@@ -7,14 +7,16 @@
 #SBATCH --mem=100gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/wsclean-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/wsclean-%A.err
 
 module load wsclean
 
 cd /astro/mwaeor/MWA/data/1061316296/2021-01-20_2000
 
-mkdir -p images
+mkdir -p images_i
 
-time wsclean -name ./images/uvdump_ -size 1024 1024 -niter 10000 \
+time wsclean -name ./images_i/uvdump -size 1024 1024 -niter 10000 \
   -auto-threshold 0.5 -auto-mask 3 \
   -pol I -multiscale -weight briggs 0 -scale 0.033 -j 20 -mgain 0.85 \
   -no-update-model-required \

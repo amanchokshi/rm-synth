@@ -7,6 +7,8 @@
 #SBATCH --mem=10gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/uv2ms-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/uv2ms-%A.err
 
 module use /pawsey/mwa/software/python3/modulefiles
 module load casa/5.6.1-8
