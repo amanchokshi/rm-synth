@@ -64,6 +64,8 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
 
     cube = np.zeros((chans, dim, dim))
 
+    freqs = []
+
     # loop through fits files
     for i in range(chans):
 
@@ -73,10 +75,12 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
         # Read fits file and append contents to data array
         with fits.open(fts) as hdul:
             hdu = hdul[0]
+            freq = hdu.header["CRVAL3"]
             data = hdu.data[0, 0, :, :]
             cube[i, :, :] = data
+            freqs.append(freq)
 
-    return cube.astype(np.float32)
+    return cube.astype(np.float32), freqs
 
 
 def create_spec_cube(
@@ -105,10 +109,14 @@ def create_spec_cube(
     """
 
     wcs = cube_hdr(fits_dir, prefix, pol, chans)
-    data = cube_data(fits_dir, prefix, pol, chans, dim)
+    data, freqs = cube_data(fits_dir, prefix, pol, chans, dim)
 
     cube = SpectralCube(data=data, wcs=wcs)
-    cube.hdu.writeto(f"{out_dir}/cube_{pol}_{chans}.fits")
+    cube.hdu.writeto(f"{out_dir}/cube_{pol}.fits")
+
+    with open(f"{out_dir}/frequency.txt", "w") as f:
+        for fr in freqs:
+            f.write(f"{fr:.0f}\n")
 
 
 if __name__ == "__main__":
