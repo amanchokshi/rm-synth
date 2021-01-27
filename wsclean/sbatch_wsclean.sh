@@ -7,34 +7,22 @@
 #SBATCH --mem=100gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
-#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/wsclean-%A.out
-#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/wsclean-%A.err
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/wsclean-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/wsclean-%A.err
 
 module load wsclean
 
-cd /astro/mwaeor/MWA/data/1061316296/2021-01-20_2000
+obsid=1061316296
+timestamp=2021-01-27_1200
+data_dir=/astro/mwaeor/MWA/data
+out_dir=images
+prefix=uvdump_
 
-mkdir -p images_iii
 
-# time wsclean -name ./images_i/uvdump -size 1024 1024 -niter 10000 \
-  # -auto-threshold 0.5 -auto-mask 3 \
-  # -pol I -multiscale -weight briggs 0 -scale 0.033 -j 20 -mgain 0.85 \
-  # -no-update-model-required \
-  # -abs-mem 100 \
-  # -grid-with-beam -use-idg -idg-mode cpu -pb-undersampling 4 \
-  # -mwa-path /astro/mwaeor/achokshi/software/local_python/mwa_pb/data \
-  # /astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/ms/uvdump_*.ms
-  # #-channels-out 4 -join-channels \
+cd "$data_dir"/"$obsid"/"$timestamp"
+mkdir -p $out_dir
 
-# time wsclean -name ./images_ii/uvdump -size 1024 1024 -niter 10000 \
-  # -auto-threshold 0.5 -auto-mask 3 -channels-out 24 \
-  # -pol I -multiscale -weight briggs 0 -scale 0.033 -j 20 -mgain 0.85 \
-  # -no-update-model-required \
-  # -abs-mem 100 \
-  # -grid-with-beam -use-idg -idg-mode cpu -pb-undersampling 4 \
-  # -mwa-path /astro/mwaeor/achokshi/software/local_python/mwa_pb/data \
-  # /astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/ms/uvdump_*.ms
 
-time wsclean -pol QU --channels-out 384 \
-  -name ./images_iii/uvdump -scale 0.033 -size 1024 1024 \
-  /astro/mwaeor/MWA/data/1061316296/2021-01-20_2000/ms/uvdump_*.ms
+time wsclean -pol QU --channels-out 768 \
+  -name ./"$out_dir"/uvdump -scale 0.033 -size 1024 1024 \
+  "$data_dir"/"$obsid"/"$timestamp"/ms/uvdump_*.ms
