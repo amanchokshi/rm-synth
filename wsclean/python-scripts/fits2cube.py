@@ -76,7 +76,7 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
             data = hdu.data[0, 0, :, :]
             cube[i, :, :] = data
 
-    return cube
+    return cube.astype(np.float32)
 
 
 def create_spec_cube(
