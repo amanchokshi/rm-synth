@@ -2,7 +2,7 @@ import numpy as np
 from astropy.io import fits
 
 
-def cube_hdr(fits_dir, prefix, pol, chans):
+def cube_hdr(fits_dir, prefix, suffix, pol, chans):
     """Create FITS header for spectral cube.
 
     Modify the FITS header of the lowest fine frequency image
@@ -14,6 +14,8 @@ def cube_hdr(fits_dir, prefix, pol, chans):
         Path to data directory with fits images
     prefix : str
         Prefix of fits files
+    suffix : str
+        Suffix of fits files
     pol : str
         Stokes polarization - Q/U
     chans : int
@@ -26,11 +28,11 @@ def cube_hdr(fits_dir, prefix, pol, chans):
     """
 
     # Copy of the header
-    with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-dirty.fits") as hdul:
+    with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-{suffix}.fits") as hdul:
         h2 = hdul[0].header
 
     # Modify the header to have frequency as first axis
-    with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-dirty.fits") as hdul:
+    with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-{suffix}.fits") as hdul:
         hdr = hdul[0].header
         hdr["NAXIS"] = 3
         hdr["NAXIS3"] = chans
@@ -67,7 +69,7 @@ def cube_hdr(fits_dir, prefix, pol, chans):
         return hdr
 
 
-def cube_data(fits_dir, prefix, pol, chans, dim):
+def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     """Create a FITS spectral cube.
 
     Combine a set of fine channel fits images into a spectral cube.
@@ -78,6 +80,8 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
         Path to data directory with fits images
     prefix : str
         Prefix of fits files
+    suffix : str
+        Suffix of fits files
     pol : str
         Stokes polarization - Q/U
     chans : int
@@ -99,7 +103,7 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
     for i in range(chans):
 
         # Path to fits file
-        fts = f"{fits_dir}/{prefix}-{i:04}-{pol}-dirty.fits"
+        fts = f"{fits_dir}/{prefix}-{i:04}-{pol}-{suffix}.fits"
 
         # Read fits file and append contents to data array
         with fits.open(fts) as hdul:
@@ -118,7 +122,7 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
 
 
 def create_spec_cube(
-    fits_dir=None, prefix=None, pol=None, chans=None, dim=None, out_dir=None
+    fits_dir=None, prefix=None, suffix=None, pol=None, chans=None, dim=None, out_dir=None
 ):
     """Creates and saves FITS spectral cube.
 
@@ -128,6 +132,8 @@ def create_spec_cube(
         Path to data directory with fits images
     prefix : str
         Prefix of fits files
+    suffix : str
+        Suffix of fits files
     pol : str
         Stokes polarization - Q/U
     chans : int
@@ -142,12 +148,12 @@ def create_spec_cube(
         Save FITS spectral cube to out_dir
     """
 
-    hdr = cube_hdr(fits_dir, prefix, pol, chans)
-    data, freqs = cube_data(fits_dir, prefix, pol, chans, dim)
+    hdr = cube_hdr(fits_dir, prefix, suffix, pol, chans)
+    data, freqs = cube_data(fits_dir, prefix, suffix, pol, chans, dim)
 
     # Write FITS cube
     hdul = fits.PrimaryHDU(data=data, header=hdr)
-    hdul.writeto(f"{out_dir}/cube_{pol}.fits")
+    hdul.writeto(f"{out_dir}/cube_{pol}_{suffix}.fits")
 
     # Write frequency list
     with open(f"{out_dir}/frequency.txt", "w") as f:
@@ -177,6 +183,14 @@ if __name__ == "__main__":
         type=str,
         default="uvdump",
         help="Prefix to fine channel file names. Default: uvdump",
+    )
+
+    parser.add_argument(
+        "--suffix",
+        metavar="\b",
+        type=str,
+        default="dirty",
+        help="Suffix to fine channel file names - dirty/image. Default: dirty",
     )
 
     parser.add_argument(
@@ -216,6 +230,7 @@ if __name__ == "__main__":
     create_spec_cube(
         fits_dir=args.fits_dir,
         prefix=args.prefix,
+        suffix=args.suffix,
         pol=args.pol,
         chans=args.chans,
         dim=args.dim,
