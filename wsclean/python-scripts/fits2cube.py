@@ -162,9 +162,6 @@ def create_spec_cube(
 
     if not freq_file.is_file():
         freqs.tofile(freq_file, "\n", "%.0f")
-    #  with open(f"{out_dir}/frequency.txt", "w") as f:
-        #  for fr in freqs:
-            #  f.write(f"{fr:.0f}\n")
 
 
 if __name__ == "__main__":
