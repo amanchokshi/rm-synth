@@ -1,0 +1,21 @@
+// How many GPUs to use?
+// At the moment, this should be set to 1.
+nGPU = 1;
+
+// What is the input format? (not case-sensitive)
+// Can be "FITS" or "HDFITS". 
+fileFormat = "FITS";
+
+// Define how fits files are stored on disk
+qCubeName = "/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/images_clean/cube_Q_dirty.fits";
+uCubeName = "/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/images_clean/cube_U_dirty.fits";
+freqFileName = "/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/images_clean/frequency.txt";
+
+// Define the faraday depth axis. All units in rad/m/m
+plotRMSF = False;
+phiMin = -250.;
+nPhi = 500; // integer
+dPhi = 1.0;
+
+// Prefix for output filenames
+outPrefix = "1061316296_test";
