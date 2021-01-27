@@ -68,7 +68,7 @@ def make_rts_setup(obs=None, outdir=None, time_stamp=None):
     outfile.write("# Generate the RTS .in files for both patching and peeling.\n")
     outfile.write("rts-in-file-generator patch \\\n")
     outfile.write(f"                      --base-dir {outdir}{obs}/{time_stamp} \\\n")
-    outfile.write("                      --fscrunch 2 \\\n")
+    outfile.write("                      --fscrunch 1 \\\n")
     outfile.write(
         f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n"
     )
@@ -79,7 +79,7 @@ def make_rts_setup(obs=None, outdir=None, time_stamp=None):
     outfile.write("                      > achokshi_rts_patch.in\n")
     outfile.write("rts-in-file-generator peel \\\n")
     outfile.write(f"                      --base-dir {outdir}{obs}/{time_stamp} \\\n")
-    outfile.write("                      --fscrunch 2 \\\n")
+    outfile.write("                      --fscrunch 1 \\\n")
     outfile.write(
         f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n"
     )
