@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from astropy.io import fits
 
@@ -118,7 +120,7 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     # Making NAXIS1 = Freq
     cube = np.moveaxis(cube, 0, -1)
 
-    return cube.astype(np.float32), freqs
+    return cube.astype(np.float32), np.array(freqs)
 
 
 def create_spec_cube(
@@ -155,10 +157,14 @@ def create_spec_cube(
     hdul = fits.PrimaryHDU(data=data, header=hdr)
     hdul.writeto(f"{out_dir}/cube_{pol}_{suffix}.fits")
 
-    # Write frequency list
-    with open(f"{out_dir}/frequency.txt", "w") as f:
-        for fr in freqs:
-            f.write(f"{fr:.0f}\n")
+    # Write frequency list if it doesn't exist
+    freq_file = Path(f"{out_dir}/frequency.txt")
+
+    if not freq_file.is_file():
+        freqs.tofile(freq_file, "\n", "%.0f")
+    #  with open(f"{out_dir}/frequency.txt", "w") as f:
+        #  for fr in freqs:
+            #  f.write(f"{fr:.0f}\n")
 
 
 if __name__ == "__main__":
