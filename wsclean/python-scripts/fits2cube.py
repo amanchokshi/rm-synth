@@ -1,14 +1,12 @@
 import numpy as np
 from astropy.io import fits
-from astropy.wcs import WCS
-from spectral_cube import SpectralCube
 
 
 def cube_hdr(fits_dir, prefix, pol, chans):
     """Create FITS header for spectral cube.
 
     Modify the FITS header of the lowest fine frequency image
-    to represent a spectral cube.
+    to represent a spectral cube. Make the first axis frequency.
 
     Parameters
     ----------
@@ -24,18 +22,49 @@ def cube_hdr(fits_dir, prefix, pol, chans):
     Returns
     -------
     astropy.wcs
-        Astropy WCS object for spectral cube
+        Astropy FITS header object for spectral cube
     """
 
+    # Copy of the header
+    with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-dirty.fits") as hdul:
+        h2 = hdul[0].header
+
+    # Modify the header to have frequency as first axis
     with fits.open(f"{fits_dir}/{prefix}-0000-{pol}-dirty.fits") as hdul:
         hdr = hdul[0].header
         hdr["NAXIS"] = 3
         hdr["NAXIS3"] = chans
+
+        hdr["NAXIS1"] = int(h2["NAXIS3"])
+        hdr["NAXIS2"] = int(h2["NAXIS1"])
+        hdr["NAXIS3"] = int(h2["NAXIS2"])
+
+        hdr["CRPIX1"] = h2["CRPIX3"]
+        hdr["CRPIX2"] = h2["CRPIX1"]
+        hdr["CRPIX3"] = h2["CRPIX2"]
+
+        hdr["CDELT1"] = h2["CDELT3"]
+        hdr["CDELT2"] = h2["CDELT1"]
+        hdr["CDELT3"] = h2["CDELT2"]
+
+        hdr["CUNIT1"] = h2["CUNIT3"]
+        hdr["CUNIT2"] = h2["CUNIT1"]
+        hdr["CUNIT3"] = h2["CUNIT2"]
+
+        hdr["CTYPE1"] = h2["CTYPE3"]
+        hdr["CTYPE2"] = h2["CTYPE1"]
+        hdr["CTYPE3"] = h2["CTYPE2"]
+
+        hdr["CRVAL1"] = h2["CRVAL3"]
+        hdr["CRVAL2"] = h2["CRVAL1"]
+        hdr["CRVAL3"] = h2["CRVAL2"]
+
+        # Remove 4th dimension stuff - Stokes info
         rm_hdr = ("NAXIS4", "CTYPE4", "CRPIX4", "CRVAL4", "CDELT4", "CUNIT4")
         for i in rm_hdr:
             hdr.pop(i, None)
 
-        return WCS(hdr)
+        return hdr
 
 
 def cube_data(fits_dir, prefix, pol, chans, dim):
@@ -80,6 +109,11 @@ def cube_data(fits_dir, prefix, pol, chans, dim):
             cube[i, :, :] = data
             freqs.append(freq)
 
+    # Intial shape [freq, Dec, Ra]
+    # Change to [Dec, Ra, freq]
+    # Making NAXIS1 = Freq
+    cube = np.moveaxis(cube, 0, -1)
+
     return cube.astype(np.float32), freqs
 
 
@@ -108,12 +142,14 @@ def create_spec_cube(
         Save FITS spectral cube to out_dir
     """
 
-    wcs = cube_hdr(fits_dir, prefix, pol, chans)
+    hdr = cube_hdr(fits_dir, prefix, pol, chans)
     data, freqs = cube_data(fits_dir, prefix, pol, chans, dim)
 
-    cube = SpectralCube(data=data, wcs=wcs)
-    cube.hdu.writeto(f"{out_dir}/cube_{pol}.fits")
+    # Write FITS cube
+    hdul = fits.PrimaryHDU(data=data, header=hdr)
+    hdul.writeto(f"{out_dir}/cube_{pol}.fits")
 
+    # Write frequency list
     with open(f"{out_dir}/frequency.txt", "w") as f:
         for fr in freqs:
             f.write(f"{fr:.0f}\n")
