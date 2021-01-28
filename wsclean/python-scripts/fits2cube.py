@@ -171,7 +171,9 @@ def create_spec_cube(
     freq_file = Path(f"{out_dir}/frequency.txt")
 
     if not freq_file.is_file():
-        freqs.tofile(freq_file, "\n", "%.1f")
+        with open(freq_file, "w") as f:
+            for line in freqs:
+                f.write(f"{line:.1f}\n")
 
 
 if __name__ == "__main__":
