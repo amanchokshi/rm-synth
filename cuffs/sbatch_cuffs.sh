@@ -13,7 +13,7 @@
 module use /pawsey/mwa/software/python3/modulefiles
 module load RTS/sla_to_pal
 
-module use /astro/mwaeor/cjordan/software/modulefiles
+module use /astro/mwaeor/achokshi/software/modulefiles
 module load cuFFS
 
 time rmsynthesis /astro/mwaeor/achokshi/rm-synth/cuffs/parsetFile
