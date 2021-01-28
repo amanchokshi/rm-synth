@@ -7,15 +7,15 @@
 #SBATCH --mem=100gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=20
-#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/wsclean-%A.out
-#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/wsclean-%A.err
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/wsclean-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/wsclean-%A.err
 
 module load wsclean
 
 obsid=1061316296
-timestamp=2021-01-27_1200
+timestamp=2021-01-28_2000
 data_dir=/astro/mwaeor/MWA/data
-out_dir=images_clean
+out_dir=images
 prefix=uvdump_
 
 
@@ -25,5 +25,5 @@ mkdir -p $out_dir
 
 time wsclean -pol QU -join-polarizations -join-channels \
   -squared-channel-joining --channels-out 768 \
-  -name ./"$out_dir"/uvdump -scale 0.033 -size 1024 1024 \
+  -name ./"$out_dir"/uvdump -scale 0.75amin -size 2048 2048 \
   "$data_dir"/"$obsid"/"$timestamp"/ms/uvdump_*.ms

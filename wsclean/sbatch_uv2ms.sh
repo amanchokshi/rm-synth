@@ -7,12 +7,12 @@
 #SBATCH --mem=10gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/uv2ms-%A.out
-#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/uv2ms-%A.err
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/uv2ms-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/uv2ms-%A.err
 
 
 obsid=1061316296
-timestamp=2021-01-27_1200
+timestamp=2021-01-28_2000
 data_dir=/astro/mwaeor/MWA/data
 out_dir="$data_dir"/"$obsid"/"$timestamp"/ms
 prefix=uvdump_
