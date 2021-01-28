@@ -119,7 +119,6 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     # Change to [Dec, Ra, freq]
     # Making NAXIS1 = Freq
     cube = np.moveaxis(cube, 0, -1)
-    print(freqs)
 
     return cube.astype(np.float32), np.array(freqs)
 
