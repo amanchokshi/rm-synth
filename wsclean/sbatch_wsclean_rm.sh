@@ -15,7 +15,7 @@ module load wsclean
 obsid=1061316296
 timestamp=2021-01-28_2000
 data_dir=/astro/mwaeor/MWA/data
-out_dir=images
+out_dir=ws_rm
 prefix=uvdump_
 
 
