@@ -16,7 +16,7 @@ timestamp=2021-01-27_1200
 data_dir=/astro/mwaeor/MWA/data
 fits_dir="$data_dir"/"$obsid"/"$timestamp"/images_clean
 prefix=uvdump
-suffix=image
+suffix=dirty
 chans=768
 dim=1024
 
