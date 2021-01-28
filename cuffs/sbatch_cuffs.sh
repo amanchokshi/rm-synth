@@ -7,8 +7,8 @@
 #SBATCH --partition=gpuq
 #SBATCH --account=mwaeor
 #SBATCH --gres=gpu:1
-#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/cuffs-%A.out
-#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-27_1200/cuffs-%A.err
+#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/cuffs-%A.out
+#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/cuffs-%A.err
 
 module use /pawsey/mwa/software/python3/modulefiles
 module load RTS/sla_to_pal
