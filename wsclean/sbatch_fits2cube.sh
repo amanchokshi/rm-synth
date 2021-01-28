@@ -1,10 +1,10 @@
 #!/bin/bash --login
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=00:20:00
+#SBATCH --time=00:30:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
-#SBATCH --mem=20gb
+#SBATCH --mem=30gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/fits2cube-%A.out
