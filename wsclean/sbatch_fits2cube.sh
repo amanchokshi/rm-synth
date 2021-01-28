@@ -1,10 +1,10 @@
 #!/bin/bash --login
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=00:10:00
+#SBATCH --time=00:20:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
-#SBATCH --mem=10gb
+#SBATCH --mem=20gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/fits2cube-%A.out
@@ -16,7 +16,7 @@ timestamp=2021-01-28_2000
 data_dir=/astro/mwaeor/MWA/data
 fits_dir="$data_dir"/"$obsid"/"$timestamp"/ws_rm
 prefix=uvdump
-suffix=image
+suffix=dirty
 chans=768
 dim=2048
 

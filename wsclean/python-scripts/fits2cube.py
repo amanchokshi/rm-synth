@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import numpy as np
@@ -71,7 +72,7 @@ def cube_hdr(fits_dir, prefix, suffix, pol, chans):
         return hdr
 
 
-def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
+def cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube):
     """Create a FITS spectral cube.
 
     Combine a set of fine channel fits images into a spectral cube.
@@ -90,6 +91,8 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
         Number of fine channels
     dim : int
         Dimensions of image data
+    tmp_cube : str
+        Name of tmp cube data file
 
     Returns
     -------
@@ -98,6 +101,7 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     """
 
     cube = np.zeros((chans, dim, dim))
+    #  cube = np.memmap(tmp_cube, dtype='float32', mode='w+', shape=(chans, dim, dim))
 
     freqs = []
 
@@ -112,7 +116,8 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
             hdu = hdul[0]
             freq = hdu.header["CRVAL3"]
             data = hdu.data[0, 0, :, :]
-            cube[i, :, :] = data
+            #  cube[i, :, :] = data
+            cube[i] = np.copy(data)
             freqs.append(freq)
 
     # Intial shape [freq, Dec, Ra]
@@ -121,10 +126,11 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     cube = np.moveaxis(cube, 0, -1)
 
     return cube.astype(np.float32), np.array(freqs)
+    #  return cube, np.array(freqs)
 
 
 def create_spec_cube(
-    fits_dir=None, prefix=None, suffix=None, pol=None, chans=None, dim=None, out_dir=None
+    fits_dir=None, prefix=None, suffix=None, pol=None, chans=None, dim=None, out_dir=None, tmp_cube="c3"
 ):
     """Creates and saves FITS spectral cube.
 
@@ -144,6 +150,8 @@ def create_spec_cube(
         Dimensions of image data
     out_dir : str
         Path to output directory
+    tmp_cube : str
+        Name of tmp cube data file
 
     Returns
     -------
@@ -151,11 +159,13 @@ def create_spec_cube(
     """
 
     hdr = cube_hdr(fits_dir, prefix, suffix, pol, chans)
-    data, freqs = cube_data(fits_dir, prefix, suffix, pol, chans, dim)
+    data, freqs = cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube)
 
     # Write FITS cube
     hdul = fits.PrimaryHDU(data=data, header=hdr)
     hdul.writeto(f"{out_dir}/cube_{pol}_{suffix}.fits")
+
+    #  os.remove(tmp_cube)
 
     # Write frequency list if it doesn't exist
     freq_file = Path(f"{out_dir}/frequency.txt")
