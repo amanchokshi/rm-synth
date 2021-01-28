@@ -119,6 +119,7 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     # Change to [Dec, Ra, freq]
     # Making NAXIS1 = Freq
     cube = np.moveaxis(cube, 0, -1)
+    print(freqs)
 
     return cube.astype(np.float32), np.array(freqs)
 
@@ -161,7 +162,7 @@ def create_spec_cube(
     freq_file = Path(f"{out_dir}/frequency.txt")
 
     if not freq_file.is_file():
-        freqs.tofile(freq_file, "\n", "%.0f")
+        freqs.tofile(freq_file, "\n", "%.1f")
 
 
 if __name__ == "__main__":
