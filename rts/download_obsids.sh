@@ -1,10 +1,10 @@
 #!/bin/bash -l
 #SBATCH --job-name="download"
-#SBATCH --export=NONE
+#SBATCH --export=None
 #SBATCH --time=6:00:00
 #SBATCH --nodes=1
-#SBATCH --output=download.%j.o
-#SBATCH --error=download.%j.e
+#SBATCH --output=download-%A.o
+#SBATCH --error=download-%A.e
 #SBATCH --mem=1G
 #SBATCH --clusters=garrawarla
 #SBATCH --partition=workq
