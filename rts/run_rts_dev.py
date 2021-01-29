@@ -20,6 +20,8 @@ def make_rts_setup(
     with open(f"{out_dir}/{obs}/{rts_tag}/rts_setup_{obs}.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
+        outfile.write("\n")
+
         outfile.write(f'#SBATCH --job-name="se_{obs}"\n')
         outfile.write(f"#SBATCH --output=RTS-setup-{obs}-%A.out\n")
         outfile.write(f"#SBATCH --error=RTS-setup-{obs}-%A.err\n")
@@ -30,6 +32,8 @@ def make_rts_setup(
         outfile.write("#SBATCH --partition=gpuq\n")
         outfile.write("#SBATCH --account=mwaeor\n")
         outfile.write("#SBATCH --gres=gpu:1\n")
+        outfile.write("\n")
+
 
         outfile.write("module use /pawsey/mwa/software/python3/modulefiles\n")
         outfile.write("module load python\n")
@@ -37,20 +41,26 @@ def make_rts_setup(
         outfile.write("module load mongoose\n")
         outfile.write("module load numpy/1.18.2\n")
         outfile.write("module load astropy/4.0.1.post1\n")
+        outfile.write("\n")
 
         outfile.write(
             "export PYTHONPATH=$PYTHONPATH:/astro/mwaeor/achokshi/software/local_python\n"
         )
         outfile.write("module load mwa_pb\n")
+        outfile.write("\n")
 
         outfile.write("set -eux\n")
-        outfile.write(f"cd {out_dir}/{obs}/{rts_tag}\n")
+        outfile.write("\n")
 
-        outfile.write("# Create symlinks from gpubox files\n")
+        outfile.write("# Create symlinks from gpubox files to out_dir\n")
+        outfile.write(f"cd {out_dir}/{obs}/{rts_tag}\n")
         outfile.write(f"ln -s {data_dir}/{obs}/{gpu_box}/* .\n")
+        outfile.write("\n")
 
         outfile.write("# Generate RTS mwaf files.\n")
         outfile.write("reflag-mwaf-files\n")
+        outfile.write("\n")
+
         outfile.write("# Generate a source list for the patch step.\n")
         outfile.write("srclist_by_beam.py -n 1000 \\\n")
         outfile.write(
@@ -59,6 +69,7 @@ def make_rts_setup(
         outfile.write(
             f"                   --metafits={out_dir}/{obs}/{rts_tag}/{obs}.metafits\n"
         )
+        outfile.write("\n")
 
         outfile.write("# Generate a source list for the peel step.\n")
         outfile.write("srclist_by_beam.py -n 3000 \\\n")
@@ -70,6 +81,7 @@ def make_rts_setup(
         )
         outfile.write("                   --no_patch \\\n")
         outfile.write("                   --cutoff=90\n")
+        outfile.write("\n")
 
         outfile.write("# Generate the RTS .in files for both patching and peeling.\n")
         outfile.write("rts-in-file-generator patch \\\n")
@@ -90,6 +102,7 @@ def make_rts_setup(
         )
         outfile.write("                      --num-primary-cals 1 \\\n")
         outfile.write("                      > rts_patch.in\n")
+        outfile.write("\n")
 
         outfile.write("rts-in-file-generator peel \\\n")
         outfile.write(
@@ -111,10 +124,13 @@ def make_rts_setup(
         outfile.write("                      --num-cals 1000 \\\n")
         outfile.write("                      --num-peel 1000 \\\n")
         outfile.write("                      > rts_peel.in\n")
+        outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible.\n")
         outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
         outfile.write("find . -user $USER -type f -exec chmod g+rw,o+r,o-w {} \;\n")
+        outfile.write("\n")
+
         outfile.write("echo gator rts_setup.sh finished successfully.\n")
 
     return f"{out_dir}/{obs}/{rts_tag}/rts_setup_{obs}.sh"
@@ -126,6 +142,8 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
     with open(f"{out_dir}/{obs}/{rts_tag}/rts_run_{obs}.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
+        outfile.write("\n")
+
         outfile.write(f'#SBATCH --job-name="pa_{obs}"\n')
         outfile.write(f"#SBATCH --output=RTS-patch-{obs}-%A.out\n")
         outfile.write(f"#SBATCH --error=RTS-patch-{obs}-%A.err\n")
@@ -136,10 +154,12 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         outfile.write("#SBATCH --partition=gpuq\n")
         outfile.write("#SBATCH --account=mwaeor\n")
         outfile.write("#SBATCH --gres=gpu:1\n")
+        outfile.write("\n")
 
         outfile.write("module use /pawsey/mwa/software/python3/modulefiles\n")
         outfile.write("module load RTS/sla_to_pal\n")
         outfile.write("module load python-singularity\n")
+        outfile.write("\n")
 
         outfile.write("set -eux\n")
         outfile.write("command -v rts_gpu\n")
@@ -147,6 +167,8 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         outfile.write("date\n")
         outfile.write("srun -n 25 --export=ALL rts_gpu rts_patch.in\n")
         outfile.write("date\n")
+        outfile.write("\n")
+
         outfile.write("# Allow python scripts to fail.\n")
         outfile.write("set +e\n")
         outfile.write(
@@ -157,8 +179,11 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         )
         outfile.write("set -e\n")
         outfile.write("date\n")
+        outfile.write("\n")
+
         outfile.write("srun -n 25 --export=ALL rts_gpu rts_peel.in\n")
         outfile.write("date\n")
+        outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible!\n")
         outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
