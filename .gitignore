@@ -147,6 +147,7 @@ cython_debug/
 *DS_Store*
 
 # Temp stuff
+.python-version
 wsclean/python-scripts/.python-version
 wsclean/python-scripts/QU/*
 wsclean/python-scripts/*.fits
