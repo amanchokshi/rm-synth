@@ -355,9 +355,8 @@ if __name__ == "__main__":
         run_jobs.append(run_job)
 
     # If not submitting to queue, create the above scripts and bypass the following code
-    if args.no_run:
-        pass
-    else:
+    if not args.no_run:
+
         # Launch all setup scripts
         for i, setup_job in enumerate(setup_jobs):
 
@@ -378,21 +377,13 @@ if __name__ == "__main__":
     if args.clean:
         for obs in obsids:
 
-            # Remove gpubox files
-            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/{obs}*gpubox*fits"
-            output = check_output(cmd, shell=True)
+            # Find all files in out_dir. Ignores subdirs
+            rts_out = Path(f"{out_dir}/{obs}/{rts_tag}")
+            f_list = list(filter(Path.is_file, Path(rts_out).glob("*")))
 
-            # Remove mwaf files
-            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS_{obs}_*.mwaf"
-            output = check_output(cmd, shell=True)
-            cmd = "rm -f {out_dir}/{obs}/{rts_tag}/{obs}_*.mwaf"
-            output = check_output(cmd, shell=True)
-
-            # Temp removal
-            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS-setup-*-60*"
-            output = check_output(cmd, shell=True)
-            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS-patch-*-60*"
-            output = check_output(cmd, shell=True)
+            # Delete files
+            for f in f_list:
+                f.unlink()
 
         exit("Cleaned directories")
 
