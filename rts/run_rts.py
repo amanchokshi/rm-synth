@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+#############################################
+#                                           #
+#               Version 0.1                 #
+#                                           #
+#############################################
+
 import os
 import re
 from pathlib import Path
