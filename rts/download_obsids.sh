@@ -19,19 +19,10 @@ module load jq
 
 sub_dir=gpubox
 mwa_dir=/astro/mwaeor/MWA/data
-obs_file_name=/astro/mwaeor/achokshi/rm-synth/rts/obsids.txt
+obs_file=/astro/mwaeor/achokshi/rm-synth/rts/rts_in.json
 
-#Read the obs file and put into an array, skipping blank lines if they exist
-# i=0
-# while read line
-# do
-   # if [ ! -z "$line" ]; then
-      # obs_id_array[$i]=$line
-      # i=$((i + 1))
-   # fi
-# done < "$obs_file_name"
-
-obs_id_array=$(jq '.obsids | .[]' rts_in.json)
+# Read obsids from json
+obs_id_array=$(jq '.obsids | .[]' "$obs_file")
 
 for obs_id in "${obs_id_array[@]}"
 do
