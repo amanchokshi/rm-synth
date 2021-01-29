@@ -34,7 +34,6 @@ def make_rts_setup(
         outfile.write("#SBATCH --gres=gpu:1\n")
         outfile.write("\n")
 
-
         outfile.write("module use /pawsey/mwa/software/python3/modulefiles\n")
         outfile.write("module load python\n")
         outfile.write("module load srclists/master\n")
@@ -351,26 +350,26 @@ if __name__ == "__main__":
         run_job = make_rts_run(obs=obs, out_dir=out_dir, rts_tag=rts_tag)
         run_jobs.append(run_job)
 
-#    # If not submitting to queue, create the above scripts and bypass the following code
-#    if args.no_run:
-#        pass
-#    else:
-#        # Launch all setup scripts
-#        for i, setup_job in enumerate(setup_jobs):
-#
-#            # Setup command and submit to queue
-#            os.chdir(Path(setup_job).parents[0])
-#            cmd = f"sbatch  {setup_job}"
-#            setup_job_message = check_output(cmd, shell=True)
-#
-#            # Use RE to extract job id from output string of setup job
-#            setup_job_ID = re.search(r"\d+", setup_job_message.decode("utf-8")).group(0)
-#
-#            # Launch run script with a dependency on the setup scripts
-#            os.chdir(Path(run_jobs[i]).parents[0])
-#            cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
-#            run_job_message = check_output(cmd, shell=True)
-#
+    # If not submitting to queue, create the above scripts and bypass the following code
+    if args.no_run:
+        pass
+    else:
+        # Launch all setup scripts
+        for i, setup_job in enumerate(setup_jobs):
+
+            # Setup command and submit to queue
+            os.chdir(Path(setup_job).parents[0])
+            cmd = f"sbatch  {setup_job}"
+            setup_job_message = check_output(cmd, shell=True)
+
+            # Use RE to extract job id from output string of setup job
+            setup_job_ID = re.search(r"\d+", setup_job_message.decode("utf-8")).group(0)
+
+            # Launch run script with a dependency on the setup scripts
+            os.chdir(Path(run_jobs[i]).parents[0])
+            cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
+            run_job_message = check_output(cmd, shell=True)
+
 #    # If set, check the output of all jobs for expected files+size and exit
 #    if args.check:
 #        for obs in obs_list:
