@@ -22,7 +22,7 @@ def make_rts_setup(
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
 
-        outfile.write(f'#SBATCH --job-name="se_{obs}"\n')
+        outfile.write(f'#SBATCH --job-name="set_{obs}"\n')
         outfile.write(f"#SBATCH --output=RTS-setup-{obs}-%A.out\n")
         outfile.write(f"#SBATCH --error=RTS-setup-{obs}-%A.err\n")
         outfile.write("#SBATCH --nodes=1\n")
@@ -143,9 +143,9 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
 
-        outfile.write(f'#SBATCH --job-name="pa_{obs}"\n')
-        outfile.write(f"#SBATCH --output=RTS-patch-{obs}-%A.out\n")
-        outfile.write(f"#SBATCH --error=RTS-patch-{obs}-%A.err\n")
+        outfile.write(f'#SBATCH --job-name="rts_{obs}"\n')
+        outfile.write(f"#SBATCH --output=RTS-run-{obs}-%A.out\n")
+        outfile.write(f"#SBATCH --error=RTS-run-{obs}-%A.err\n")
         outfile.write("#SBATCH --nodes=25\n")
         outfile.write("#SBATCH --ntasks-per-node=1\n")
         outfile.write("#SBATCH --time=00:30:00\n")
@@ -182,6 +182,9 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
 
         outfile.write("srun -n 25 --export=ALL rts_gpu rts_peel.in\n")
         outfile.write("date\n")
+        outfile.write("\n")
+
+        outfile.write("mkdir uvfits && mv *.uvfits uvfits\n")
         outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible!\n")
@@ -359,7 +362,7 @@ if __name__ == "__main__":
 
             # Setup command and submit to queue
             os.chdir(Path(setup_job).parents[0])
-            cmd = f"sbatch  {setup_job}"
+            cmd = f"sbatch {setup_job}"
             setup_job_message = check_output(cmd, shell=True)
 
             # Use RE to extract job id from output string of setup job
@@ -369,6 +372,28 @@ if __name__ == "__main__":
             os.chdir(Path(run_jobs[i]).parents[0])
             cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
             run_job_message = check_output(cmd, shell=True)
+
+    # If set, clean out the RTS directories and exit
+    if args.clean:
+        for obs in obsids:
+
+            # Remove gpubox files
+            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/{obs}*gpubox*fits"
+            output = check_output(cmd, shell=True)
+
+            # Remove mwaf files
+            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS_{obs}_*.mwaf"
+            output = check_output(cmd, shell=True)
+            cmd = "rm -f {out_dir}/{obs}/{rts_tag}/{obs}_*.mwaf"
+            output = check_output(cmd, shell=True)
+
+            # Temp removal
+            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS-setup-*-60*"
+            output = check_output(cmd, shell=True)
+            cmd = f"rm -f {out_dir}/{obs}/{rts_tag}/RTS-patch-*-60*"
+            output = check_output(cmd, shell=True)
+
+        exit("Cleaned directories")
 
 #    # If set, check the output of all jobs for expected files+size and exit
 #    if args.check:
@@ -390,25 +415,3 @@ if __name__ == "__main__":
 #                    print(f"{obs} uvfits are less than 2.1G")
 #
 #        exit("Check complete. 24 uvfits files are present and look good.")
-#
-#    # If set, clean out the RTS directories and exit
-#    if args.clean:
-#        for obs in obs_list:
-#
-#            # Remove gpubox files
-#            cmd = f"rm -f {outdir}{obs}/{time_stamp}/{obs}*gpubox*fits"
-#            output = check_output(cmd, shell=True)
-#
-#            # Remove mwaf files
-#            cmd = f"rm -f {outdir}{obs}/{time_stamp}/RTS_{obs}_*.mwaf"
-#            output = check_output(cmd, shell=True)
-#            cmd = "rm -f {outdir}{obs}/{time_stamp}/{obs}_*.mwaf"
-#            output = check_output(cmd, shell=True)
-#
-#            # Temp removal
-#            cmd = f"rm -f {outdir}{obs}/{time_stamp}/RTS-setup-*-60*"
-#            output = check_output(cmd, shell=True)
-#            cmd = f"rm -f {outdir}{obs}/{time_stamp}/RTS-patch-*-60*"
-#            output = check_output(cmd, shell=True)
-#
-#        exit("Cleaned directories")
