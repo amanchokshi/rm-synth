@@ -52,16 +52,12 @@ def make_rts_setup(obs=None, outdir=None, time_stamp=None):
     outfile.write("# Generate a source list for the patch step.\n")
     outfile.write("srclist_by_beam.py -n 1000 \\\n")
     outfile.write(f"                   --srclist={srclist_dir}{srclist_file}.txt \\\n")
-    outfile.write(
-        f"                   --metafits={outdir}{obs}/{time_stamp}/{obs}.metafits\n"
-    )
+    outfile.write(f"                   --metafits={outdir}{obs}/{time_stamp}/{obs}.metafits\n")
 
     outfile.write("# Generate a source list for the peel step.\n")
     outfile.write("srclist_by_beam.py -n 3000 \\\n")
     outfile.write(f"                   --srclist={srclist_dir}{srclist_file}.txt \\\n")
-    outfile.write(
-        f"                   --metafits={outdir}{obs}/{time_stamp}/{obs}.metafits \\\n"
-    )
+    outfile.write(f"                   --metafits={outdir}{obs}/{time_stamp}/{obs}.metafits \\\n")
     outfile.write("                   --no_patch \\\n")
     outfile.write("                   --cutoff=90\n")
 
@@ -69,27 +65,20 @@ def make_rts_setup(obs=None, outdir=None, time_stamp=None):
     outfile.write("rts-in-file-generator patch \\\n")
     outfile.write(f"                      --base-dir {outdir}{obs}/{time_stamp} \\\n")
     outfile.write("                      --fscrunch 1 \\\n")
-    outfile.write(
-        f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n"
-    )
-    outfile.write(
-        f"                      --srclist {srclist_file}_{obs}_patch1000.txt \\\n"
-    )
+    outfile.write(f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n")
+    outfile.write(f"                      --srclist {srclist_file}_{obs}_patch1000.txt \\\n")
     outfile.write("                      --num-primary-cals 1 \\\n")
-    outfile.write("                      > achokshi_rts_patch.in\n")
+    outfile.write("                      > rts_patch.in\n")
+
     outfile.write("rts-in-file-generator peel \\\n")
     outfile.write(f"                      --base-dir {outdir}{obs}/{time_stamp} \\\n")
     outfile.write("                      --fscrunch 1 \\\n")
-    outfile.write(
-        f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n"
-    )
-    outfile.write(
-        f"                      --srclist {srclist_file}_{obs}_peel3000.txt \\\n"
-    )
+    outfile.write(f"                      --metafits {outdir}{obs}/{time_stamp}/{obs}.metafits \\\n")
+    outfile.write(f"                      --srclist {srclist_file}_{obs}_peel3000.txt \\\n")
     outfile.write("                      --num-primary-cals 5 \\\n")
     outfile.write("                      --num-cals 1000 \\\n")
     outfile.write("                      --num-peel 1000 \\\n")
-    outfile.write("                      > achokshi_rts_peel.in\n")
+    outfile.write("                      > rts_peel.in\n")
 
     outfile.write("# Ensure permissions are sensible.\n")
     outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
@@ -119,25 +108,20 @@ def make_rts_run(obs=None, outdir=None, time_stamp=None):
     outfile.write("module use /pawsey/mwa/software/python3/modulefiles\n")
     outfile.write("module load RTS/sla_to_pal\n")
     outfile.write("module load python-singularity\n")
-    # outfile.write('module load RTS/master\n')
 
     outfile.write("set -eux\n")
     outfile.write("command -v rts_gpu\n")
     outfile.write("export UCX_MEMTYPE_CACHE=n\n")
     outfile.write("date\n")
-    outfile.write("srun -n 25 --export=ALL rts_gpu achokshi_rts_patch.in\n")
+    outfile.write("srun -n 25 --export=ALL rts_gpu rts_patch.in\n")
     outfile.write("date\n")
     outfile.write("# Allow python scripts to fail.\n")
     outfile.write("set +e\n")
-    outfile.write(
-        "srun -n 1 -N 1 --export=ALL plot_BPcal_128T.py --both --outname BPcal.png\n"
-    )
-    outfile.write(
-        f"srun -n 1 -N 1 --export=ALL plot_CalSols.py --base_dir=`pwd` -n {obs}\n"
-    )
+    outfile.write("srun -n 1 -N 1 --export=ALL plot_BPcal_128T.py --both --outname BPcal.png\n")
+    outfile.write(f"srun -n 1 -N 1 --export=ALL plot_CalSols.py --base_dir=`pwd` -n {obs}\n")
     outfile.write("set -e\n")
     outfile.write("date\n")
-    outfile.write("srun -n 25 --export=ALL rts_gpu achokshi_rts_peel.in\n")
+    outfile.write("srun -n 25 --export=ALL rts_gpu rts_peel.in\n")
     outfile.write("date\n")
 
     outfile.write("# Ensure permissions are sensible!\n")
@@ -192,18 +176,21 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Setup and run jobs to run the RTS on Garrawarla"
+        description="Setup and run RTS jobs on Garrawarla"
     )
     parser.add_argument(
         "--obs_list",
+        metavar="\b",
         default=None,
         required=True,
         help="Text file list of all obs IDs to be processed",
     )
     parser.add_argument(
         "--time_stamp",
+        metavar="\b",
+        required=True,
         default="2021-01-01_0000",
-        help="Timestamp when processing begins - creates timestamp subdir within obsid dir",
+        help="Timestamp subdir within obsid dir",
     )
     parser.add_argument(
         "--no_run",
@@ -211,7 +198,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Don't submit the jobs to the queue",
     )
-    parser.add_argument("--fhd_flags", default=None, help="Text file of FHD tile flags")
+    parser.add_argument(
+        "--fhd_flags",
+        metavar="\b",
+        default=None,
+        help="Text file of FHD tile flags"
+    )
     parser.add_argument(
         "--check",
         default=False,
@@ -226,6 +218,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--outdir",
+        metavar="\b",
         default="/astro/mwaeor/MWA/data/",
         help="Base output dir. Default:/astro/mwaeor/MWA/data/",
     )
