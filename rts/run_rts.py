@@ -224,6 +224,7 @@ if __name__ == "__main__":
     outdir = args.outdir
     time_stamp = args.time_stamp
 
+
     # Test the observation list file and make an array of obs
     obs_list = test_false("--obs_list", args.obs_list)
     try:
@@ -231,6 +232,7 @@ if __name__ == "__main__":
         obs_list = np.array([obs for obs in obs_list if obs != "" and obs != " "])
     except Exception:
         exit(f"Cannot read --obs_list={obs_list}, please check file. Exiting now.")
+
 
     # If set, check the output of all jobs for expected files+size and exit
     if args.check:
@@ -252,6 +254,7 @@ if __name__ == "__main__":
                     print(f"{obs} uvfits are less than 2.1G")
 
         exit("Check complete. 24 uvfits files are present and look good.")
+
 
     # If set, clean out the RTS directories and exit
     if args.clean:
@@ -275,6 +278,7 @@ if __name__ == "__main__":
 
         exit("Cleaned directories")
 
+
     # Write all shell scripts for running
     setup_jobs = []
     run_jobs = []
@@ -294,14 +298,16 @@ if __name__ == "__main__":
         while not os.path.exists(latest_flag):
             if len(matching) > 1:
                 matching.remove(max(matching))
-                latest_flag = outdir + obs + "/" + max(matching) + "/flagged_tiles.txt"
+                latest_flag = f"{outdir}{obs}/{max(matching)}/flagged_tiles.txt"
             else:
-                latest_flag = outdir + obs + "/flagged_tiles.txt"
+                latest_flag = f"{outdir}{obs}/flagged_tiles.txt"
                 break
 
         # Copy latest flag file
-        os.popen("cp " + latest_flag + " " + outdir + obs + "/" + time_stamp)
+        os.popen(f"cp {latest_flag} {outdir}{obs}/{time_stamp})
 
+
+    # FHD flag stuff
     if args.fhd_flags:
         fhd_file = args.fhd_flags
         with open(fhd_file) as f:
@@ -311,13 +317,11 @@ if __name__ == "__main__":
                 # Only write file if flags exist
                 if len(line_arr) > 1:
                     fhd_flags = line_arr[1:]
-                    metafits_file = (
-                        outdir + obs + "/" + time_stamp + "/" + obs + ".metafits"
-                    )
+                    metafits_file = f"{outdir}{obs}/{time_stamp}/{obs}.metafits"
                     fhd2rts_flags = fhd2rts(metafits_file, fhd_flags)
 
                     # Find out if the flagged_tile.txt already exists and get information
-                    latest_flag = outdir + obs + "/" + time_stamp + "/flagged_tiles.txt"
+                    latest_flag = f"{outdir}{obs}/{time_stamp}/flagged_tiles.txt"
                     if os.path.exists(latest_flag):
                         with open(latest_flag) as latest_flag_file:
                             rts_flags = latest_flag_file.read().splitlines()
@@ -327,7 +331,8 @@ if __name__ == "__main__":
 
                     with open(latest_flag, "w") as final_flag_file:
                         for flag in full_flags:
-                            final_flag_file.write("%s\n" % flag)
+                            final_flag_file.write(f"{flag}\n")
+
 
     # If not submitting to queue, create the above scripts and bypass the following code
     if args.no_run:
