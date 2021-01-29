@@ -185,6 +185,7 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         outfile.write("\n")
 
         outfile.write("mkdir uvfits && mv *.uvfits uvfits\n")
+        outfile.write("cp -rL *metafits*.fits uvfits\n")
         outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible!\n")
