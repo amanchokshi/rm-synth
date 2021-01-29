@@ -322,6 +322,17 @@ if __name__ == "__main__":
         else:
             flagged_tiles = None
 
+    # If set, clean out the RTS directories and exit
+    if args.clean:
+        for obs in obsids:
+
+            # Find and nuke all files in out_dir. Ignores subdirs
+            os.popen(f"rm {out_dir}/{obs}/{rts_tag}/* &> /dev/null")
+            print(f"Cleaned {out_dir}/{obs}/{rts_tag}")
+
+        exit()
+
+
     # Write all shell scripts for running the rts
     setup_jobs = []
     run_jobs = []
@@ -373,19 +384,6 @@ if __name__ == "__main__":
             cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
             run_job_message = check_output(cmd, shell=True)
 
-    # If set, clean out the RTS directories and exit
-    if args.clean:
-        for obs in obsids:
-
-            # Find all files in out_dir. Ignores subdirs
-            rts_out = Path(f"{out_dir}/{obs}/{rts_tag}")
-            f_list = list(filter(Path.is_file, Path(rts_out).glob("*")))
-
-            # Delete files
-            for f in f_list:
-                f.unlink()
-
-        exit("Cleaned directories")
 
 #    # If set, check the output of all jobs for expected files+size and exit
 #    if args.check:
