@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+"""
+run_rts.py
+
+Setup and run batch RTS jobs on Garrawarla
+"""
+
+__author__ = ["Aman Chokshi", "Nichole Barry"]
+__cite__ = "https://github.com/amanchokshi"
+__data__ = "2021-01-31"
+
 
 def make_rts_setup(
     obs=None,
@@ -124,7 +134,7 @@ def make_rts_setup(
 
 
 def make_rts_run(obs=None, out_dir=None, tag=None, clean=None):
-    """Create the rts_setup script for the given observation."""
+    """Create the rts_run script for the given observation."""
 
     with open(f"{out_dir}/{obs}/{tag}/rts_run_{obs}.sh", "w+") as outfile:
 
@@ -191,11 +201,12 @@ if __name__ == "__main__":
     import re
     from pathlib import Path
     from subprocess import check_output
-    from sys import exit
 
     import numpy as np
 
-    parser = argparse.ArgumentParser(description="Setup and run RTS jobs on Garrawarla")
+    parser = argparse.ArgumentParser(
+        description="Setup and run batch RTS jobs on Garrawarla"
+    )
 
     parser.add_argument(
         "--tag",
@@ -251,19 +262,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no_run",
         action="store_true",
-        help="<FLAG> - Don't submit the jobs to SLURM queue after creating rts in files",
+        help="<FLAG> - Don't submit the jobs to SLURM queue, only create rts in files",
     )
 
     parser.add_argument(
         "--clean",
         action="store_true",
-        help="<FLAG> - Clean out RTS directories of everything but metadata and uvfits, then exit",
+        help="<FLAG> - Clean RTS output directories of everything but metadata and uvfits, then exit",
     )
 
     parser.add_argument(
         "--check",
         action="store_true",
-        help="<FLAG> - Run a check on previous specified run for uvfits outputs, then exit",
+        help="<FLAG> - Check previous RTS run for uvfits output files, then exit",
     )
 
     args = parser.parse_args()
@@ -287,7 +298,12 @@ if __name__ == "__main__":
     if not data_dir.exists():
         print("Data dir did not exist, enter valid path")
 
-    # Name of dir with gpubox files
+    #####################################################################
+    #                                                                   #
+    #      Read rts_in.json for obsids, flagged channels & tiles        #
+    #                                                                   #
+    #####################################################################
+
     gpu_box = args.gpu_box
 
     with open(rts_in) as f:
@@ -310,7 +326,12 @@ if __name__ == "__main__":
         else:
             flagged_tiles = None
 
-    # If set, clean out the RTS directories and exit
+    #####################################################################
+    #                                                                   #
+    #           Clean RTS outputs - keep only uv, metafits              #
+    #                                                                   #
+    #####################################################################
+
     if args.clean:
         for obs in obsids:
 
@@ -318,7 +339,12 @@ if __name__ == "__main__":
             os.popen(f"rm {out_dir}/{obs}/{tag}/* &> /dev/null")
             print(f"Cleaned {out_dir}/{obs}/{tag}")
 
-    # If set, check the output of all jobs for expected files+size and exit
+    #####################################################################
+    #                                                                   #
+    #            Check if uvfits files generated are okay               #
+    #                                                                   #
+    #####################################################################
+
     elif args.check:
         for obs in obsids:
 
@@ -329,17 +355,24 @@ if __name__ == "__main__":
             if num_uvfits < 24:
                 print(f"{obs}/{tag} does not have 24 uvfits files")
             else:
-                # now check that they surpass an expected size
                 size_uvfits = sum(
                     f.stat().st_size for f in uv_dir.glob("*.uvfits") if f.is_file()
                 )
 
                 # 4.2G is appropriate for 40kHz, 8 second uvfits.
-                if int(size_uvfits) < 4200000/args.fscrunch:
+                if int(size_uvfits) < 4200000 / args.fscrunch:
                     print(f"{obs}/{tag} uvfits are less than 2.1G")
 
                 else:
-                    print(f"Check complete. 24 uvfits files are present in {obs}/{tag} and look good")
+                    print(
+                        f"Check complete. 24 uvfits files are present in {obs}/{tag} and look good"
+                    )
+
+    #####################################################################
+    #                                                                   #
+    #               Write RTS setup and run scripts                     #
+    #                                                                   #
+    #####################################################################
 
     else:
         # Write all shell scripts for running the rts
@@ -376,7 +409,12 @@ if __name__ == "__main__":
             run_job = make_rts_run(obs=obs, out_dir=out_dir, tag=tag)
             run_jobs.append(run_job)
 
-        # If not submitting to queue, create the above scripts and bypass the following code
+        #####################################################################
+        #                                                                   #
+        #                  Submit Jobs to Slurm Queue                       #
+        #                                                                   #
+        #####################################################################
+
         if not args.no_run:
 
             # Launch all setup scripts
