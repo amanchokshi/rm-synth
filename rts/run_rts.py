@@ -84,11 +84,9 @@ def make_rts_setup(
 
         outfile.write("# Generate the RTS .in files for both patching and peeling.\n")
         outfile.write("rts-in-file-generator patch \\\n")
-        outfile.write(
-            f"                      --base-dir {out_dir}/{obs}/{tag} \\\n"
-        )
+        outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
 
-        if (phase_ra and phase_dec):
+        if phase_ra and phase_dec:
             outfile.write(f"                      --force-ra {phase_ra} \\\n")
             outfile.write(f"                      --force-dec {phase_dec} \\\n")
 
@@ -104,11 +102,9 @@ def make_rts_setup(
         outfile.write("\n")
 
         outfile.write("rts-in-file-generator peel \\\n")
-        outfile.write(
-            f"                      --base-dir {out_dir}/{obs}/{tag} \\\n"
-        )
+        outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
 
-        if (phase_ra and phase_dec):
+        if phase_ra and phase_dec:
             outfile.write(f"                      --force-ra {phase_ra} \\\n")
             outfile.write(f"                      --force-dec {phase_dec} \\\n")
 
@@ -330,6 +326,32 @@ if __name__ == "__main__":
             os.popen(f"rm {out_dir}/{obs}/{tag}/* &> /dev/null")
             print(f"Cleaned {out_dir}/{obs}/{tag}")
 
+    # If set, check the output of all jobs for expected files+size and exit
+    elif args.check:
+        for obs in obsids:
+
+            # check that 24 uvfits exist
+            uv_dir = Path(f"{out_dir}/{obs}/{tag}/uvfits/")
+            num_uvfits = len([k.name for k in uv_dir.glob("*.uvfits")])
+            #  cmd = f"ls  {out_dir}/{obs}/{tag}/uvdump_*uvfits | wc -l"
+            #  num_uvfits = int(check_output(cmd, shell=True))
+
+            if num_uvfits < 24:
+                print(f"{obs}/{tag} does not have 24 uvfits files")
+            else:
+                # now check that they surpass an expected size
+                size_uvfits = sum(
+                    f.stat().st_size for f in uv_dir.glob("*.uvfits") if f.is_file()
+                )
+                #  cmd = f"du -c  {out_dir}/{obs}/{tag}/uvdump_*uvfits | grep total"
+                #  size_uvfits, _ = check_output(cmd, shell=True).split()
+
+                # 2.1G is appropriate for 80kHz, 8 second uvfits.
+                if int(size_uvfits) < 2100000:
+                    print(f"{obs}/{tag} uvfits are less than 2.1G")
+
+        #  exit("Check complete. 24 uvfits files are present and look good.")
+
     else:
         # Write all shell scripts for running the rts
         setup_jobs = []
@@ -346,7 +368,9 @@ if __name__ == "__main__":
                 )
 
             if flagged_tiles:
-                np.array(flagged_tiles).tofile(f"{rts_out}/flagged_tiles.txt", "\n", "%s")
+                np.array(flagged_tiles).tofile(
+                    f"{rts_out}/flagged_tiles.txt", "\n", "%s"
+                )
 
             setup_job = make_rts_setup(
                 obs=obs,
@@ -375,32 +399,11 @@ if __name__ == "__main__":
                 setup_job_message = check_output(cmd, shell=True)
 
                 # Use RE to extract job id from output string of setup job
-                setup_job_ID = re.search(r"\d+", setup_job_message.decode("utf-8")).group(0)
+                setup_job_ID = re.search(
+                    r"\d+", setup_job_message.decode("utf-8")
+                ).group(0)
 
                 # Launch run script with a dependency on the setup scripts
                 os.chdir(Path(run_jobs[i]).parents[0])
                 cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
                 run_job_message = check_output(cmd, shell=True)
-
-
-
-  # If set, check the output of all jobs for expected files+size and exit
-  if args.check:
-      for obs in obsids:
-
-          # check that 24 uvfits exist
-          cmd = f"ls  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | wc -l"
-          num_uvfits = int(check_output(cmd, shell=True))
-
-          if num_uvfits < 24:
-              print(f"{obs} does not have 24 uvfits files")
-          else:
-              # now check that they surpass an expected size
-              cmd = f"du -c  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | grep total"
-              size_uvfits, _ = check_output(cmd, shell=True).split()
-
-              # 2.1G is appropriate for 80kHz, 8 second uvfits.
-              if int(size_uvfits) < 2100000:
-                  print(f"{obs} uvfits are less than 2.1G")
-
-      exit("Check complete. 24 uvfits files are present and look good.")
