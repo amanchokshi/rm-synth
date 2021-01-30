@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 def make_rts_setup(
     obs=None,
     out_dir=None,
@@ -35,16 +34,9 @@ def make_rts_setup(
         outfile.write("\n")
 
         outfile.write("module use /pawsey/mwa/software/python3/modulefiles\n")
-        outfile.write("module load python\n")
+        outfile.write("module load python-singularity\n")
         outfile.write("module load srclists/master\n")
         outfile.write("module load mongoose\n")
-        outfile.write("module load numpy/1.18.2\n")
-        outfile.write("module load astropy/4.0.1.post1\n")
-        outfile.write("\n")
-
-        outfile.write(
-            "export PYTHONPATH=$PYTHONPATH:/astro/mwaeor/achokshi/software/local_python\n"
-        )
         outfile.write("module load mwa_pb\n")
         outfile.write("\n")
 
@@ -333,8 +325,6 @@ if __name__ == "__main__":
             # check that 24 uvfits exist
             uv_dir = Path(f"{out_dir}/{obs}/{tag}/uvfits/")
             num_uvfits = len([k.name for k in uv_dir.glob("*.uvfits")])
-            #  cmd = f"ls  {out_dir}/{obs}/{tag}/uvdump_*uvfits | wc -l"
-            #  num_uvfits = int(check_output(cmd, shell=True))
 
             if num_uvfits < 24:
                 print(f"{obs}/{tag} does not have 24 uvfits files")
@@ -343,14 +333,13 @@ if __name__ == "__main__":
                 size_uvfits = sum(
                     f.stat().st_size for f in uv_dir.glob("*.uvfits") if f.is_file()
                 )
-                #  cmd = f"du -c  {out_dir}/{obs}/{tag}/uvdump_*uvfits | grep total"
-                #  size_uvfits, _ = check_output(cmd, shell=True).split()
 
-                # 2.1G is appropriate for 80kHz, 8 second uvfits.
-                if int(size_uvfits) < 2100000:
+                # 4.2G is appropriate for 40kHz, 8 second uvfits.
+                if int(size_uvfits) < 4200000/args.fscrunch:
                     print(f"{obs}/{tag} uvfits are less than 2.1G")
 
-        #  exit("Check complete. 24 uvfits files are present and look good.")
+                else:
+                    print(f"Check complete. 24 uvfits files are present in {obs}/{tag} and look good")
 
     else:
         # Write all shell scripts for running the rts
