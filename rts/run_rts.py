@@ -4,7 +4,7 @@
 def make_rts_setup(
     obs=None,
     out_dir=None,
-    rts_tag=None,
+    tag=None,
     data_dir=None,
     gpu_box=None,
     fscrunch=None,
@@ -17,7 +17,7 @@ def make_rts_setup(
     srclist_dir = "/pawsey/mwa/software/python3/srclists/master"
     srclist_file = "srclist_pumav3_EoR0aegean_EoR1pietro+ForA"
 
-    with open(f"{out_dir}/{obs}/{rts_tag}/rts_setup_{obs}.sh", "w+") as outfile:
+    with open(f"{out_dir}/{obs}/{tag}/rts_setup_{obs}.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
@@ -52,7 +52,7 @@ def make_rts_setup(
         outfile.write("\n")
 
         outfile.write("# Create symlinks from gpubox files to out_dir\n")
-        outfile.write(f"cd {out_dir}/{obs}/{rts_tag}\n")
+        outfile.write(f"cd {out_dir}/{obs}/{tag}\n")
         outfile.write(f"ln -s {data_dir}/{obs}/{gpu_box}/* .\n")
         outfile.write("\n")
 
@@ -66,7 +66,7 @@ def make_rts_setup(
             f"                   --srclist={srclist_dir}/{srclist_file}.txt \\\n"
         )
         outfile.write(
-            f"                   --metafits={out_dir}/{obs}/{rts_tag}/{obs}.metafits\n"
+            f"                   --metafits={out_dir}/{obs}/{tag}/{obs}.metafits\n"
         )
         outfile.write("\n")
 
@@ -76,7 +76,7 @@ def make_rts_setup(
             f"                   --srclist={srclist_dir}/{srclist_file}.txt \\\n"
         )
         outfile.write(
-            f"                   --metafits={out_dir}/{obs}/{rts_tag}/{obs}.metafits \\\n"
+            f"                   --metafits={out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
         )
         outfile.write("                   --no_patch \\\n")
         outfile.write("                   --cutoff=90\n")
@@ -85,16 +85,16 @@ def make_rts_setup(
         outfile.write("# Generate the RTS .in files for both patching and peeling.\n")
         outfile.write("rts-in-file-generator patch \\\n")
         outfile.write(
-            f"                      --base-dir {out_dir}/{obs}/{rts_tag} \\\n"
+            f"                      --base-dir {out_dir}/{obs}/{tag} \\\n"
         )
 
-        if phase_ra and phase_dec:
+        if (phase_ra and phase_dec):
             outfile.write(f"                      --force-ra {phase_ra} \\\n")
             outfile.write(f"                      --force-dec {phase_dec} \\\n")
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
-            f"                      --metafits {out_dir}/{obs}/{rts_tag}/{obs}.metafits \\\n"
+            f"                      --metafits {out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
         )
         outfile.write(
             f"                      --srclist {srclist_file}_{obs}_patch1000.txt \\\n"
@@ -105,16 +105,16 @@ def make_rts_setup(
 
         outfile.write("rts-in-file-generator peel \\\n")
         outfile.write(
-            f"                      --base-dir {out_dir}/{obs}/{rts_tag} \\\n"
+            f"                      --base-dir {out_dir}/{obs}/{tag} \\\n"
         )
 
-        if phase_ra and phase_dec:
+        if (phase_ra and phase_dec):
             outfile.write(f"                      --force-ra {phase_ra} \\\n")
             outfile.write(f"                      --force-dec {phase_dec} \\\n")
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
-            f"                      --metafits {out_dir}/{obs}/{rts_tag}/{obs}.metafits \\\n"
+            f"                      --metafits {out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
         )
         outfile.write(
             f"                      --srclist {srclist_file}_{obs}_peel3000.txt \\\n"
@@ -132,13 +132,13 @@ def make_rts_setup(
 
         outfile.write("echo gator rts_setup.sh finished successfully.\n")
 
-    return f"{out_dir}/{obs}/{rts_tag}/rts_setup_{obs}.sh"
+    return f"{out_dir}/{obs}/{tag}/rts_setup_{obs}.sh"
 
 
-def make_rts_run(obs=None, out_dir=None, rts_tag=None):
+def make_rts_run(obs=None, out_dir=None, tag=None, clean=None):
     """Create the rts_setup script for the given observation."""
 
-    with open(f"{out_dir}/{obs}/{rts_tag}/rts_run_{obs}.sh", "w+") as outfile:
+    with open(f"{out_dir}/{obs}/{tag}/rts_run_{obs}.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
@@ -192,7 +192,7 @@ def make_rts_run(obs=None, out_dir=None, rts_tag=None):
         outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
         outfile.write("find . -user $USER -type f -exec chmod g+rw,o+r,o-w {} \;\n")
 
-    return f"{out_dir}/{obs}/{rts_tag}/rts_run_{obs}.sh"
+    return f"{out_dir}/{obs}/{tag}/rts_run_{obs}.sh"
 
 
 if __name__ == "__main__":
@@ -210,10 +210,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Setup and run RTS jobs on Garrawarla")
 
     parser.add_argument(
-        "--rts_tag",
+        "--tag",
         metavar="\b",
         required=True,
-        help="Unique tag for each rts run, will create a <rts_tag> subdir for rts outputs in the out_dir/obsid dir/<rts_tag>",
+        help="Unique tag for each rts run, will create a <tag> subdir for rts outputs in the out_dir/obsid dir/<tag>",
     )
 
     parser.add_argument(
@@ -280,8 +280,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Unique tag to /out_dir/obsid/<rts_tag>
-    rts_tag = args.rts_tag
+    # Unique tag to /out_dir/obsid/<tag>
+    tag = args.tag
 
     # Check if rts_in.json exists
     rts_in = Path(args.rts_in)
@@ -327,81 +327,80 @@ if __name__ == "__main__":
         for obs in obsids:
 
             # Find and nuke all files in out_dir. Ignores subdirs
-            os.popen(f"rm {out_dir}/{obs}/{rts_tag}/* &> /dev/null")
-            print(f"Cleaned {out_dir}/{obs}/{rts_tag}")
+            os.popen(f"rm {out_dir}/{obs}/{tag}/* &> /dev/null")
+            print(f"Cleaned {out_dir}/{obs}/{tag}")
 
-        exit()
+    else:
+        # Write all shell scripts for running the rts
+        setup_jobs = []
+        run_jobs = []
+        for obs in obsids:
 
+            # Create rts output dir
+            rts_out = Path(f"{out_dir}/{obs}/{tag}")
+            rts_out.mkdir(parents=True, exist_ok=True)
 
-    # Write all shell scripts for running the rts
-    setup_jobs = []
-    run_jobs = []
-    for obs in obsids:
+            if flagged_chans:
+                np.array(flagged_chans).tofile(
+                    f"{rts_out}/flagged_channels.txt", "\n", "%s"
+                )
 
-        # Create rts output dir
-        rts_out = Path(f"{out_dir}/{obs}/{rts_tag}")
-        rts_out.mkdir(parents=True, exist_ok=True)
+            if flagged_tiles:
+                np.array(flagged_tiles).tofile(f"{rts_out}/flagged_tiles.txt", "\n", "%s")
 
-        if flagged_chans:
-            np.array(flagged_chans).tofile(
-                f"{rts_out}/flagged_channels.txt", "\n", "%s"
+            setup_job = make_rts_setup(
+                obs=obs,
+                out_dir=out_dir,
+                tag=tag,
+                data_dir=data_dir,
+                gpu_box=gpu_box,
+                fscrunch=args.fscrunch,
+                phase_ra=args.phase_ra,
+                phase_dec=args.phase_dec,
             )
+            setup_jobs.append(setup_job)
 
-        if flagged_tiles:
-            np.array(flagged_tiles).tofile(f"{rts_out}/flagged_tiles.txt", "\n", "%s")
+            run_job = make_rts_run(obs=obs, out_dir=out_dir, tag=tag)
+            run_jobs.append(run_job)
 
-        setup_job = make_rts_setup(
-            obs=obs,
-            out_dir=out_dir,
-            rts_tag=rts_tag,
-            data_dir=data_dir,
-            gpu_box=gpu_box,
-            fscrunch=args.fscrunch,
-            phase_ra=args.phase_ra,
-            phase_dec=args.phase_dec,
-        )
-        setup_jobs.append(setup_job)
+        # If not submitting to queue, create the above scripts and bypass the following code
+        if not args.no_run:
 
-        run_job = make_rts_run(obs=obs, out_dir=out_dir, rts_tag=rts_tag)
-        run_jobs.append(run_job)
+            # Launch all setup scripts
+            for i, setup_job in enumerate(setup_jobs):
 
-    # If not submitting to queue, create the above scripts and bypass the following code
-    if not args.no_run:
+                # Setup command and submit to queue
+                os.chdir(Path(setup_job).parents[0])
+                cmd = f"sbatch {setup_job}"
+                setup_job_message = check_output(cmd, shell=True)
 
-        # Launch all setup scripts
-        for i, setup_job in enumerate(setup_jobs):
+                # Use RE to extract job id from output string of setup job
+                setup_job_ID = re.search(r"\d+", setup_job_message.decode("utf-8")).group(0)
 
-            # Setup command and submit to queue
-            os.chdir(Path(setup_job).parents[0])
-            cmd = f"sbatch {setup_job}"
-            setup_job_message = check_output(cmd, shell=True)
-
-            # Use RE to extract job id from output string of setup job
-            setup_job_ID = re.search(r"\d+", setup_job_message.decode("utf-8")).group(0)
-
-            # Launch run script with a dependency on the setup scripts
-            os.chdir(Path(run_jobs[i]).parents[0])
-            cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
-            run_job_message = check_output(cmd, shell=True)
+                # Launch run script with a dependency on the setup scripts
+                os.chdir(Path(run_jobs[i]).parents[0])
+                cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
+                run_job_message = check_output(cmd, shell=True)
 
 
-#    # If set, check the output of all jobs for expected files+size and exit
-#    if args.check:
-#        for obs in obs_list:
-#
-#            # check that 24 uvfits exist
-#            cmd = f"ls  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | wc -l"
-#            num_uvfits = int(check_output(cmd, shell=True))
-#
-#            if num_uvfits < 24:
-#                print(f"{obs} does not have 24 uvfits files")
-#            else:
-#                # now check that they surpass an expected size
-#                cmd = f"du -c  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | grep total"
-#                size_uvfits, _ = check_output(cmd, shell=True).split()
-#
-#                # 2.1G is appropriate for 80kHz, 8 second uvfits.
-#                if int(size_uvfits) < 2100000:
-#                    print(f"{obs} uvfits are less than 2.1G")
-#
-#        exit("Check complete. 24 uvfits files are present and look good.")
+
+  # If set, check the output of all jobs for expected files+size and exit
+  if args.check:
+      for obs in obsids:
+
+          # check that 24 uvfits exist
+          cmd = f"ls  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | wc -l"
+          num_uvfits = int(check_output(cmd, shell=True))
+
+          if num_uvfits < 24:
+              print(f"{obs} does not have 24 uvfits files")
+          else:
+              # now check that they surpass an expected size
+              cmd = f"du -c  {outdir}{obs}/{time_stamp}/uvdump_*uvfits | grep total"
+              size_uvfits, _ = check_output(cmd, shell=True).split()
+
+              # 2.1G is appropriate for 80kHz, 8 second uvfits.
+              if int(size_uvfits) < 2100000:
+                  print(f"{obs} uvfits are less than 2.1G")
+
+      exit("Check complete. 24 uvfits files are present and look good.")
