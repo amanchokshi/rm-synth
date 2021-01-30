@@ -204,6 +204,12 @@ if __name__ == "__main__":
 
     import numpy as np
 
+    #####################################################################
+    #                                                                   #
+    #                            Get arguments                          #
+    #                                                                   #
+    #####################################################################
+
     parser = argparse.ArgumentParser(
         description="Setup and run batch RTS jobs on Garrawarla"
     )
