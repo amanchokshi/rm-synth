@@ -1,4 +1,5 @@
 #!/bin/bash --login
+
 #SBATCH --nodes=1
 #SBATCH --partition=workq
 #SBATCH --time=00:20:00
@@ -7,15 +8,17 @@
 #SBATCH --mem=10gb
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --output=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/uv2ms-%A.out
-#SBATCH --error=/astro/mwaeor/MWA/data/1061316296/2021-01-28_2000/uv2ms-%A.err
+#SBATCH --output=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/uv2ms-%A.out
+#SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/uv2ms-%A.err
 
 
 obsid=1061316296
-timestamp=2021-01-28_2000
-data_dir=/astro/mwaeor/MWA/data
-out_dir="$data_dir"/"$obsid"/"$timestamp"/ms
+tag=2021-01-31_0100
+data_dir=/astro/mwaeor/achokshi/rm-synth/data
 prefix=uvdump_
+
+uv_dir="$data_dir"/"$obsid"/"$tag"/uvfits
+ms_dir="$data_dir"/"$obsid"/"$tag"/ms
 
 
 module use /pawsey/mwa/software/python3/modulefiles
@@ -25,15 +28,13 @@ module load intel-mkl/19.0.5
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pawsey/intel/19.0.5/mkl/lib/intel64/
 
+cd "$uv_dir"
 
-cd "$data_dir"/"$obsid"/"$timestamp"
+time casa --nologger -c /astro/mwaeor/achokshi/rm-synth/wsclean/python-scripts/uv2ms.py $prefix "$obsid"_metafits_ppds.fits
 
-time casa --nologger -c /astro/mwaeor/achokshi/rm-synth/wsclean/python-scripts/uv2ms.py $prefix "$data_dir"/"$obsid"/"$timestamp"/"$obsid"_metafits_ppds.fits
-
-
-time for band in '01' '02' '03' '04' '05' '06' '07' '08' '09' '10' '11' '12' '13' '14' '15' '16' '17' '18' '19' '20' '21' '22' '23' '24'
+time for band in $(seq -f "%02g" 1 24);
 do
-  fixmwams "$prefix"${band}.ms "$data_dir"/"$obsid"/"$timestamp"/"$obsid"_metafits_ppds.fits
+  fixmwams "$prefix"${band}.ms "$obsid"_metafits_ppds.fits
 done
 
-mkdir -p $out_dir && mv "$data_dir"/"$obsid"/"$timestamp"/*.ms $out_dir
+mkdir -p $ms_dir && mv "$uv_dir"/*.ms $ms_dir
