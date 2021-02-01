@@ -13,13 +13,13 @@
 module load wsclean
 
 obsid=1061316296
-timestamp=2021-01-28_2000
-data_dir=/astro/mwaeor/MWA/data
+tag=2021-01-31_0100
+data_dir=/astro/mwaeor/achokshi/rm-synth/data
 out_dir=ws_rm
 prefix=uvdump_
 
 
-cd "$data_dir"/"$obsid"/"$timestamp"
+cd "$data_dir"/"$obsid"/"$tag"
 mkdir -p $out_dir
 
 
