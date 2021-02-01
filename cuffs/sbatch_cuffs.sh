@@ -11,8 +11,10 @@
 #SBATCH --output=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cuffs-%A.out
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cuffs-%A.err
 
-module use /pawsey/mwa/software/python3/modulefiles
-module load RTS/sla_to_pal
+source /pawsey/mwa/software/python3/build_base.sh
+module load cuda
+module load hdf5
+module load cfitsio
 
 module use /astro/mwaeor/achokshi/software/modulefiles
 module load cuFFS
