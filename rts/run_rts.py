@@ -89,8 +89,8 @@ def make_rts_setup(
         outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
 
         if phase_ra and phase_dec:
-            outfile.write(f"                      --force-ra {phase_ra} \\\n")
-            outfile.write(f"                      --force-dec {phase_dec} \\\n")
+            outfile.write(f'                      --force-ra={phase_ra} \\\n')
+            outfile.write(f'                      --force-dec={phase_dec} \\\n')
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
@@ -107,8 +107,8 @@ def make_rts_setup(
         outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
 
         if phase_ra and phase_dec:
-            outfile.write(f"                      --force-ra {phase_ra} \\\n")
-            outfile.write(f"                      --force-dec {phase_dec} \\\n")
+            outfile.write(f'                      --force-ra={phase_ra} \\\n')
+            outfile.write(f'                      --force-dec={phase_dec} \\\n')
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
