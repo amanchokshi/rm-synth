@@ -13,7 +13,7 @@
 
 
 obsid=1061316296
-tag=2021-01-31_0100
+tag=POGSII-EG-024
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 prefix=uvdump_
 
