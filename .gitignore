@@ -153,3 +153,4 @@ wsclean/python-scripts/QU/*
 wsclean/python-scripts/*.fits
 wsclean/python-scripts/*.txt
 data/*/*/*
+./data
