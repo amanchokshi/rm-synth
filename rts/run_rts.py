@@ -5,10 +5,6 @@ run_rts.py
 Setup and run batch RTS jobs on Garrawarla
 """
 
-__author__ = ["Aman Chokshi", "Nichole Barry"]
-__cite__ = "https://github.com/amanchokshi"
-__data__ = "2021-01-31"
-
 
 def make_rts_setup(
     obs=None,
