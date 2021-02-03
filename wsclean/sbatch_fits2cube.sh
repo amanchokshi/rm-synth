@@ -13,11 +13,11 @@
 
 
 obsid=1061316296
-tag=POGSII-EG-024
+tag=POGSII-EG-024-FEE
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 fits_dir="$data_dir"/"$obsid"/"$tag"/wsclean_rm
 prefix=uvdump
-suffix=image
+suffix=dirty
 chans=768
 dim=256
 

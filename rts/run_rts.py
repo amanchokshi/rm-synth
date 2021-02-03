@@ -15,6 +15,7 @@ def make_rts_setup(
     fscrunch=None,
     phase_ra=None,
     phase_dec=None,
+    fee=None,
 ):
     """Create the rts_setup script for the given observation."""
 
@@ -88,6 +89,10 @@ def make_rts_setup(
             outfile.write(f'                      --force-ra={phase_ra} \\\n')
             outfile.write(f'                      --force-dec={phase_dec} \\\n')
 
+        if fee:
+            outfile.write(f'                      --use-fee-beam \\\n')
+
+
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
             f"                      --metafits {out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
@@ -105,6 +110,9 @@ def make_rts_setup(
         if phase_ra and phase_dec:
             outfile.write(f'                      --force-ra={phase_ra} \\\n')
             outfile.write(f'                      --force-dec={phase_dec} \\\n')
+
+        if fee:
+            outfile.write(f'                      --use-fee-beam \\\n')
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
@@ -262,6 +270,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--fee",
+        action="store_true",
+        help="<FLAG> - Use the FEE beam model for patch and peeling",
+    )
+
+    parser.add_argument(
         "--no_run",
         action="store_true",
         help="<FLAG> - Don't submit the jobs to SLURM queue, only create rts in files",
@@ -405,6 +419,7 @@ if __name__ == "__main__":
                 fscrunch=args.fscrunch,
                 phase_ra=args.phase_ra,
                 phase_dec=args.phase_dec,
+                fee=args.fee,
             )
             setup_jobs.append(setup_job)
 
