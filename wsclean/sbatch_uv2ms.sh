@@ -13,7 +13,7 @@
 
 
 obsid=1061316296
-tag=POGSII-EG-024-FEE
+tag=patch
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 prefix=uvdump_
 

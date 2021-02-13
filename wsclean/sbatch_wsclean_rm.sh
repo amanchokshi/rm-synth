@@ -14,7 +14,7 @@
 module load wsclean
 
 obsid=1061316296
-tag=POGSII-EG-024-FEE
+tag=patch
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 out_dir=wsclean_rm
 prefix=uvdump_
@@ -26,5 +26,6 @@ mkdir -p $out_dir
 
 time wsclean -pol QU -join-polarizations -join-channels \
   -squared-channel-joining --channels-out 768 \
+  -weight briggs -1 \
   -name ./"$out_dir"/uvdump -scale 0.75amin -size 256 256 \
   ./ms/"$prefix"*.ms
