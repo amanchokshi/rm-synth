@@ -19,4 +19,4 @@ module load cfitsio
 module use /astro/mwaeor/achokshi/software/modulefiles
 module load cuFFS
 
-time rmsynthesis /astro/mwaeor/achokshi/rm-synth/slurm/cuffs/parsetFile
+time rmsynthesis /astro/mwaeor/achokshi/rm-synth/slurm/cuffs/cuffs_parset.in
