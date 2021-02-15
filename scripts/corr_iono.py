@@ -1,4 +1,13 @@
-# Inspired by code by Chris Riseley
+"""
+Determine ionospheric RM at the Ra/Dec of a POGS source
+for a given obsid, using GPS & EMM data. Such rotation
+is frequency dependant and detoration is applied to
+individual fine channel stokes images.
+
+# TODO: Figure origin of the factor of -2 in correct_iono
+
+Inspired by code by Chris Riseley
+"""
 
 import re
 from shutil import copyfile as cp
