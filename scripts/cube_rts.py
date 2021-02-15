@@ -186,7 +186,7 @@ def create_spec_cube(
     freqs = get_freqs(fits_dir)
 
     # Make out_dir if doesn't exist
-    Path(out_dir).mkdir(parent=True, exist_ok=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     hdr = cube_hdr(fits_dir, pol, freqs)
     data = cube_data(fits_dir, pol, freqs, hdr)
