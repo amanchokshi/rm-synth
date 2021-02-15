@@ -6,15 +6,16 @@ nGPU = 1;
 // Can be "FITS" or "HDFITS".
 fileFormat = "FITS";
 
-qCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/patch/rm_cubes/cube_Q_dirty.fits";
-uCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/patch/rm_cubes/cube_U_dirty.fits";
-freqFileName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/patch/rm_cubes/frequency.txt";
+// Define how fits files are stored on disk
+qCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv/cubes/cube_Q.fits";
+uCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv/cubes/cube_U.fits";
+freqFileName = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv/cubes/frequency.txt";
 
 // Define the faraday depth axis. All units in rad/m/m
 plotRMSF = False;
-phiMin = -200.;
-nPhi = 400; // integer
-dPhi = 1.0;
+phiMin = -1000.;
+nPhi = 4001; // integer
+dPhi = 0.5;
 
 // Prefix for output filenames
-outPrefix = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/patch/rm_cubes/wsclean_dirty_";
+outPrefix = "/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_";
