@@ -30,7 +30,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/pawsey/intel/19.0.5/mkl/lib/intel64/
 
 cd "$uv_dir"
 
-time casa --nologger -c /astro/mwaeor/achokshi/rm-synth/wsclean/python-scripts/uv2ms.py $prefix "$obsid"_metafits_ppds.fits
+time casa --nologger -c /astro/mwaeor/achokshi/rm-synth/scripts/uv2ms.py $prefix "$obsid"_metafits_ppds.fits
 
 time for band in $(seq -f "%02g" 1 24);
 do
