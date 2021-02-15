@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
 #SBATCH --mem=10gb
@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.err
 
 
-rts_dir=/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iii
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
 
 # Clean slate
@@ -24,4 +24,4 @@ module load rmextract-singularity
 
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/corr_iono.py \
-    --fits_dir="$rts_dir"/stokes --out_dir="$rts_dir"/stokes_iono --pogs_path=$pogs_path
+    --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/stokes_iono --pogs_path=$pogs_path
