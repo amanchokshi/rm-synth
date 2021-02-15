@@ -19,7 +19,7 @@ module load jq
 
 sub_dir=gpubox
 mwa_dir=/astro/mwaeor/MWA/data
-obs_file=/astro/mwaeor/achokshi/rm-synth/rts/rts_in.json
+obs_file=/astro/mwaeor/achokshi/rm-synth/slurm/rts/rts_in.json
 
 # Read obsids from json
 obs_id_array=$(jq '.obsids | .[]' "$obs_file")

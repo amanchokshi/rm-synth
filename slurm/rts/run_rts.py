@@ -228,8 +228,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--rts_in",
         metavar="\b",
-        default="/astro/mwaeor/achokshi/rm-synth/rts/rts_in.json",
-        help="Json file containing obsids, flagged channels and tiles. Default:/astro/mwaeor/achokshi/rm-synth/rts_in.json",
+        default="/astro/mwaeor/achokshi/rm-synth/slurm/rts/rts_in.json",
+        help="Json file containing obsids, flagged channels and tiles. Default:/astro/mwaeor/achokshi/rm-synth/slurm/rts_in.json",
     )
 
     parser.add_argument(
