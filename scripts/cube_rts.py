@@ -1,3 +1,7 @@
+"""
+Convert RTS fine channel images in spectral cube
+"""
+
 import re
 from pathlib import Path
 

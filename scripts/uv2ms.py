@@ -1,3 +1,9 @@
+"""
+Functions to convert uvfits to ms with CASA
+
+Author: Jack Line <https://github.com/JLBLine>
+"""
+
 from subprocess import call
 from numpy import *
 from sys import argv

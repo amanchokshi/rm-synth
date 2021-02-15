@@ -1,3 +1,7 @@
+"""
+Convert WSClean fine channel images in spectral cube
+"""
+
 from pathlib import Path
 
 import numpy as np
