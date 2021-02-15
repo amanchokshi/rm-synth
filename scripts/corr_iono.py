@@ -1,8 +1,10 @@
 """
-Determine ionospheric RM at the Ra/Dec of a POGS source
-for a given obsid, using GPS & EMM data. Such rotation
-is frequency dependant and detoration is applied to
-individual fine channel stokes images.
+Determine ionospheric RM and correct it.
+
+Ionospheric RM determined using GPS & EMM data at Ra, Dec
+of POGS source, at obsid gps time. Rotation is frequency
+dependant and detoration is applied to individual fine
+channel stokes images.
 
 # TODO: Figure origin of the factor of -2 in correct_iono
 
