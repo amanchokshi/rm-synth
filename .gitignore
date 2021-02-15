@@ -155,3 +155,4 @@ wsclean/python-scripts/*.txt
 ./data/*/*/*
 ./data
 data/
+iono/ionex-data/
