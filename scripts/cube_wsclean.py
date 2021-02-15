@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import numpy as np
@@ -72,7 +71,7 @@ def cube_hdr(fits_dir, prefix, suffix, pol, chans):
         return hdr
 
 
-def cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube):
+def cube_data(fits_dir, prefix, suffix, pol, chans, dim):
     """Create a FITS spectral cube.
 
     Combine a set of fine channel fits images into a spectral cube.
@@ -91,8 +90,6 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube):
         Number of fine channels
     dim : int
         Dimensions of image data
-    tmp_cube : str
-        Name of tmp cube data file
 
     Returns
     -------
@@ -101,7 +98,6 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube):
     """
 
     cube = np.zeros((chans, dim, dim))
-    #  cube = np.memmap(tmp_cube, dtype='float32', mode='w+', shape=(chans, dim, dim))
 
     freqs = []
 
@@ -130,7 +126,13 @@ def cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube):
 
 
 def create_spec_cube(
-    fits_dir=None, prefix=None, suffix=None, pol=None, chans=None, dim=None, out_dir=None, tmp_cube="c3"
+    fits_dir=None,
+    prefix=None,
+    suffix=None,
+    pol=None,
+    chans=None,
+    dim=None,
+    out_dir=None,
 ):
     """Creates and saves FITS spectral cube.
 
@@ -159,13 +161,11 @@ def create_spec_cube(
     """
 
     hdr = cube_hdr(fits_dir, prefix, suffix, pol, chans)
-    data, freqs = cube_data(fits_dir, prefix, suffix, pol, chans, dim, tmp_cube)
+    data, freqs = cube_data(fits_dir, prefix, suffix, pol, chans, dim)
 
     # Write FITS cube
     hdul = fits.PrimaryHDU(data=data, header=hdr)
     hdul.writeto(f"{out_dir}/cube_{pol}_{suffix}.fits")
-
-    #  os.remove(tmp_cube)
 
     # Write frequency list if it doesn't exist
     freq_file = Path(f"{out_dir}/frequency.txt")
@@ -209,14 +209,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--pol",
-        metavar="\b",
-        type=str,
-        required=True,
-        help="Stokes polarization. Either Q/U",
-    )
-
-    parser.add_argument(
         "--chans",
         metavar="\b",
         type=int,
@@ -242,11 +234,23 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Create Q cube
     create_spec_cube(
         fits_dir=args.fits_dir,
         prefix=args.prefix,
         suffix=args.suffix,
-        pol=args.pol,
+        pol="Q",
+        chans=args.chans,
+        dim=args.dim,
+        out_dir=args.out_dir,
+    )
+
+    # Create U cube
+    create_spec_cube(
+        fits_dir=args.fits_dir,
+        prefix=args.prefix,
+        suffix=args.suffix,
+        pol="U",
         chans=args.chans,
         dim=args.dim,
         out_dir=args.out_dir,
