@@ -169,7 +169,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Derotate ionospheric RM")
 
     parser.add_argument(
-        "--obsid", metavar="\b", default=1061316296, help="Obsid. Default: 1061316296",
+        "--obsid", metavar="\b", required=True, help="Obsid - gps start time",
     )
 
     parser.add_argument(

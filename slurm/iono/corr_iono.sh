@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.err
 
 
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1061316296/rts_imgr/rts_iv
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
 
 # Clean slate
