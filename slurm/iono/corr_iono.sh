@@ -14,6 +14,7 @@
 
 data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
+obsid=1086351512
 
 # Clean slate
 module purge
@@ -24,4 +25,4 @@ module load rmextract-singularity
 
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/corr_iono.py \
-    --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/stokes_iono --pogs_path=$pogs_path
+    --obsid=$obsid --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/stokes_iono --pogs_path=$pogs_path
