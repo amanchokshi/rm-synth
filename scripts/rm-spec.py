@@ -15,17 +15,17 @@ df_eg.set_index("catalog_id", inplace=True)
 pogs_ii_024 = df_eg.loc["POGSII-EG-024"]
 rm_peak = SkyCoord(pogs_ii_024.ra, pogs_ii_024.dec, unit="deg")
 
-with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_p.phi.dirty.fits") as hdus:
+with fits.open("../data/1086351512/rts_imgr/run_i/cubes/rts_imgr_p.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     hdr = hdu.header
     data_p = hdu.data
 
-with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_q.phi.dirty.fits") as hdus:
+with fits.open("../data/1086351512/rts_imgr/run_i/cubes/rts_imgr_q.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     #  hdr = hdu.header
     data_q = hdu.data
 
-with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_u.phi.dirty.fits") as hdus:
+with fits.open("../data/1086351512/rts_imgr/run_i/cubes/rts_imgr_u.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     hdr = hdu.header
     data_u = hdu.data
@@ -59,9 +59,9 @@ _, rm_x, rm_y = wcs.all_world2pix(0, rm_peak.ra.deg, rm_peak.dec.deg, 0)
 plt.style.use("seaborn")
 
 plt.plot(phi, data_p[128, 128, :], label="p")
-plt.plot(phi, data_q[128, 128, :], label="q")
-plt.plot(phi, data_u[128, 128, :], label="u")
-plt.xlim([-100, 100])
+#  plt.plot(phi, data_q[128, 128, :], label="q")
+#  plt.plot(phi, data_u[128, 128, :], label="u")
+plt.xlim([-50, 50])
 plt.xlabel("Faraday Depth")
 plt.ylabel("Polarized Flux Density")
 plt.legend()
