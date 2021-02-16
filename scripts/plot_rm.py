@@ -38,7 +38,7 @@ def pogs_obj_loc(pogs_obj, pogs_path):
     return pogs_pos
 
 
-def read_rm_cube(pogs_pos, rm_prefix, cube_dir):
+def read_rm_cube(pogs_pos, cuffs_prefix, cube_dir):
     """Read rm fits cube created by cuFFS.
 
     cuFFS creates spectral cubes with the weird
@@ -52,14 +52,14 @@ def read_rm_cube(pogs_pos, rm_prefix, cube_dir):
     ----------
     pogs_pos : skycoord object
         SkyCoord object from pogs_obj_loc
-    rm_prefix : str
+    cuffs_prefix : str
         Prefix to cube names as defined in cuFFS parset file
     cube_dir: str
         Path to directory with rm cubes
     """
 
     # Open cube and grab header and data
-    with fits.open(f"{cube_dir}/{rm_prefix}p.phi.dirty.fits") as hdus:
+    with fits.open(f"{cube_dir}/{cuffs_prefix}p.phi.dirty.fits") as hdus:
         hdu = hdus[0]
         hdr = hdu.header
         data_p = hdu.data
@@ -94,14 +94,87 @@ def read_rm_cube(pogs_pos, rm_prefix, cube_dir):
 
 if __name__ == "__main__":
 
-    pogs_pos = pogs_obj_loc("POGSII-EG-321", "../slurm/iono/POGS-II_ExGal.fits")
-    ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(
-        pogs_pos, "rts_imgr_", "../data"
+    import argparse
+    from pathlib import Path
+
+    #####################################################################
+    #                                                                   #
+    #                            Get arguments                          #
+    #                                                                   #
+    #####################################################################
+
+    parser = argparse.ArgumentParser(
+        description="Plot RM and RMSF from cuFFS fits cubes"
     )
 
+    parser.add_argument(
+        "--pogs_path",
+        metavar="\b",
+        default="../slurm/iono/POGS-II_ExGal.fits",
+        type=str,
+        help="Path to POGS EXGAL fits catalogue. Default: ../slurm/iono/POGS-II_ExGal.fits",
+    )
+
+    parser.add_argument(
+        "--pogs_obj",
+        metavar="\b",
+        required=True,
+        help="POGS identifier. Ex: POGSII-EG-321",
+    )
+
+    parser.add_argument(
+        "--cuffs_prefix",
+        metavar="\b",
+        default="rts_imgr_",
+        help="Prefix to cube names as defined in cuFFS parset file. Default=rts_imgr_",
+    )
+
+    parser.add_argument(
+        "--cube_dir",
+        metavar="\b",
+        required=True,
+        help="Path to dir with cuffs fits cubes",
+    )
+
+    parser.add_argument(
+        "--out_dir",
+        metavar="\b",
+        default="./",
+        help="Output directory to saved de-rotated stokes fits images to",
+    )
+
+    args = parser.parse_args()
+
+    pogs_obj = args.pogs_obj
+    cuffs_prefix = args.cuffs_prefix
+    pogs_path = Path(args.pogs_path)
+    cube_dir = Path(args.cube_dir)
+    out_dir = Path(args.out_dir)
+
+    # make out_dir if doesn't exist
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    #####################################################################
+    #                                                                   #
+    #                   Read in data and create spectra                 #
+    #                                                                   #
+    #####################################################################
+
+    pogs_pos = pogs_obj_loc(pogs_obj, pogs_path)
+
+    ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(
+        pogs_pos, cuffs_prefix, cube_dir
+    )
+
+    # Elegant Seaborn
     plt.style.use("seaborn")
 
-    # Plot RM image of POGS source
+    #####################################################################
+    #                                                                   #
+    #                    Plot RM image of POGS source                   #
+    #                                                                   #
+    #####################################################################
+
     fig = plt.figure(figsize=(6.4, 6))
     ax = fig.add_subplot(1, 1, 1, projection=wcs[:, :, int(phi_z)])
     im = ax.imshow(data_p[:, :, int(phi_z)], origin="lower", cmap="viridis")
@@ -121,11 +194,15 @@ if __name__ == "__main__":
     ax.set_ylabel("Declination [deg]")
 
     ax.set_title(f"POGSII-EG-321 RM: {phi[phi_z]} [rad m$^{-2}$]")
+    plt.savefig(f"{out_dir}/{pogs_obj.lower()}_rm_img.png", dpi=300)
 
-    plt.show()
+    #####################################################################
+    #                                                                   #
+    #                  Plot RM spectra of POGS source                   #
+    #                                                                   #
+    #####################################################################
 
-    # Plot RM Spectra of POGS source
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(9, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(phi, data_p[dec_y, ra_x, :], label="POGS RM", color="#207561")
     ax.set_xlabel("Faraday Depth [rad/m$^2$]")
@@ -138,19 +215,22 @@ if __name__ == "__main__":
         le.set_alpha(1)
 
     plt.tight_layout()
-    #  plt.savefig("rm_spec.png")
-    plt.show()
+    plt.savefig(f"{out_dir}/{pogs_obj.lower()}_rm_spec.png", dpi=300)
 
-    # Plot RMSF
-    file = "../data/rts_imgr_rmsf.txt"
-    data = np.loadtxt(file)
+    #####################################################################
+    #                                                                   #
+    #                             Plot RMSF                             #
+    #                                                                   #
+    #####################################################################
+
+    data = np.loadtxt(f"{cube_dir}/{cuffs_prefix}rmsf.txt")
 
     phi = data[:, 0]
     q = data[:, 1]
     u = data[:, 2]
     p = data[:, 3]
 
-    fig = plt.figure(figsize=(8, 5))
+    fig = plt.figure(figsize=(9, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(phi, p, color="#207561", label=r"$ \vert R \vert $", zorder=2)
     ax.plot(
@@ -185,5 +265,4 @@ if __name__ == "__main__":
         le.set_alpha(1)
 
     plt.tight_layout()
-    #  plt.savefig("rmsf.png")
-    plt.show()
+    plt.savefig(f"{out_dir}/{pogs_obj.lower()}_rmsf.png", dpi=300)
