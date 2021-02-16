@@ -6,9 +6,7 @@ of POGS source, at obsid gps time. Rotation is frequency
 dependant and detoration is applied to individual fine
 channel stokes images.
 
-# TODO: Figure origin of the factor of -2 in correct_iono
-
-Inspired by code by Chris Riseley
+Inspired by code from Emil Lenc and Chris Riseley
 """
 
 import re
@@ -135,8 +133,9 @@ def correct_iono(freq, ionRM, fits_dir, out_dir):
     # Lambda squared
     lam2 = (c / (freq * 1.0e6)) ** 2.0
 
-    # Angle to derotate by
-    # Why -2???
+    # Work out frequency dependant correction angle
+    # Factor of -2 comes from definition of polarization
+    # angle - (Brentjens and de Bruyn)
     angle = -2 * ionRM * lam2
 
     hduq = fits.open(qfn)
