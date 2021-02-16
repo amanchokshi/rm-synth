@@ -7,7 +7,7 @@ from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 
 # Read the POGs tables in to return an astropy Table object
-exgal = Table.read("../POGS-II_ExGal.fits")
+exgal = Table.read("../slurm/iono/POGS-II_ExGal.fits")
 df_eg = exgal.to_pandas()
 df_eg["catalog_id"] = df_eg["catalog_id"].str.decode("utf-8")
 df_eg.set_index("catalog_id", inplace=True)
@@ -15,17 +15,17 @@ df_eg.set_index("catalog_id", inplace=True)
 pogs_ii_024 = df_eg.loc["POGSII-EG-024"]
 rm_peak = SkyCoord(pogs_ii_024.ra, pogs_ii_024.dec, unit="deg")
 
-with fits.open("./rm_cubes/wsclean_dirty_p.phi.dirty.fits") as hdus:
+with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_p.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     hdr = hdu.header
     data_p = hdu.data
 
-with fits.open("./rm_cubes/wsclean_dirty_q.phi.dirty.fits") as hdus:
+with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_q.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     #  hdr = hdu.header
     data_q = hdu.data
 
-with fits.open("./rm_cubes/wsclean_dirty_u.phi.dirty.fits") as hdus:
+with fits.open("../data/1061316296/rts_imgr/rts_iv/cubes/rts_imgr_u.phi.dirty.fits") as hdus:
     hdu = hdus[0]
     hdr = hdu.header
     data_u = hdu.data
@@ -61,8 +61,9 @@ plt.style.use("seaborn")
 plt.plot(phi, data_p[128, 128, :], label="p")
 plt.plot(phi, data_q[128, 128, :], label="q")
 plt.plot(phi, data_u[128, 128, :], label="u")
+plt.xlim([-100, 100])
 plt.xlabel("Faraday Depth")
 plt.ylabel("Polarized Flux Density")
 plt.legend()
 plt.tight_layout()
-plt.show()
+plt.savefig("rm_spec.png")
