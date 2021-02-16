@@ -1,5 +1,5 @@
 """
-Plot the RM Specta of a POGS source.
+Plot the RM Specta and RMSF of a POGS source.
 """
 
 import numpy as np
@@ -89,8 +89,6 @@ def read_rm_cube(pogs_pos, rm_prefix, cube_dir):
     spec_peak = np.amax(spec)
     phi_z = np.where(spec == spec_peak)[0][0]
 
-    print(f"Phi Max: {phi[phi_z]}, RM: {spec_peak:.3f}")
-
     return ra_x, dec_y, phi_z, phi, data_p, wcs
 
 
@@ -103,16 +101,17 @@ if __name__ == "__main__":
 
     plt.style.use("seaborn")
 
-    ax = plt.subplot(projection=wcs[:, :, int(phi_z)])
-    im = ax.imshow(data_p[:, :, int(phi_z)], origin="lower", cmap="viridis",)
-    ax.plot(
-        ra_x, dec_y, "darkorange", marker="o", mfc="none", ms=28, mew=2.0,
-    )
+    # Plot RM image of POGS source
+    fig = plt.figure(figsize=(6.4, 6))
+    ax = fig.add_subplot(1, 1, 1, projection=wcs[:, :, int(phi_z)])
+    im = ax.imshow(data_p[:, :, int(phi_z)], origin="lower", cmap="viridis")
 
-    ax.set_xlim(ra_x - 50, ra_x + 50)
-    ax.set_ylim(dec_y - 50, dec_y + 50)
+    ax.plot(ra_x, dec_y, "#e85d04", marker="o", mfc="none", ms=32, mew=2.0)
 
-    ax.coords.grid(True, color="white", ls="dotted")
+    ax.set_xlim(ra_x - 56, ra_x + 56)
+    ax.set_ylim(dec_y - 56, dec_y + 56)
+
+    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[0].set_auto_axislabel(False)
     ax.set_xlabel("Right Ascension [deg]")
@@ -121,18 +120,28 @@ if __name__ == "__main__":
     ax.coords[1].set_auto_axislabel(False)
     ax.set_ylabel("Declination [deg]")
 
+    ax.set_title(f"POGSII-EG-321 RM: {phi[phi_z]} [rad m$^{-2}$]")
+
     plt.show()
 
-    plt.style.use("seaborn")
+    # Plot RM Spectra of POGS source
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(phi, data_p[dec_y, ra_x, :], label="POGS RM", color="#207561")
+    ax.set_xlabel("Faraday Depth [rad/m$^2$]")
+    ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+    ax.set_title(f"POGSII-EG-321  $\phi_{{max}}={phi[phi_z]}$")
 
-    plt.plot(phi, data_p[dec_y, ra_x, :], label="p", color="#207561")
-    plt.xlabel("Faraday Depth")
-    plt.ylabel("Polarized Flux Density")
-    plt.legend()
+    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
     plt.tight_layout()
     #  plt.savefig("rm_spec.png")
     plt.show()
 
+    # Plot RMSF
     file = "../data/rts_imgr_rmsf.txt"
     data = np.loadtxt(file)
 
@@ -141,9 +150,10 @@ if __name__ == "__main__":
     u = data[:, 2]
     p = data[:, 3]
 
-    plt.style.use("seaborn")
-    plt.plot(phi, p, color="#207561", label=r"$ \vert R \vert $", zorder=2)
-    plt.plot(
+    fig = plt.figure(figsize=(8, 5))
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(phi, p, color="#207561", label=r"$ \vert R \vert $", zorder=2)
+    ax.plot(
         phi,
         q,
         alpha=0.7,
@@ -154,7 +164,7 @@ if __name__ == "__main__":
         label=r"$ real(R) $",
         zorder=3,
     )
-    plt.plot(
+    ax.plot(
         phi,
         u,
         alpha=0.7,
@@ -165,9 +175,15 @@ if __name__ == "__main__":
         label=r"$ imag(R) $",
         zorder=1,
     )
-    plt.xlabel("Faraday Depth")
-    plt.ylabel("RMSF")
-    plt.legend()
+    ax.set_xlabel("Faraday Depth [rad/m$^2$]")
+    ax.set_ylabel("RMSF")
+    ax.set_title("POGSII-EG-321 RMSF")
+
+    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
     plt.tight_layout()
     #  plt.savefig("rmsf.png")
     plt.show()
