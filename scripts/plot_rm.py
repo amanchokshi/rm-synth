@@ -202,9 +202,27 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
+    # 9 pixels centered around source
+    arr = [
+        data_p[dec_y, ra_x, :],
+        data_p[dec_y + 1, ra_x, :],
+        data_p[dec_y + 1, ra_x + 1, :],
+        data_p[dec_y + 1, ra_x - 1, :],
+        data_p[dec_y, ra_x + 1, :],
+        data_p[dec_y, ra_x - 1, :],
+        data_p[dec_y - 1, ra_x, :],
+        data_p[dec_y - 1, ra_x + 1, :],
+        data_p[dec_y - 1, ra_x - 1, :],
+    ]
+
+    arr_med = np.median(arr, axis=0)
+    arr_max = np.amax(arr, axis=0)
+
     fig = plt.figure(figsize=(9, 6))
     ax = fig.add_subplot(1, 1, 1)
     ax.plot(phi, data_p[dec_y, ra_x, :], label="POGS RM", color="#207561")
+    #  ax.plot(phi, arr_med, label="Med RM 9", color="#822659")
+    #  ax.plot(phi, arr_max, label="Med RM 9", color="#487e95")
     ax.set_xlabel("Faraday Depth [rad/m$^2$]")
     ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
     ax.set_title(f"POGSII-EG-321  $\phi_{{max}}={phi[phi_z]}$")
