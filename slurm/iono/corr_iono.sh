@@ -11,10 +11,11 @@
 #SBATCH --output=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.out
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.err
 
-
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
-pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
+# Input params
 obsid=1086351512
+pogs_obj=POGSII-EG-321
+pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_ii
 
 # Clean slate
 module purge
@@ -25,4 +26,4 @@ module load rmextract-singularity
 
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/corr_iono.py \
-    --obsid=$obsid --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/stokes_iono --pogs_path=$pogs_path
+    --obsid=$obsid --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/stokes_iono --pogs_obj=$pogs_obj --pogs_path=$pogs_path
