@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cube_rts-%A.err
 
 
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_ii
 
 module load python
 module load numpy
@@ -20,3 +20,6 @@ module load astropy
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
     --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/cubes
+
+time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
+    --fits_dir="$data_dir"/stokes_iono --out_dir="$data_dir"/cubes_iono
