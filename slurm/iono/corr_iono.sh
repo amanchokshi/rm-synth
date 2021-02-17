@@ -15,7 +15,7 @@
 obsid=1086351512
 pogs_obj=POGSII-EG-321
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_ii
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
 
 # Clean slate
 module purge
