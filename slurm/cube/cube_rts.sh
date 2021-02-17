@@ -19,4 +19,4 @@ module load numpy
 module load astropy
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
-    --fits_dir="$data_dir"/stokes_iono --out_dir="$data_dir"/cubes
+    --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/cubes
