@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cube_rts-%A.err
 
 
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/rts_imgr/run_i
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/fee/run_i
 
 module load python
 module load numpy
