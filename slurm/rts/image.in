@@ -1,0 +1,26 @@
+//----------------------------------------------//
+// Options describing RTS outputs
+//----------------------------------------------//
+
+// Number of fine channels to be averaged when creating output images/visibilities
+// ie 32 will create images which average over 32 fine channels.
+FscrunchChan=1
+
+MakeImage=1
+FieldOfViewDegrees=10
+MakeStokesSnapshots=1
+
+// ImageOversampling [float]: Sets oversampling of imaging pixel. Default value is 3.
+ImageOversampling=5
+
+// Image PSF
+// ImagePSF=1
+
+// UV cuts
+imgBaselineMin=50
+imgBaselineMax=1000
+
+// Weighting
+imgUniformWeighting=1
+imgRobustWeighting=1
+imgRobustnessParameter=-1
