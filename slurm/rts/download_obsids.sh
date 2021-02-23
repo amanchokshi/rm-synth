@@ -1,15 +1,15 @@
 #!/bin/bash -l
 #SBATCH --job-name="download"
 #SBATCH --export=None
-#SBATCH --time=6:00:00
+#SBATCH --time=1:00:00
 #SBATCH --nodes=1
-#SBATCH --output=download-%A.o
-#SBATCH --error=download-%A.e
 #SBATCH --mem=1G
 #SBATCH --clusters=garrawarla
 #SBATCH --partition=workq
 #SBATCH --account=mwaeor
 #SBATCH --export=MWA_ASVO_API_KEY
+#SBATCH --output=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/download-%A.out
+#SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/download-%A.err
 
 module use /pawsey/mwa/software/python3/modulefiles
 module load giant-squid
