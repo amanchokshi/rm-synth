@@ -101,6 +101,7 @@ def make_rts_setup(
             f"                      --srclist {srclist_file}_{obs}_patch1000.txt \\\n"
         )
         outfile.write("                      --num-primary-cals 1 \\\n")
+        outfile.write("                      --num-integration-bins 5 \\\n")
         outfile.write("                      > rts_patch.in\n")
         outfile.write("\n")
 
