@@ -12,11 +12,10 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.err
 
 # Input params
-obsid=1086351512
+obsid=1132832648
 pogs_obj=POGSII-EG-321
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/"$1"/run_i
-# data_dir=/astro/mwaeor/achokshi/rm-synth/data/1086351512/fee_100/run_i
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/run_i
 
 # Clean slate
 module purge
