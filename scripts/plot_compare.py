@@ -9,12 +9,12 @@ import matplotlib.pylab as pl
 import numpy as np
 
 # Read POGS catalog and create source skycoord object
-pogs_pos = pogs_obj_loc("POGSII-EG-010", "../slurm/iono/POGS-II_ExGal.fits")
+pogs_pos = pogs_obj_loc("POGSII-EG-022", "../slurm/iono/POGS-II_ExGal.fits")
 obsid = "1132832648"
 
 # List of run_rts --tag names
-#  tags = ["f_p010", "f_p010_nodflag", "a_p010", "a_p010_nodflag"]
-tags = ["a_p010", "a_p010_nodflag"]
+tags = ["f_p022", "f_p022_nodflag", "a_p022", "a_p022_nodflag"]
+#  tags = ["a_p022", "a_p022_nodflag"]
 
 plt.style.use("seaborn")
 
@@ -29,7 +29,7 @@ for i, tag in enumerate(tags):
 
 ax.set_xlabel("Faraday Depth [rad/m$^2$]")
 ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-ax.set_title("POGSII-EG-010 Analytic vs Dipole Flag RM effects")
+ax.set_title("POGSII-EG-022 Analytic vs FEE vs Dipole Flag RM effects")
 
 leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
 leg.get_frame().set_facecolor("white")
@@ -37,4 +37,4 @@ for le in leg.legendHandles:
     le.set_alpha(1)
 
 plt.tight_layout()
-plt.savefig(f"ana_dipole_test.png", dpi=300)
+plt.savefig(f"ana_fee_dipole_test.png", dpi=300)
