@@ -10,7 +10,7 @@ MakeStokesSnapshots=1
 ImageOversampling=5
 
 // Image PSF
-ImagePSF=1
+// ImagePSF=1
 
 // UV cuts
 imgBaselineMin=50
