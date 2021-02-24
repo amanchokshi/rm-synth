@@ -13,7 +13,7 @@
 
 
 obsid=1132832648
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/run_i
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs
 
 module load python
 module load numpy
