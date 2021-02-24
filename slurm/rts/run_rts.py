@@ -112,9 +112,10 @@ def make_rts_setup(
         if image:
             # Comment out the default image oversampling value
             outfile.write(
-                'sed -i "s|ImageOversampling=3|// ImageOversampling=3|g" rts_patch.in'
+                'sed -i "s|ImageOversampling=3|// ImageOversampling=3|g" rts_patch.in \n'
             )
-            outfile.write(f"cat {Path('image.in').absolute()} >> rts_patch.in")
+            outfile.write(f"cat {Path('image.in').absolute()} >> rts_patch.in \n")
+            outfile.write("\n")
 
         if not no_peel:
             outfile.write("rts-in-file-generator peel \\\n")
@@ -474,13 +475,12 @@ if __name__ == "__main__":
                 cmd = f"sbatch {setup_job}"
                 setup_job_message = check_output(cmd, shell=True)
 
-                if not args.no_peel:
-                    # Use RE to extract job id from output string of setup job
-                    setup_job_ID = re.search(
-                        r"\d+", setup_job_message.decode("utf-8")
-                    ).group(0)
+                # Use RE to extract job id from output string of setup job
+                setup_job_ID = re.search(
+                    r"\d+", setup_job_message.decode("utf-8")
+                ).group(0)
 
-                    # Launch run script with a dependency on the setup scripts
-                    os.chdir(Path(run_jobs[i]).parents[0])
-                    cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
-                    run_job_message = check_output(cmd, shell=True)
+                # Launch run script with a dependency on the setup scripts
+                os.chdir(Path(run_jobs[i]).parents[0])
+                cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
+                run_job_message = check_output(cmd, shell=True)
