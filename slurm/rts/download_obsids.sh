@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH --job-name="download"
 #SBATCH --export=None
-#SBATCH --time=1:00:00
+#SBATCH --time=6:00:00
 #SBATCH --nodes=1
 #SBATCH --mem=1G
 #SBATCH --clusters=garrawarla
@@ -32,27 +32,29 @@ done
 
 for obs_id in "${obs_id_array[@]}"
 do
-   mkdir -p "${mwa_dir}"/"${obs_id}"/"${sub_dir}"
-   cd "${mwa_dir}"/"${obs_id}"/"${sub_dir}"
+    mkdir -p "${mwa_dir}"/"${obs_id}"/"${sub_dir}"
+    cd "${mwa_dir}"/"${obs_id}"/"${sub_dir}"
+    echo Made and moved to "${mwa_dir}"/"${obs_id}"/"${sub_dir}"
 
-   num_files=$(ls "${mwa_dir}"/"${obs_id}"/"${sub_dir}"/"${obs_id}"* | wc -l)
+    num_files=$(ls "${mwa_dir}"/"${obs_id}"/"${sub_dir}" -1 | wc -l)
 
-   if [[ $num_files -gt 47 ]]; then
-       echo "$obs_id" was already downloaded
-   else
-       download_flag=0
-       while [ $download_flag -eq 0 ]
-       do
-           message=$(giant-squid download "${obs_id}")
+    if [[ $num_files -gt 47 ]]; then
+        echo "$obs_id" was already downloaded
+    else
+        download_flag=0
+        while [ $download_flag -eq 0 ]
+        do
+            message=$(giant-squid download "${obs_id}")
 
-           if [[ $message == *"not ready"* ]]; then
-               sleep 60
-           else
-               unzip "${mwa_dir}"/"${obs_id}"/"${sub_dir}"/"${obs_id}"_flags.zip
-               rm "${mwa_dir}"/"${obs_id}"/"${sub_dir}"/"${obs_id}"_flags.zip
-               download_flag=1
-               echo Successfully downloaded "${obs_id}"
-           fi
-       done
-   fi
+            if [[ $message == *"not ready"* ]]; then
+                echo "$(date) - "$num_files" downloaded"
+                sleep 60
+            else
+                unzip "${mwa_dir}"/"${obs_id}"/"${sub_dir}"/"${obs_id}"_flags.zip
+                rm "${mwa_dir}"/"${obs_id}"/"${sub_dir}"/"${obs_id}"_flags.zip
+                download_flag=1
+                echo Successfully downloaded "${obs_id}"
+            fi
+        done
+    fi
 done
