@@ -5,6 +5,8 @@ run_rts.py
 Setup and run batch RTS jobs on Garrawarla
 """
 
+from pathlib import Path
+
 
 def make_rts_setup(
     obs=None,
@@ -15,6 +17,8 @@ def make_rts_setup(
     fscrunch=None,
     phase_ra=None,
     phase_dec=None,
+    no_peel=None,
+    image=None,
     fee=None,
 ):
     """Create the rts_setup script for the given observation."""
@@ -23,7 +27,7 @@ def make_rts_setup(
     srclist_dir = "/pawsey/mwa/software/python3/srclists/master"
     srclist_file = "srclist_pumav3_EoR0aegean_EoR1pietro+ForA"
 
-    with open(f"{out_dir}/{obs}/{tag}/rts_setup_{obs}.sh", "w+") as outfile:
+    with open(f"{out_dir}/{obs}/{tag}/rts_setup.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
@@ -69,29 +73,29 @@ def make_rts_setup(
         )
         outfile.write("\n")
 
-        outfile.write("# Generate a source list for the peel step.\n")
-        outfile.write("srclist_by_beam.py -n 3000 \\\n")
-        outfile.write(
-            f"                   --srclist={srclist_dir}/{srclist_file}.txt \\\n"
-        )
-        outfile.write(
-            f"                   --metafits={out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
-        )
-        outfile.write("                   --no_patch \\\n")
-        outfile.write("                   --cutoff=90\n")
-        outfile.write("\n")
+        if not no_peel:
+            outfile.write("# Generate a source list for the peel step.\n")
+            outfile.write("srclist_by_beam.py -n 3000 \\\n")
+            outfile.write(
+                f"                   --srclist={srclist_dir}/{srclist_file}.txt \\\n"
+            )
+            outfile.write(
+                f"                   --metafits={out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
+            )
+            outfile.write("                   --no_patch \\\n")
+            outfile.write("                   --cutoff=90\n")
+            outfile.write("\n")
 
         outfile.write("# Generate the RTS .in files for both patching and peeling.\n")
         outfile.write("rts-in-file-generator patch \\\n")
         outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
 
         if phase_ra and phase_dec:
-            outfile.write(f'                      --force-ra={phase_ra} \\\n')
-            outfile.write(f'                      --force-dec={phase_dec} \\\n')
+            outfile.write(f"                      --force-ra={phase_ra} \\\n")
+            outfile.write(f"                      --force-dec={phase_dec} \\\n")
 
         if fee:
-            outfile.write(f'                      --use-fee-beam \\\n')
-
+            outfile.write("                      --use-fee-beam \\\n")
 
         outfile.write(f"                      --fscrunch {fscrunch} \\\n")
         outfile.write(
@@ -105,28 +109,38 @@ def make_rts_setup(
         outfile.write("                      > rts_patch.in\n")
         outfile.write("\n")
 
-        outfile.write("rts-in-file-generator peel \\\n")
-        outfile.write(f"                      --base-dir {out_dir}/{obs}/{tag} \\\n")
+        if image:
+            # Comment out the default image oversampling value
+            outfile.write(
+                'sed -i "s|ImageOversampling=3|// ImageOversampling=3|g" rts_patch.in'
+            )
+            outfile.write(f"cat {Path('image.in').absolute()} >> rts_patch.in")
 
-        if phase_ra and phase_dec:
-            outfile.write(f'                      --force-ra={phase_ra} \\\n')
-            outfile.write(f'                      --force-dec={phase_dec} \\\n')
+        if not no_peel:
+            outfile.write("rts-in-file-generator peel \\\n")
+            outfile.write(
+                f"                      --base-dir {out_dir}/{obs}/{tag} \\\n"
+            )
 
-        if fee:
-            outfile.write(f'                      --use-fee-beam \\\n')
+            if phase_ra and phase_dec:
+                outfile.write(f"                      --force-ra={phase_ra} \\\n")
+                outfile.write(f"                      --force-dec={phase_dec} \\\n")
 
-        outfile.write(f"                      --fscrunch {fscrunch} \\\n")
-        outfile.write(
-            f"                      --metafits {out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
-        )
-        outfile.write(
-            f"                      --srclist {srclist_file}_{obs}_peel3000.txt \\\n"
-        )
-        outfile.write("                      --num-primary-cals 5 \\\n")
-        outfile.write("                      --num-cals 1000 \\\n")
-        outfile.write("                      --num-peel 1000 \\\n")
-        outfile.write("                      > rts_peel.in\n")
-        outfile.write("\n")
+            if fee:
+                outfile.write("                      --use-fee-beam \\\n")
+
+            outfile.write(f"                      --fscrunch {fscrunch} \\\n")
+            outfile.write(
+                f"                      --metafits {out_dir}/{obs}/{tag}/{obs}.metafits \\\n"
+            )
+            outfile.write(
+                f"                      --srclist {srclist_file}_{obs}_peel3000.txt \\\n"
+            )
+            outfile.write("                      --num-primary-cals 5 \\\n")
+            outfile.write("                      --num-cals 1000 \\\n")
+            outfile.write("                      --num-peel 1000 \\\n")
+            outfile.write("                      > rts_peel.in\n")
+            outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible.\n")
         outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
@@ -135,13 +149,13 @@ def make_rts_setup(
 
         outfile.write("echo gator rts_setup.sh finished successfully.\n")
 
-    return f"{out_dir}/{obs}/{tag}/rts_setup_{obs}.sh"
+    return f"{out_dir}/{obs}/{tag}/rts_setup.sh"
 
 
-def make_rts_run(obs=None, out_dir=None, tag=None, clean=None):
+def make_rts_run(obs=None, out_dir=None, tag=None, no_peel=None):
     """Create the rts_run script for the given observation."""
 
-    with open(f"{out_dir}/{obs}/{tag}/rts_run_{obs}.sh", "w+") as outfile:
+    with open(f"{out_dir}/{obs}/{tag}/rts_run.sh", "w+") as outfile:
 
         outfile.write("#!/bin/bash -l\n")
         outfile.write("\n")
@@ -183,19 +197,20 @@ def make_rts_run(obs=None, out_dir=None, tag=None, clean=None):
         outfile.write("date\n")
         outfile.write("\n")
 
-        outfile.write("srun -n 25 --export=ALL rts_gpu rts_peel.in\n")
-        outfile.write("date\n")
-        outfile.write("\n")
+        if not no_peel:
+            outfile.write("srun -n 25 --export=ALL rts_gpu rts_peel.in\n")
+            outfile.write("date\n")
+            outfile.write("\n")
 
-        outfile.write("mkdir uvfits && mv *.uvfits uvfits\n")
-        outfile.write("cp -rL *metafits*.fits uvfits\n")
-        outfile.write("\n")
+            outfile.write("mkdir uvfits && mv *.uvfits uvfits\n")
+            outfile.write("cp -rL *metafits*.fits uvfits\n")
+            outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible!\n")
         outfile.write("find . -user $USER -type d -exec chmod g+rwx,o+rx,o-w {} \;\n")
         outfile.write("find . -user $USER -type f -exec chmod g+rw,o+r,o-w {} \;\n")
 
-    return f"{out_dir}/{obs}/{tag}/rts_run_{obs}.sh"
+    return f"{out_dir}/{obs}/{tag}/rts_run.sh"
 
 
 if __name__ == "__main__":
@@ -268,6 +283,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--phase_dec", metavar="\b", help="Force DEC phase centre in degrees",
+    )
+
+    parser.add_argument(
+        "--no_peel",
+        action="store_true",
+        help="<FLAG> - Don't peel after patch calibration",
     )
 
     parser.add_argument(
@@ -420,11 +441,14 @@ if __name__ == "__main__":
                 fscrunch=args.fscrunch,
                 phase_ra=args.phase_ra,
                 phase_dec=args.phase_dec,
+                no_peel=args.no_peel,
                 fee=args.fee,
             )
             setup_jobs.append(setup_job)
 
-            run_job = make_rts_run(obs=obs, out_dir=out_dir, tag=tag)
+            run_job = make_rts_run(
+                obs=obs, out_dir=out_dir, tag=tag, no_peel=args.no_peel
+            )
             run_jobs.append(run_job)
 
         #####################################################################
@@ -443,12 +467,13 @@ if __name__ == "__main__":
                 cmd = f"sbatch {setup_job}"
                 setup_job_message = check_output(cmd, shell=True)
 
-                # Use RE to extract job id from output string of setup job
-                setup_job_ID = re.search(
-                    r"\d+", setup_job_message.decode("utf-8")
-                ).group(0)
+                if not args.no_peel:
+                    # Use RE to extract job id from output string of setup job
+                    setup_job_ID = re.search(
+                        r"\d+", setup_job_message.decode("utf-8")
+                    ).group(0)
 
-                # Launch run script with a dependency on the setup scripts
-                os.chdir(Path(run_jobs[i]).parents[0])
-                cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
-                run_job_message = check_output(cmd, shell=True)
+                    # Launch run script with a dependency on the setup scripts
+                    os.chdir(Path(run_jobs[i]).parents[0])
+                    cmd = f"sbatch --dependency=afterok:{setup_job_ID} {run_jobs[i]}"
+                    run_job_message = check_output(cmd, shell=True)
