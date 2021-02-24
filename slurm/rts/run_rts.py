@@ -292,6 +292,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--image",
+        action="store_true",
+        help="<FLAG> - Create stokes and psf images of each fine channel",
+    )
+
+    parser.add_argument(
         "--fee",
         action="store_true",
         help="<FLAG> - Use the FEE beam model for patch and peeling",
@@ -442,6 +448,7 @@ if __name__ == "__main__":
                 phase_ra=args.phase_ra,
                 phase_dec=args.phase_dec,
                 no_peel=args.no_peel,
+                image=args.image,
                 fee=args.fee,
             )
             setup_jobs.append(setup_job)
