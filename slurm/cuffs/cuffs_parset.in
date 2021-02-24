@@ -7,9 +7,9 @@ nGPU = 1;
 fileFormat = "FITS";
 
 // Define how fits files are stored on disk
-qCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/run_i/cubes_iono/cube_Q.fits";
-uCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/run_i/cubes_iono/cube_U.fits";
-freqFileName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/run_i/cubes_iono/frequency.txt";
+qCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/imgs/cubes_iono/cube_Q.fits";
+uCubeName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/imgs/cubes_iono/cube_U.fits";
+freqFileName = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/imgs/cubes_iono/frequency.txt";
 
 // Define the faraday depth axis. All units in rad/m/m
 plotRMSF = False;
@@ -18,4 +18,4 @@ nPhi = 801; // integer
 dPhi = 0.5;
 
 // Prefix for output filenames
-outPrefix = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/run_i/cubes_iono/rts_imgr_";
+outPrefix = "/astro/mwaeor/achokshi/rm-synth/data/1132832648/tag/imgs/cubes_iono/rts_imgr_";
