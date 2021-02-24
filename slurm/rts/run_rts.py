@@ -153,7 +153,7 @@ def make_rts_setup(
     return f"{out_dir}/{obs}/{tag}/rts_setup.sh"
 
 
-def make_rts_run(obs=None, out_dir=None, tag=None, no_peel=None):
+def make_rts_run(obs=None, out_dir=None, tag=None, no_peel=None, image=None):
     """Create the rts_run script for the given observation."""
 
     with open(f"{out_dir}/{obs}/{tag}/rts_run.sh", "w+") as outfile:
@@ -205,6 +205,12 @@ def make_rts_run(obs=None, out_dir=None, tag=None, no_peel=None):
 
             outfile.write("mkdir uvfits && mv *.uvfits uvfits\n")
             outfile.write("cp -rL *metafits*.fits uvfits\n")
+            outfile.write("\n")
+
+        if image:
+            outfile.write("mkdir -p imgs/psf && mkdir imgs/stokes \n")
+            outfile.write("mv *img*.fits imgs/psf\n")
+            outfile.write("mv *stokes*.fits imgs/stokes\n")
             outfile.write("\n")
 
         outfile.write("# Ensure permissions are sensible!\n")
@@ -295,7 +301,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image",
         action="store_true",
-        help="<FLAG> - Create stokes and psf images of each fine channel",
+        help="<FLAG> - Create stokes and psf images of each fine channel. Only works for patch step currently",
     )
 
     parser.add_argument(
@@ -455,7 +461,11 @@ if __name__ == "__main__":
             setup_jobs.append(setup_job)
 
             run_job = make_rts_run(
-                obs=obs, out_dir=out_dir, tag=tag, no_peel=args.no_peel
+                obs=obs,
+                out_dir=out_dir,
+                tag=tag,
+                no_peel=args.no_peel,
+                image=args.image,
             )
             run_jobs.append(run_job)
 
