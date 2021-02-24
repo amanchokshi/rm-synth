@@ -208,8 +208,8 @@ def make_rts_run(obs=None, out_dir=None, tag=None, no_peel=None, image=None):
             outfile.write("\n")
 
         if image:
-            outfile.write("mkdir -p imgs/psf && mkdir imgs/stokes \n")
-            outfile.write("mv *img*.fits imgs/psf\n")
+            outfile.write("mkdir -p imgs/instr && mkdir imgs/stokes \n")
+            outfile.write("mv *img*.fits imgs/instr\n")
             outfile.write("mv *stokes*.fits imgs/stokes\n")
             outfile.write("\n")
 
