@@ -129,9 +129,9 @@ def noise_map(phi_mask, cuffs_prefix, cube_dir):
         # Loop over Dec
         for j in range(data.shape[0]):
 
-            print(
-                f" ** INFO: Fitting noise Ra: {i}/{data.shape[1]}, Dec ind:{j}/{data.shape[0]}"
-            )
+            #  print(
+                #  f" ** INFO: Fitting noise Ra: {i}/{data.shape[1]}, Dec ind:{j}/{data.shape[0]}"
+            #  )
 
             # Extract RM Spectra for RA, Dec
             rm_spec = data[j, i, :]
@@ -177,6 +177,7 @@ def noise_map(phi_mask, cuffs_prefix, cube_dir):
             if i == int(round(data.shape[1] / 2)) and j == int(
                 round(data.shape[0] / 2)
             ):
+                print(" ** INFO: Writing noise fit plot")
                 plt.style.use("seaborn")
                 plt.hist(
                     rm_masked,
