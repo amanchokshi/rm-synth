@@ -28,7 +28,7 @@ def gaussian(x, sigma):
 def noise_map():
     """Add Docsting once script is done"""
 
-    p_cube = Path("../data/rts_imgr_p.phi.dirty.fits")
+    p_cube = Path("../data/noise_321/fee_imgr_p.phi.dirty.fits")
     print(f"Processing {p_cube}")
 
     with fits.open(p_cube, memmap=True, mode="denywrite") as hdus:
@@ -102,7 +102,7 @@ def noise_map():
             # If the fit fails, I give it an error of zero. I haven't seen this happen in any of my maps,
             # so I think it is working reliably in that regard.
             # print "  Noise: ", popt[0],np.sqrt(pcov[0])
-            print(popt)
+            #  print(popt)
             noise[i, j] = np.abs(popt[0])
 
             #  plt.style.use("seaborn")
@@ -123,7 +123,7 @@ def noise_map():
             #  break
         #  break
 
-    Create FITS header for noise map, save map to file.
+    # Create FITS header for noise map, save map to file.
     print(" ** INFO: Writing output noise image")
     new_header = hdr
     new_header["NAXIS"] = 2
@@ -139,7 +139,7 @@ def noise_map():
     del new_header["NAXIS3"]
 
     hdul = fits.PrimaryHDU(data=noise, header=new_header)
-    hdul.writeto("cube_noise.fits")
+    hdul.writeto("../data/noise_321/fee_cube_noise.fits")
 
     #    plt.hist(np.ravel(test_data),50,normed=True)
     #    plt.plot(x,Rayleigh(x,popt[0]),'g-',linewidth=3)
