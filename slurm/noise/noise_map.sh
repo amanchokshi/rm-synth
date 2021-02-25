@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=01:00:00
+#SBATCH --time=04:00:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
 #SBATCH --mem=30gb
