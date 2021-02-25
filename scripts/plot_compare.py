@@ -10,11 +10,11 @@ from matplotlib import pyplot as plt
 from plot_rm import pogs_obj_loc, read_rm_cube
 
 # Read POGS catalog and create source skycoord object
-pogs_pos = pogs_obj_loc("POGSII-EG-022", "../slurm/iono/POGS-II_ExGal.fits")
-obsid = "1132832648"
+pogs_pos = pogs_obj_loc("POGSII-EG-321", "../slurm/iono/POGS-II_ExGal.fits")
+obsid = "1120300232"
 
 # List of run_rts --tag names
-tags = ["f_p022", "f_p022_nodflag", "a_p022", "a_p022_nodflag"]
+tags = ["fee_p321", "fee_p321_nodflag", "ana_p321", "ana_p321_nodflag"]
 #  tags = ["a_p022", "a_p022_nodflag"]
 
 plt.style.use("seaborn")
@@ -26,7 +26,7 @@ ax = fig.add_subplot(1, 1, 1)
 
 for i, tag in enumerate(tags):
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(
-        pogs_pos, "rts_imgr_", f"../data/{obsid}/{tag}/run_i/cubes_iono"
+        pogs_pos, "rts_imgr_", f"../data/{obsid}/{tag}/imgs/cubes_iono"
     )
     ax.plot(
         phi,
@@ -39,7 +39,7 @@ for i, tag in enumerate(tags):
 
 ax.set_xlabel("Faraday Depth [rad/m$^2$]")
 ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-ax.set_title("POGSII-EG-022 Analytic vs FEE vs Dipole Flag RM effects")
+ax.set_title("POGSII-EG-321 Analytic vs FEE vs Dipole Flag RM effects")
 
 leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
 leg.get_frame().set_facecolor("white")
