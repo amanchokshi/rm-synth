@@ -92,6 +92,52 @@ def read_rm_cube(pogs_pos, cuffs_prefix, cube_dir):
     return ra_x, dec_y, phi_z, phi, data_p, wcs
 
 
+def read_noise(pogs_pos, noise_prefix, cube_dir):
+    """Read noise fits image created by noise_map.py.
+
+    The first axis in the fits header is dec, followed
+    by ra. When the fits file is read by astropy, the
+    indexing order is reversed
+
+    data == [⍺, δ]
+
+    Parameters
+    ----------
+    pogs_pos : skycoord object
+        SkyCoord object from pogs_obj_loc
+    noise_prefix : str
+        Prefix to noise.fits names as defined in noise_map.py
+    cube_dir: str
+        Path to directory with rm cubes
+    """
+
+    # Open cube and grab header and data
+    with fits.open(f"{cube_dir}/{noise_prefix}cube_noise.fits") as hdus:
+        hdu = hdus[0]
+        hdr = hdu.header
+        noise = hdu.data
+
+    # World Coordinate System
+    wcs = WCS(hdr)
+
+    # Determine range of phi, ra, dec in data
+    # Here, the order of indexing the same as the fits file
+    # wcs.all_pix2world(δ, ⍺, 0)
+    # The last 0 ensures pythonic zero indexing
+
+    # Determine pixel coordinates of pogs object
+    dec, ra = wcs.all_world2pix(pogs_pos.dec.deg, pogs_pos.ra.deg, 0)
+
+    # Convert to closes integer pixel index
+    dec = np.round(dec).astype(int)
+    ra = np.round(ra).astype(int)
+
+    # Extract spectral slice of cube at location of pogs source
+    n_pogs = noise[np.round(ra).astype(int), np.round(dec).astype(int)]
+
+    return n_pogs
+
+
 if __name__ == "__main__":
 
     import argparse
@@ -123,6 +169,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--noise_prefix",
+        metavar="\b",
+        help="Prefix to noise image names as defined in noise_map.py. Try= ana_ or fee_",
+    )
+
+    parser.add_argument(
         "--cuffs_prefix",
         metavar="\b",
         default="rts_imgr_",
@@ -146,6 +198,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     pogs_obj = args.pogs_obj
+    noise_prefix = args.noise_prefix
     cuffs_prefix = args.cuffs_prefix
     pogs_path = Path(args.pogs_path)
     cube_dir = Path(args.cube_dir)
@@ -165,6 +218,8 @@ if __name__ == "__main__":
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(
         pogs_pos, cuffs_prefix, cube_dir
     )
+    if noise_prefix:
+        n_pogs = read_noise(pogs_pos, noise_prefix, cube_dir)
 
     # Elegant Seaborn
     plt.style.use("seaborn")
@@ -220,7 +275,10 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=(9, 6))
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(phi, data_p[dec_y, ra_x, :], label="POGS RM", color="#207561")
+    if noise_prefix:
+        ax.plot(phi, data_p[dec_y, ra_x, :] - n_pogs, label="POGS RM", color="#207561")
+    else:
+        ax.plot(phi, data_p[dec_y, ra_x, :], label="POGS RM", color="#207561")
     #  ax.plot(phi, arr_med, label="Med RM 9", color="#822659")
     #  ax.plot(phi, arr_max, label="Med RM 9", color="#487e95")
     ax.set_xlabel("Faraday Depth [rad/m$^2$]")
