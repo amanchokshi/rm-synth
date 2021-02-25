@@ -15,7 +15,7 @@ n_f = read_noise(pogs_pos, "fee_", "../data/noise_321")
 
 plt.style.use("seaborn")
 
-fig = plt.figure(figsize=(9, 6))
+fig = plt.figure(figsize=(7, 7))
 ax = fig.add_subplot(1, 1, 1)
 ax.plot(
     phi_f,
@@ -37,11 +37,13 @@ ax.plot(
 ax.set_xlabel("Faraday Depth [rad/m$^2$]")
 ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
 ax.set_title("POGSII-EG-321 Analytic vs FEE Beam")
+ax.grid(True, color="white", linewidth=1.2, alpha=0.9, ls="dotted")
 
 leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
-leg.get_frame().set_facecolor("white")
+leg.get_frame().set_edgecolor('#22222233')
+leg.get_frame().set_facecolor("none")
 for le in leg.legendHandles:
     le.set_alpha(1)
 
 plt.tight_layout()
-plt.savefig("rm_spec_ana_fee.png", dpi=300)
+plt.savefig("rm_spec_ana_fee.png", transparent=True, dpi=300)
