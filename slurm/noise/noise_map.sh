@@ -1,4 +1,4 @@
-#!/bin/bash --login
+#!/bin/bash
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
