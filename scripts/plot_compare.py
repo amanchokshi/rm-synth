@@ -2,9 +2,6 @@
 Compare a set of RM Spectra
 """
 
-import numpy as np
-from matplotlib import patheffects as pe
-from matplotlib import pylab as pl
 from matplotlib import pyplot as plt
 
 from plot_rm import pogs_obj_loc, read_noise, read_rm_cube
@@ -14,18 +11,27 @@ pogs_pos = pogs_obj_loc("POGSII-EG-321", "../slurm/iono/POGS-II_ExGal.fits")
 obsid = "1120300232"
 
 # List of run_rts --tag names
-#  tags = ["fee_p321", "fee_p321_nodflag", "ana_p321", "ana_p321_nodflag"]
-#  tags = ["fee_p321", "ana_p321"]
-tags = ["ana_p321_nodflag", "ana_p321"]
+
+# ANA vs FEE
+title = "POGSII-EG-321 Analytic vs FEE RM Spectra"
+tags = ["fee_p321", "ana_p321"]
+leg = ["FEE Beam", "Analytic Beam"]
+colors = ["#cc561e", "#008891"]
+
+# ANA vs Dipole
+#  title = "POGSII-EG-321 Analytic vs Dipole Flag RM effects"
+#  tags = ["ana_p321_nodflag", "ana_p321"]
+#  leg = ["Analytic no dipole flags", "Analytic with dipole flags"]
+#  colors = ["#184d47", "#96bb7c"]
+
+# FEE vs Dipole
+#  title = "POGSII-EG-321 FEE vs Dipole Flag RM effects"
 #  tags = ["fee_p321", "fee_p321_nodflag"]
+#  leg = ["FEE with dipole flags", "FEE no dipole flags"]
+#  colors = ["#583d72", "#de4463"]
 
 plt.style.use("seaborn")
 
-#  colors = pl.cm.Spectral(np.linspace(0.05, 0.9, len(tags)))
-#  colors = pl.cm.Spectral(np.linspace(0.02, 0.78, 2))
-#  colors = ["#cc561e", "#008891"] # ANA vs FEE
-colors = ["#184d47", "#96bb7c"]  # ANA vs Dipole
-#  colors = ["#583d72", "#de4463"]  # FEE vs Dipole
 
 fig = plt.figure(figsize=(8, 8))
 ax = fig.add_subplot(1, 1, 1)
@@ -41,20 +47,17 @@ for i, tag in enumerate(tags):
     ax.plot(
         phi,
         data_p[dec_y, ra_x, :] - noise,
-        label=f"{tag}",
-        #  color=colors[::-2][i],
+        label=f"{leg[i]}",
         linewidth=2,
         color=colors[i],
         alpha=0.9,
-        #  path_effects=[pe.Stroke(linewidth=2.4, foreground="k"), pe.Normal()],
     )
 
 ax.set_xlabel("Faraday Depth [rad/m$^2$]")
 ax.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-ax.set_title("POGSII-EG-321 Analytic vs Dipole Flag RM effects")
-#  ax.set_title("POGSII-EG-321 Analytic vs FEE RM Spectra")
+ax.set_title(title)
 
-ax.set_ylim([-0.013, 0.13])
+#  ax.set_ylim([-0.013, 0.13])
 #  ax.set(ylabel=None)
 #  ax.set(yticklabels=[])
 
@@ -67,4 +70,4 @@ for le in leg.legendHandles:
     le.set_alpha(1)
 
 plt.tight_layout()
-plt.savefig("ana_dipole.png", dpi=300, transparent=True)
+plt.savefig("fee_dipole.png", dpi=300, transparent=True)
