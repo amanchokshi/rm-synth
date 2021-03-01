@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/corr_iono-%A.err
 
 # Input params
-obsid=1120300232
+obsid=1120300352
 pogs_obj=POGSII-EG-321
 pogs_path=/astro/mwaeor/achokshi/rm-synth/slurm/iono/POGS-II_ExGal.fits
 data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs

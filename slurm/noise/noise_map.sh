@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/noise-%A.err
 
 
-obsid=1120300232
+obsid=1120300352
 phi_mask=20
 cuffs_prefix=rts_imgr_
 cube_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs/cubes_iono

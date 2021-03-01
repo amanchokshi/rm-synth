@@ -12,7 +12,7 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cube_rts-%A.err
 
 
-obsid=1120300232
+obsid=1120300352
 data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs
 
 module load python
