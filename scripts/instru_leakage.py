@@ -186,10 +186,14 @@ def gleam_by_beam(gleam_cat=None):
     # convert to a pandas data frame
     df = dat.to_pandas()
 
+    #  print(df.head)
+    for column in df.columns:
+        print(column)
+
 
 if __name__ == "__main__":
 
-    gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits.gz")
+    gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
     metafits = Path("../data/leakage/1120300352_metafits_ppds.fits")
 
     # MWA coordinates
@@ -198,7 +202,9 @@ if __name__ == "__main__":
     mwa_lon = mwa_loc.longitude.degrees
     mwa_el = mwa_loc.elevation.m
 
-    with fits.open(metafits) as hdus:
-        hdu = hdus[0]
-        hdr = hdu.header
-        print(repr(hdr))
+    #  with fits.open(metafits) as hdus:
+        #  hdu = hdus[0]
+        #  hdr = hdu.header
+        #  print(repr(hdr))
+
+    gleam_by_beam(gleam_cat)
