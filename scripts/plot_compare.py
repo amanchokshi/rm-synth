@@ -8,12 +8,13 @@ from plot_rm import pogs_obj_loc, read_noise, read_rm_cube
 
 # Read POGS catalog and create source skycoord object
 pogs_pos = pogs_obj_loc("POGSII-EG-321", "../slurm/iono/POGS-II_ExGal.fits")
-obsid = "1120300232"
+#  obsid = "1120300232"
+obsid = "1120300352"
 
 # List of run_rts --tag names
 
 # ANA vs FEE
-title = "POGSII-EG-321 Analytic vs FEE RM Spectra"
+title = "POGSII-EG-321 Analytic vs FEE RM Spectra - 200-230Mhz"
 tags = ["fee_p321", "ana_p321"]
 leg = ["FEE Beam", "Analytic Beam"]
 colors = ["#cc561e", "#008891"]
@@ -38,12 +39,13 @@ ax = fig.add_subplot(1, 1, 1)
 
 for i, tag in enumerate(tags):
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(
-        pogs_pos,
-        "rts_imgr_",
-        f"../data/{obsid}/{tag}"
-        #  pogs_pos, "rts_imgr_", f"../data/{obsid}/{tag}/imgs/cubes_iono"
+        #  pogs_pos,
+        #  "rts_imgr_",
+        #  f"../data/{obsid}/{tag}"
+        pogs_pos, "rts_imgr_", f"../data/{obsid}/{tag}/imgs/cubes_iono"
     )
-    noise = read_noise(pogs_pos, "", f"../data/{obsid}/{tag}")
+    #  noise = read_noise(pogs_pos, "", f"../data/{obsid}/{tag}")
+    noise = read_noise(pogs_pos, "", f"../data/{obsid}/{tag}/imgs/cubes_iono")
     ax.plot(
         phi,
         data_p[dec_y, ra_x, :] - noise,
@@ -70,4 +72,5 @@ for le in leg.legendHandles:
     le.set_alpha(1)
 
 plt.tight_layout()
-plt.savefig("fee_dipole.png", dpi=300, transparent=True)
+plt.savefig("ana_fee_dipole_1120300352.png", dpi=300)
+#  plt.savefig("fee_dipole.png", dpi=300, transparent=True)
