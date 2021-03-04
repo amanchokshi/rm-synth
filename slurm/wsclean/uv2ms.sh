@@ -12,8 +12,8 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/uv2ms-%A.err
 
 
-obsid=1061316296
-tag=patch
+obsid=1120300352
+tag=fee_leakage
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 prefix=uvdump_
 

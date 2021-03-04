@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
 #SBATCH --mem=128gb
@@ -13,10 +13,10 @@
 
 module load wsclean
 
-obsid=1061316296
-tag=patch
+obsid=1120300352
+tag=fee_leakage
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
-out_dir=wsclean_rm
+out_dir=wsc_mfs
 prefix=uvdump_
 
 
@@ -25,7 +25,7 @@ mkdir -p $out_dir
 
 
 time wsclean -pol iquv -join-polarizations -join-channels \
-  -squared-channel-joining --channels-out 1 -weight briggs -1 \
+  -squared-channel-joining --channels-out 768 -weight briggs -1 \
   -auto-mask 5 -auto-threshold 1 -scale 0.75amin -size 2048 2048 \
   -multiscale -mgain 0.85 --niter 100000 -no-update-model-required -abs-mem 128 \
   -grid-with-beam -use-idg -idg-mode cpu -pb-undersampling 4 \
