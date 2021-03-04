@@ -186,8 +186,44 @@ def gleam_by_beam(gleam_cat=None):
     # convert to a pandas data frame
     df = dat.to_pandas()
 
+    # Extract columns of interest
+    gleam = df[
+        [
+            "RAJ2000",
+            "DEJ2000",
+            "int_flux_166",
+            "a_166",
+            "b_166",
+            "int_flux_174",
+            "a_174",
+            "b_174",
+            "int_flux_181",
+            "a_181",
+            "b_181",
+            "int_flux_189",
+            "a_189",
+            "b_189",
+            "int_flux_197",
+            "a_197",
+            "b_197",
+            "int_flux_204",
+            "a_204",
+            "b_204",
+            "int_flux_212",
+            "a_212",
+            "b_212",
+            "int_flux_220",
+            "a_220",
+            "b_220",
+            "int_flux_227",
+            "a_227",
+            "b_227",
+            "alpha",
+        ]
+    ]
+
     #  print(df.head)
-    for column in df.columns:
+    for column in gleam.columns:
         print(column)
 
 
@@ -203,8 +239,8 @@ if __name__ == "__main__":
     mwa_el = mwa_loc.elevation.m
 
     #  with fits.open(metafits) as hdus:
-        #  hdu = hdus[0]
-        #  hdr = hdu.header
-        #  print(repr(hdr))
+    #  hdu = hdus[0]
+    #  hdr = hdu.header
+    #  print(repr(hdr))
 
     gleam_by_beam(gleam_cat)
