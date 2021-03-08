@@ -23,8 +23,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from astropy import units as u
 from astropy.io import fits
 from astropy.table import Table
+from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mwa_pb import primary_beam
 from skyfield.api import wgs84
@@ -178,7 +180,9 @@ def get_beam_weights(
     return beam_weights
 
 
-def gleam_by_beam(gleam_cat=None):
+def gleam_by_beam(
+    gleam_cat=None, mfs_fits=None, lst=None, mwa_lat=None, freqcent=None, delays=None
+):
 
     # Read the gleam catalog and return astropy Table object
     dat = Table.read(gleam_cat)
@@ -222,9 +226,67 @@ def gleam_by_beam(gleam_cat=None):
         ]
     ]
 
-    #  print(df.head)
-    for column in gleam.columns:
-        print(column)
+    # Read MFS image and extract range of ras and decs
+    with fits.open(mfs_fits) as hdus:
+        hdr = hdus[0].header
+        data = hdus[0].data
+
+        # World Coordinate System
+        wcs = WCS(hdr)
+
+    # wcs.all_pix2world(⍺, δ, freq, stokes, 0)
+    ras, _, _, _ = wcs[:2].all_pix2world(np.arange(data.shape[3]), 0, 0, 0, 0)
+    _, decs, _, _ = wcs[:2].all_pix2world(0, np.arange(data.shape[2]), 0, 0, 0)
+
+    # Rescale from -180, 180 to 0, 360
+    ras = np.mod(ras, 360)
+
+    # Select gleam sources within image
+    gleam_in_img = gleam[
+        (gleam.RAJ2000 <= np.amax(ras))
+        & (gleam.RAJ2000 >= np.amin(ras))
+        & (gleam.DEJ2000 <= np.amax(decs))
+        & (gleam.DEJ2000 >= np.amin(decs))
+    ]
+
+    beam_weights = get_beam_weights(
+        ras=gleam_in_img["RAJ2000"].to_numpy(),
+        decs=gleam_in_img["DEJ2000"].to_numpy(),
+        LST=lst,
+        mwa_lat=mwa_lat,
+        freqcent=freqcent,
+        delays=delays,
+    )
+
+    print(beam_weights)
+
+    # Convert ra, dec to pix coordinates
+    ra_pix = []
+    dec_pix = []
+    for i in range(gleam_in_img["RAJ2000"].to_numpy().shape[0]):
+        coord = wcs.wcs_world2pix(
+            gleam_in_img["RAJ2000"].to_numpy()[i],
+            gleam_in_img["DEJ2000"].to_numpy()[i],
+            0,
+            0,
+            0,
+        )
+        ra_pix.append(coord[0])
+        dec_pix.append(coord[1])
+
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
+    ax.imshow(data[0, 0, :, :], origin="lower", cmap=plt.cm.viridis)
+    ax.scatter(ra_pix, dec_pix, marker="o", facecolor="none", edgecolor="seagreen")
+    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
+    ax.coords[0].set_format_unit(u.deg)
+    ax.coords[0].set_auto_axislabel(False)
+    ax.set_xlabel("Right Ascension [deg]")
+
+    ax.coords[1].set_format_unit(u.deg)
+    ax.coords[1].set_auto_axislabel(False)
+    ax.set_ylabel("Declination [deg]")
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -232,15 +294,20 @@ if __name__ == "__main__":
     gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
     metafits = Path("../data/leakage/1120300352_metafits_ppds.fits")
 
+    mfs_i = Path("../data/leakage/wsc_stokes_2048/uvdump-MFS-I-image.fits")
+
     # MWA coordinates
     mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
     mwa_lat = mwa_loc.latitude.degrees
     mwa_lon = mwa_loc.longitude.degrees
     mwa_el = mwa_loc.elevation.m
 
-    #  with fits.open(metafits) as hdus:
-    #  hdu = hdus[0]
-    #  hdr = hdu.header
-    #  print(repr(hdr))
-
-    gleam_by_beam(gleam_cat)
+    lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+    gleam_by_beam(
+        gleam_cat=gleam_cat,
+        mfs_fits=mfs_i,
+        lst=lst,
+        mwa_lat=mwa_lat,
+        freqcent=freqcent,
+        delays=delays,
+    )
