@@ -230,6 +230,36 @@ def gleam_by_beam(
     beam_thresh=None,
     plot=False,
 ):
+    """Find bright GLEAM sources in sensitive part of the beam.
+
+    Parameters
+    ----------
+    gleam_cat : str
+        Path to GLEAM fits catalog
+    mfs_fits : str
+        Path to mfs stokes I image
+    lst : float
+        Local Sidereal Time
+    mwa_lat : float
+        MWA latitude in decimal degrees
+    freqcent : float
+        Centre frequency of observation
+    delays : list
+        Beamformer delays
+    smin : float
+        Minimum source flux to be considered in Jy
+    beam_thresh : float
+        Minimum zenith normalized beam power
+    plot : boolean
+        If true, plot something really cool
+
+    Returns
+    -------
+    pandas.dataframe :
+        gleam_beam - pandas dataframe with gleam sources in sensitive area of beam
+        and brighter than minimum flux. Also includes beam_weights and ra_pix, dec_pix
+        pixel coordinates of peak flux locations of data array.
+    """
 
     # Read the gleam catalog and return astropy Table object
     dat = Table.read(gleam_cat)
@@ -415,3 +445,10 @@ if __name__ == "__main__":
         beam_thresh=0.3,
         plot=True,
     )
+
+    # Get ra, dec coords of all pixels
+    # https://github.com/astropy/astropy/issues/1587
+    #  x = np.arange(NAXIS1)
+    #  y = np.arange(NAXIS2)
+    #  X, Y = np.meshgrid(x, y)
+    #  ra, dec = wcs.wcs_pix2world(X, Y, 0)
