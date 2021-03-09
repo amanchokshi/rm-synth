@@ -284,9 +284,7 @@ def gleam_by_beam(
     # Bleam sources in the field with beam weights more than threshold
     gleam_beam = gleam_in_img[(gleam_in_img.beam_weights >= beam_thresh)]
 
-    print(gleam_beam)
-
-    # Convert ra, dec to pix coordinates
+    # Convert gleam ra, dec to pix coordinates
     ra_pix = []
     dec_pix = []
     for i in range(gleam_beam["RAJ2000"].to_numpy().shape[0]):
@@ -299,17 +297,53 @@ def gleam_by_beam(
         )
         ra_pix.append(coord[0])
         dec_pix.append(coord[1])
-        #  print(f"{gleam_beam['Name'].iloc[i]} {np.rint(coord[0])} {np.rint(coord[1])}")
 
+    # Round to integer coordinate values
     ra_pix_int = np.rint(np.asarray(ra_pix)).astype(int)
     dec_pix_int = np.rint(np.asarray(dec_pix)).astype(int)
 
+    # Now we check the square of 9 pixels centered around each source
+    # ra_pix_int, dec_pix_int to find the index of the peak pixel
+    # This is usually the centre pixel, but not always
+
+    ra_pix_peak = []
+    dec_pix_peak = []
+
+    for p in range(ra_pix_int.shape[0]):
+
+        # Extract 3x3 pixels centred around coords
+        data_2d = data[0, 0, :, :]
+        sarray = data_2d[
+            dec_pix_int[p] - 1 : dec_pix_int[p] + 2,
+            ra_pix_int[p] - 1 : ra_pix_int[p] + 2,
+        ]
+
+        # Find indices of peak in subarray
+        # https://stackoverflow.com/questions/55284090/how-to-find-maximum-value-in-whole-2d-array-with-indices
+        peak_inds = np.unravel_index(sarray.argmax(), sarray.shape)
+
+        # Convert peak_inds of sarray to indices of original data array
+        # ra_pix_int[p] is ra index of center of sarray
+        # ra_pix_int[p] - 1 take you back to the top left corner of subarray
+        ra_pix_peak.append(ra_pix_int[p] - 1 + peak_inds[1])
+        dec_pix_peak.append(dec_pix_int[p] - 1 + peak_inds[0])
+
+    # Add pixel coordinates of peak fluxes to data frame
+    gleam_beam["ra_pix"] = ra_pix_peak
+    gleam_beam["dec_pix"] = dec_pix_peak
+
+    print(gleam_beam)
+
+    # Plotting stuff
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
     ax.imshow(data[0, 0, :, :], origin="lower", cmap=plt.cm.viridis)
     ax.scatter(ra_pix, dec_pix, marker="o", facecolor="none", edgecolor="seagreen")
     ax.scatter(
         ra_pix_int, dec_pix_int, marker="o", facecolor="none", edgecolor="orange"
+    )
+    ax.scatter(
+        ra_pix_peak, dec_pix_peak, marker="o", facecolor="none", edgecolor="blue"
     )
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
@@ -336,6 +370,7 @@ if __name__ == "__main__":
     mwa_el = mwa_loc.elevation.m
 
     lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+
     gleam_by_beam(
         gleam_cat=gleam_cat,
         mfs_fits=mfs_i,
