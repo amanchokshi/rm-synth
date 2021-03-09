@@ -74,13 +74,39 @@ def read_metafits(metafits):
     return lst, obsid, freqcent, ra_point, dec_point, delays
 
 
-def nearest_gleam_freq(freqcent):
-    """Find the nearest GLEAM frequency band."""
+def band_avg_flux(freqcent, gleam_df):
+    """Find flux at freqcent with spectral index and nearest gleam band.
 
-    gleam_bands = np.array([166, 174, 181, 189, 197, 204, 212, 220, 227])
-    idx = (np.abs(gleam_bands - freqcent)).argmin()
+    Parameters
+    ----------
+    freqcent : float/str
+        Frequency centre from metafits
+    gleam_df : pandas dataframe
+        GLEAM catalog as a pandas dataframe
 
-    return gleam_bands[idx]
+    Returns
+    -------
+    numpy.array
+        Flux at freqcent
+    """
+
+    # 200 - 230 MHz
+    if float(freqcent) > 200e6:
+        gleam_bands = np.array([204, 212, 220, 227])
+
+    # 163 - 200 MHz
+    else:
+        gleam_bands = np.array([166, 174, 181, 189, 197])
+
+    # Create array of fluxes in gleam bands
+    flux_array = []
+    for b in gleam_bands:
+        flux_array.append(gleam_df[f"peak_flux_{b}"].to_numpy())
+
+    # Average peak flux in each of the gleam bands
+    sfluxes = np.sum(np.asarray(flux_array), axis=0) / gleam_bands.shape[0]
+
+    return sfluxes
 
 
 def eq2horz(HA, Dec, lat):
@@ -200,6 +226,7 @@ def gleam_by_beam(
     mwa_lat=None,
     freqcent=None,
     delays=None,
+    smin=None,
     beam_thresh=None,
 ):
 
@@ -207,44 +234,7 @@ def gleam_by_beam(
     dat = Table.read(gleam_cat)
 
     # convert to a pandas data frame
-    df = dat.to_pandas()
-
-    # Extract columns of interest
-    gleam = df[
-        [
-            "Name",
-            "RAJ2000",
-            "DEJ2000",
-            "int_flux_166",
-            "a_166",
-            "b_166",
-            "int_flux_174",
-            "a_174",
-            "b_174",
-            "int_flux_181",
-            "a_181",
-            "b_181",
-            "int_flux_189",
-            "a_189",
-            "b_189",
-            "int_flux_197",
-            "a_197",
-            "b_197",
-            "int_flux_204",
-            "a_204",
-            "b_204",
-            "int_flux_212",
-            "a_212",
-            "b_212",
-            "int_flux_220",
-            "a_220",
-            "b_220",
-            "int_flux_227",
-            "a_227",
-            "b_227",
-            "alpha",
-        ]
-    ]
+    gleam_df = dat.to_pandas()
 
     # Read MFS image and extract range of ras and decs
     with fits.open(mfs_fits) as hdus:
@@ -262,13 +252,23 @@ def gleam_by_beam(
     ras = np.mod(ras, 360)
 
     # Select gleam sources within image
-    gleam_in_img = gleam[
-        (gleam.RAJ2000 <= np.amax(ras))
-        & (gleam.RAJ2000 >= np.amin(ras))
-        & (gleam.DEJ2000 <= np.amax(decs))
-        & (gleam.DEJ2000 >= np.amin(decs))
+    gleam_df = gleam_df[
+        (gleam_df.RAJ2000 <= np.amax(ras))
+        & (gleam_df.RAJ2000 >= np.amin(ras))
+        & (gleam_df.DEJ2000 <= np.amax(decs))
+        & (gleam_df.DEJ2000 >= np.amin(decs))
     ]
 
+    # Extract columns of interest
+    gleam_in_img = gleam_df[["Name", "RAJ2000", "DEJ2000"]]
+
+    # Add column with band averaged flux
+    sfluxes = band_avg_flux(freqcent, gleam_df)
+    gleam_in_img["sfluxes"] = sfluxes
+
+    gleam_in_img = gleam_in_img[(gleam_in_img.sfluxes >= smin)]
+
+    # Determine beam weights for gleam_in_img sources
     beam_weights = get_beam_weights(
         ras=gleam_in_img["RAJ2000"].to_numpy(),
         decs=gleam_in_img["DEJ2000"].to_numpy(),
@@ -278,14 +278,13 @@ def gleam_by_beam(
         delays=delays,
     )
 
+    # Append beam weights to df as new column
     gleam_in_img["beam_weights"] = beam_weights
 
     # Bleam sources in the field with beam weights more than threshold
-    gleam_beam = gleam_in_img[gleam_in_img.beam_weights >= beam_thresh]
+    gleam_beam = gleam_in_img[(gleam_in_img.beam_weights >= beam_thresh)]
 
-    gleam_beam = gleam_beam.sort_values("int_flux_212")
-
-    print(gleam_beam.head())
+    print(gleam_beam)
 
     # Convert ra, dec to pix coordinates
     ra_pix = []
@@ -344,5 +343,6 @@ if __name__ == "__main__":
         mwa_lat=mwa_lat,
         freqcent=freqcent,
         delays=delays,
+        smin=2.0,
         beam_thresh=0.3,
     )
