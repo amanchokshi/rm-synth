@@ -31,6 +31,10 @@ from matplotlib import pyplot as plt
 from mwa_pb import primary_beam
 from skyfield.api import wgs84
 
+# Ignore SettingWithCopyWarning
+# https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
+pd.options.mode.chained_assignment = None
+
 
 def read_metafits(metafits):
     """Extract header info from MWA metafits file
@@ -65,7 +69,7 @@ def read_metafits(metafits):
         freqcent = hdr["FREQCENT"] * 1e6
         ra_point = hdr["RA"]
         dec_point = hdr["DEC"]
-        delays = hdr["DELAYS"]
+        delays = np.fromstring(hdr["DELAYS"], dtype=int, sep=",")
 
     return lst, obsid, freqcent, ra_point, dec_point, delays
 
@@ -175,13 +179,19 @@ def get_beam_weights(
 
     # Old way of combining XX and YY - end up with beam values greater than 1, not good!
     # beam_weights = sqrt(XX[0]**2+YY[0]**2)
-    beam_weights = (XX[0] + YY[0]) / 2.0
+    beam_weights = np.asarray((XX[0] + YY[0]) / 2.0)
 
     return beam_weights
 
 
 def gleam_by_beam(
-    gleam_cat=None, mfs_fits=None, lst=None, mwa_lat=None, freqcent=None, delays=None
+    gleam_cat=None,
+    mfs_fits=None,
+    lst=None,
+    mwa_lat=None,
+    freqcent=None,
+    delays=None,
+    beam_thresh=None,
 ):
 
     # Read the gleam catalog and return astropy Table object
@@ -193,6 +203,7 @@ def gleam_by_beam(
     # Extract columns of interest
     gleam = df[
         [
+            "Name",
             "RAJ2000",
             "DEJ2000",
             "int_flux_166",
@@ -258,15 +269,18 @@ def gleam_by_beam(
         delays=delays,
     )
 
-    print(beam_weights)
+    gleam_in_img["beam_weights"] = beam_weights
+
+    # Bleam sources in the field with beam weights more than threshold
+    gleam_beam = gleam_in_img[gleam_in_img.beam_weights >= beam_thresh]
 
     # Convert ra, dec to pix coordinates
     ra_pix = []
     dec_pix = []
-    for i in range(gleam_in_img["RAJ2000"].to_numpy().shape[0]):
+    for i in range(gleam_beam["RAJ2000"].to_numpy().shape[0]):
         coord = wcs.wcs_world2pix(
-            gleam_in_img["RAJ2000"].to_numpy()[i],
-            gleam_in_img["DEJ2000"].to_numpy()[i],
+            gleam_beam["RAJ2000"].to_numpy()[i],
+            gleam_beam["DEJ2000"].to_numpy()[i],
             0,
             0,
             0,
@@ -310,4 +324,5 @@ if __name__ == "__main__":
         mwa_lat=mwa_lat,
         freqcent=freqcent,
         delays=delays,
+        beam_thresh=0.3,
     )
