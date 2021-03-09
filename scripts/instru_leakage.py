@@ -74,6 +74,15 @@ def read_metafits(metafits):
     return lst, obsid, freqcent, ra_point, dec_point, delays
 
 
+def nearest_gleam_freq(freqcent):
+    """Find the nearest GLEAM frequency band."""
+
+    gleam_bands = np.array([166, 174, 181, 189, 197, 204, 212, 220, 227])
+    idx = (np.abs(gleam_bands - freqcent)).argmin()
+
+    return gleam_bands[idx]
+
+
 def eq2horz(HA, Dec, lat):
     """Convert equatorial coordinates to horizontal
 
@@ -274,6 +283,10 @@ def gleam_by_beam(
     # Bleam sources in the field with beam weights more than threshold
     gleam_beam = gleam_in_img[gleam_in_img.beam_weights >= beam_thresh]
 
+    gleam_beam = gleam_beam.sort_values("int_flux_212")
+
+    print(gleam_beam.head())
+
     # Convert ra, dec to pix coordinates
     ra_pix = []
     dec_pix = []
@@ -287,11 +300,18 @@ def gleam_by_beam(
         )
         ra_pix.append(coord[0])
         dec_pix.append(coord[1])
+        #  print(f"{gleam_beam['Name'].iloc[i]} {np.rint(coord[0])} {np.rint(coord[1])}")
+
+    ra_pix_int = np.rint(np.asarray(ra_pix)).astype(int)
+    dec_pix_int = np.rint(np.asarray(dec_pix)).astype(int)
 
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
     ax.imshow(data[0, 0, :, :], origin="lower", cmap=plt.cm.viridis)
     ax.scatter(ra_pix, dec_pix, marker="o", facecolor="none", edgecolor="seagreen")
+    ax.scatter(
+        ra_pix_int, dec_pix_int, marker="o", facecolor="none", edgecolor="orange"
+    )
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[0].set_auto_axislabel(False)
