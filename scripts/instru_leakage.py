@@ -228,6 +228,7 @@ def gleam_by_beam(
     delays=None,
     smin=None,
     beam_thresh=None,
+    plot=False,
 ):
 
     # Read the gleam catalog and return astropy Table object
@@ -332,28 +333,60 @@ def gleam_by_beam(
     gleam_beam["ra_pix"] = ra_pix_peak
     gleam_beam["dec_pix"] = dec_pix_peak
 
-    print(gleam_beam)
-
     # Plotting stuff
-    fig = plt.figure(figsize=(7, 7))
-    ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
-    ax.imshow(data[0, 0, :, :], origin="lower", cmap=plt.cm.viridis)
-    ax.scatter(ra_pix, dec_pix, marker="o", facecolor="none", edgecolor="seagreen")
-    ax.scatter(
-        ra_pix_int, dec_pix_int, marker="o", facecolor="none", edgecolor="orange"
-    )
-    ax.scatter(
-        ra_pix_peak, dec_pix_peak, marker="o", facecolor="none", edgecolor="blue"
-    )
-    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
-    ax.coords[0].set_format_unit(u.deg)
-    ax.coords[0].set_auto_axislabel(False)
-    ax.set_xlabel("Right Ascension [deg]")
+    if plot is True:
+        plt.style.use("seaborn")
+        fig = plt.figure(figsize=(7, 7))
+        ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
+        ax.imshow(data[0, 0, :, :], origin="lower", cmap="Spectral_r")
+        ax.scatter(
+            ra_pix,
+            dec_pix,
+            marker="o",
+            facecolor="none",
+            edgecolor="seagreen",
+            linewidth=1.2,
+            label="GLEAM RaDec",
+        )
+        ax.scatter(
+            ra_pix_int,
+            dec_pix_int,
+            marker="o",
+            facecolor="none",
+            edgecolor="darkorange",
+            linewidth=2.1,
+            label="GLEAM Pixel",
+        )
+        ax.scatter(
+            ra_pix_peak,
+            dec_pix_peak,
+            marker="o",
+            facecolor="none",
+            edgecolor="crimson",
+            linewidth=1.2,
+            label="Source Peak",
+        )
+        ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
+        ax.coords[0].set_format_unit(u.deg)
+        ax.coords[0].set_auto_axislabel(False)
+        ax.set_xlabel("Right Ascension [deg]")
 
-    ax.coords[1].set_format_unit(u.deg)
-    ax.coords[1].set_auto_axislabel(False)
-    ax.set_ylabel("Declination [deg]")
-    plt.show()
+        ax.coords[1].set_format_unit(u.deg)
+        ax.coords[1].set_auto_axislabel(False)
+        ax.set_ylabel("Declination [deg]")
+
+        ax.set_title(
+            f"GLEAM sources - Beam Weight >= {beam_thresh}, Source Flux >= {smin} Jy"
+        )
+
+        leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+        leg.get_frame().set_facecolor("white")
+        for le in leg.legendHandles:
+            le.set_alpha(1)
+
+        plt.show()
+
+    return gleam_beam
 
 
 if __name__ == "__main__":
@@ -371,7 +404,7 @@ if __name__ == "__main__":
 
     lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
 
-    gleam_by_beam(
+    gleam_beam = gleam_by_beam(
         gleam_cat=gleam_cat,
         mfs_fits=mfs_i,
         lst=lst,
@@ -380,4 +413,5 @@ if __name__ == "__main__":
         delays=delays,
         smin=2.0,
         beam_thresh=0.3,
+        plot=True,
     )
