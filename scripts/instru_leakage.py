@@ -279,7 +279,7 @@ def gleam_by_beam(
     ras, _, _, _ = wcs[:2].all_pix2world(np.arange(data.shape[3]), 0, 0, 0, 0)
     _, decs, _, _ = wcs[:2].all_pix2world(0, np.arange(data.shape[2]), 0, 0, 0)
 
-    # Rescale from -180, 180 to 0, 360
+    # Rescale ras from -180, 180 to 0, 360
     ras = np.mod(ras, 360)
 
     # Select gleam sources within image
@@ -328,7 +328,7 @@ def gleam_by_beam(
         )
         ra_pix.append(coord[0])
         dec_pix.append(coord[1])
-
+    print(ra_pix)
     # Round to integer coordinate values
     ra_pix_int = np.rint(np.asarray(ra_pix)).astype(int)
     dec_pix_int = np.rint(np.asarray(dec_pix)).astype(int)
@@ -419,12 +419,47 @@ def gleam_by_beam(
     return gleam_beam
 
 
+def fit_leakage(gleam_beam=None, mfs_dir=None):
+    """Fit leakage surfaces to Q, U, V images."""
+
+    # Ra, Dec pixel positions from stokes I mfs image
+    ra_pix = gleam_beam.ra_pix.to_numpy()
+    dec_pix = gleam_beam.dec_pix.to_numpy()
+
+    pols = ["I", "Q", "U", "V"]
+
+    for pol in pols:
+
+        msf_fits = f"{mfs_dir}/uvdump-MFS-{pol}-image.fits"
+
+        with fits.open(msf_fits) as hdus:
+            data = hdus[0].data
+
+            # Flux at ra, dec pixel positions of mfs images
+            flux = data[0, 0, dec_pix, ra_pix]
+
+            # Add observed flux to pandas dataframe
+            gleam_beam[f"{pol}_flux"] = flux
+
+    # Determine fractional leakage for Q, U, V
+
+    I_flux = gleam_beam.I_flux.to_numpy()
+    Q_flux = gleam_beam.Q_flux.to_numpy()
+    U_flux = gleam_beam.U_flux.to_numpy()
+    V_flux = gleam_beam.V_flux.to_numpy()
+
+    gleam_beam["Q_leak"] = Q_flux / I_flux
+    gleam_beam["U_leak"] = U_flux / I_flux
+    gleam_beam["V_leak"] = V_flux / I_flux
+
+    return gleam_beam
+
+
 if __name__ == "__main__":
 
     gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
-    metafits = Path("../data/leakage/1120300352_metafits_ppds.fits")
-
-    mfs_i = Path("../data/leakage/wsc_stokes_2048/uvdump-MFS-I-image.fits")
+    mfs_dir = Path("../data/leakage/1120300352")
+    metafits = Path(f"{mfs_dir}/1120300352_metafits_ppds.fits")
 
     # MWA coordinates
     mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
@@ -436,7 +471,7 @@ if __name__ == "__main__":
 
     gleam_beam = gleam_by_beam(
         gleam_cat=gleam_cat,
-        mfs_fits=mfs_i,
+        mfs_fits=f"{mfs_dir}/uvdump-MFS-I-image.fits",
         lst=lst,
         mwa_lat=mwa_lat,
         freqcent=freqcent,
@@ -445,6 +480,21 @@ if __name__ == "__main__":
         beam_thresh=0.3,
         plot=True,
     )
+
+    gleam_beam = fit_leakage(gleam_beam=gleam_beam, mfs_dir=mfs_dir)
+
+    plt.scatter(
+        gleam_beam.RAJ2000.to_numpy(),
+        gleam_beam.DEJ2000.to_numpy(),
+        c=gleam_beam.Q_leak.to_numpy(),
+        marker="s",
+        cmap="viridis",
+        s=77,
+        edgecolor="black",
+        linewidth=0.4,
+    )
+    plt.tight_layout()
+    plt.show()
 
     # Get ra, dec coords of all pixels
     # https://github.com/astropy/astropy/issues/1587
