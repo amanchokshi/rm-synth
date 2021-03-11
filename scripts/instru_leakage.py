@@ -28,7 +28,9 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mwa_pb import primary_beam
+from scipy.linalg import lstsq
 from skyfield.api import wgs84
 
 # Ignore SettingWithCopyWarning
@@ -328,7 +330,7 @@ def gleam_by_beam(
         )
         ra_pix.append(coord[0])
         dec_pix.append(coord[1])
-    print(ra_pix)
+
     # Round to integer coordinate values
     ra_pix_int = np.rint(np.asarray(ra_pix)).astype(int)
     dec_pix_int = np.rint(np.asarray(dec_pix)).astype(int)
@@ -452,6 +454,101 @@ def fit_leakage(gleam_beam=None, mfs_dir=None):
     gleam_beam["U_leak"] = U_flux / I_flux
     gleam_beam["V_leak"] = V_flux / I_flux
 
+    # Get image data from I header and create wcs obj
+    msf_i = f"{mfs_dir}/uvdump-MFS-I-image.fits"
+
+    with fits.open(msf_i) as hdus:
+        hdr = hdus[0].header
+
+        # World Coordinate System
+        wcs = WCS(hdr)
+
+        # Pixel indices along Ra: x, Dec: y
+        x = np.arange(hdr["NAXIS1"])
+        y = np.arange(hdr["NAXIS2"])
+
+        # Pixel meshgrid
+        X, Y = np.meshgrid(x, y)
+        ras, decs, _, _ = wcs.wcs_pix2world(X, Y, 0, 0, 0)
+
+        # Rescale ras from -180, 180 to 0, 360
+        ras = np.mod(ras, 360)
+
+        # Flatten 2D ras, decs arrays
+        ra_f = ras.flatten()
+        dec_f = decs.flatten()
+
+    # http://inversionlabs.com/2016/03/21/best-fit-surfaces-for-3-dimensional-data.html
+    # Create data array to fit quadratic surface to
+    # x, y, z in array columns
+    data = np.c_[
+        gleam_beam.RAJ2000.to_numpy(),
+        gleam_beam.DEJ2000.to_numpy(),
+        gleam_beam.Q_leak.to_numpy(),
+    ]
+
+    # Best fit quadratic surface (2nd-order)
+    A = np.c_[
+        np.ones(data.shape[0]),
+        data[:, :2],
+        np.prod(data[:, :2], axis=1),
+        data[:, :2] ** 2,
+    ]
+    B = data[:, 2]
+    C, _, _, _ = lstsq(A, B)
+
+    # Evaluate the fit on the ra, dec 2D grid
+    Z = np.dot(
+        np.c_[np.ones(ra_f.shape), ra_f, dec_f, ra_f * dec_f, ra_f ** 2, dec_f ** 2], C
+    ).reshape(ras.shape)
+
+    # Plot stuff
+    plt.style.use("seaborn")
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
+    im = ax.imshow(Z, origin="lower", cmap="Spectral_r")
+
+    ax.scatter(
+        gleam_beam.ra_pix.to_numpy(),
+        gleam_beam.dec_pix.to_numpy(),
+        c=gleam_beam.Q_leak.to_numpy(),
+        marker="s",
+        cmap="Spectral_r",
+        s=77,
+        edgecolor="black",
+        linewidth=0.4,
+        vmin=np.amin(Z),
+        vmax=np.amax(Z),
+    )
+    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
+    ax.coords[0].set_format_unit(u.deg)
+    ax.coords[0].set_auto_axislabel(False)
+    ax.set_xlabel("Right Ascension [deg]")
+
+    ax.coords[1].set_format_unit(u.deg)
+    ax.coords[1].set_auto_axislabel(False)
+    ax.set_ylabel("Declination [deg]")
+
+    ax.set_title("Leakage Surface")
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    cax.coords[1].set_ticklabel_position("r")
+    cax.coords[1].set_axislabel_position("r")
+    cax.coords[1].set_axislabel("Fractional Leakage")
+    cax.coords[0].set_ticks(
+        alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
+    )
+
+    plt.colorbar(im, cax=cax)
+
+    #  leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+    #  leg.get_frame().set_facecolor("white")
+    #  for le in leg.legendHandles:
+    #  le.set_alpha(1)
+
+    plt.show()
+
     return gleam_beam
 
 
@@ -478,23 +575,10 @@ if __name__ == "__main__":
         delays=delays,
         smin=2.0,
         beam_thresh=0.3,
-        plot=True,
+        plot=False,
     )
 
     gleam_beam = fit_leakage(gleam_beam=gleam_beam, mfs_dir=mfs_dir)
-
-    plt.scatter(
-        gleam_beam.RAJ2000.to_numpy(),
-        gleam_beam.DEJ2000.to_numpy(),
-        c=gleam_beam.Q_leak.to_numpy(),
-        marker="s",
-        cmap="viridis",
-        s=77,
-        edgecolor="black",
-        linewidth=0.4,
-    )
-    plt.tight_layout()
-    plt.show()
 
     # Get ra, dec coords of all pixels
     # https://github.com/astropy/astropy/issues/1587
