@@ -421,7 +421,7 @@ def gleam_by_beam(
     return gleam_beam
 
 
-def fit_leakage(gleam_beam=None, mfs_dir=None):
+def fit_leakage(gleam_beam=None, mfs_dir=None, title=None):
     """Fit leakage surfaces to Q, U, V images."""
 
     # Ra, Dec pixel positions from stokes I mfs image
@@ -478,107 +478,131 @@ def fit_leakage(gleam_beam=None, mfs_dir=None):
         ra_f = ras.flatten()
         dec_f = decs.flatten()
 
-    # http://inversionlabs.com/2016/03/21/best-fit-surfaces-for-3-dimensional-data.html
-    # Create data array to fit quadratic surface to
-    # x, y, z in array columns
-    data = np.c_[
-        gleam_beam.RAJ2000.to_numpy(),
-        gleam_beam.DEJ2000.to_numpy(),
-        gleam_beam.Q_leak.to_numpy(),
-    ]
+    # Fit leakage surfaces for Q, U, V polarizations
 
-    # Best fit quadratic surface (2nd-order)
-    A = np.c_[
-        np.ones(data.shape[0]),
-        data[:, :2],
-        np.prod(data[:, :2], axis=1),
-        data[:, :2] ** 2,
-    ]
-    B = data[:, 2]
-    C, _, _, _ = lstsq(A, B)
+    # Dictionary for leakage surface arrays
+    leakage_surface = {}
 
-    # Evaluate the fit on the ra, dec 2D grid
-    Z = np.dot(
-        np.c_[np.ones(ra_f.shape), ra_f, dec_f, ra_f * dec_f, ra_f ** 2, dec_f ** 2], C
-    ).reshape(ras.shape)
+    for i, pol in enumerate(["Q", "U", "V"]):
 
-    # Plot stuff
+        # http://inversionlabs.com/2016/03/21/best-fit-surfaces-for-3-dimensional-data.html
+        # Create data array to fit quadratic surface to
+        # x, y, z in array columns
+        data = np.c_[
+            gleam_beam.RAJ2000.to_numpy(),
+            gleam_beam.DEJ2000.to_numpy(),
+            gleam_beam[f"{pol}_leak"].to_numpy(),
+        ]
+
+        # Best fit quadratic surface (2nd-order)
+        A = np.c_[
+            np.ones(data.shape[0]),
+            data[:, :2],
+            np.prod(data[:, :2], axis=1),
+            data[:, :2] ** 2,
+        ]
+        B = data[:, 2]
+        C, _, _, _ = lstsq(A, B)
+
+        # Evaluate the fit on the ra, dec 2D grid
+        Z = np.dot(
+            np.c_[
+                np.ones(ra_f.shape), ra_f, dec_f, ra_f * dec_f, ra_f ** 2, dec_f ** 2
+            ],
+            C,
+        ).reshape(ras.shape)
+
+        leakage_surface[f"{pol}"] = Z
+
     plt.style.use("seaborn")
-    fig = plt.figure(figsize=(7, 7))
-    ax = fig.add_subplot(111, projection=wcs[0, 0, :, :])
-    im = ax.imshow(Z, origin="lower", cmap="Spectral_r")
-
-    ax.scatter(
-        gleam_beam.ra_pix.to_numpy(),
-        gleam_beam.dec_pix.to_numpy(),
-        c=gleam_beam.Q_leak.to_numpy(),
-        marker="s",
-        cmap="Spectral_r",
-        s=77,
-        edgecolor="black",
-        linewidth=0.4,
-        vmin=np.amin(Z),
-        vmax=np.amax(Z),
+    fig, axs = plt.subplots(
+        1, 3, figsize=(16, 6), subplot_kw=dict(projection=wcs[0, 0, :, :])
     )
-    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
-    ax.coords[0].set_format_unit(u.deg)
-    ax.coords[0].set_auto_axislabel(False)
-    ax.set_xlabel("Right Ascension [deg]")
+    fig.suptitle(title, fontsize=16)
 
-    ax.coords[1].set_format_unit(u.deg)
-    ax.coords[1].set_auto_axislabel(False)
-    ax.set_ylabel("Declination [deg]")
+    for i, pol in enumerate(["Q", "U", "V"]):
 
-    ax.set_title("Leakage Surface")
+        im = axs[i].imshow(leakage_surface[f"{pol}"], origin="lower", cmap="Spectral_r")
 
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.1)
-    cax.coords[1].set_ticklabel_position("r")
-    cax.coords[1].set_axislabel_position("r")
-    cax.coords[1].set_axislabel("Fractional Leakage")
-    cax.coords[0].set_ticks(
-        alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
-    )
+        axs[i].scatter(
+            gleam_beam.ra_pix.to_numpy(),
+            gleam_beam.dec_pix.to_numpy(),
+            c=gleam_beam[f"{pol}_leak"].to_numpy(),
+            marker="s",
+            cmap="Spectral_r",
+            s=77,
+            edgecolor="black",
+            linewidth=0.4,
+            vmin=np.amin(leakage_surface[f"{pol}"]),
+            vmax=np.amax(leakage_surface[f"{pol}"]),
+        )
+        axs[i].coords.grid(True, color="white", alpha=0.8, ls="dotted")
+        axs[i].coords[0].set_format_unit(u.deg)
+        axs[i].coords[0].set_auto_axislabel(False)
+        axs[i].set_xlabel("Right Ascension [deg]")
 
-    plt.colorbar(im, cax=cax)
+        axs[i].coords[1].set_format_unit(u.deg)
+        axs[i].coords[1].set_auto_axislabel(False)
+        axs[i].set_ylabel("Declination [deg]")
 
-    #  leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
-    #  leg.get_frame().set_facecolor("white")
-    #  for le in leg.legendHandles:
-    #  le.set_alpha(1)
+        axs[i].set_title(f"Quadratic Leakage Surface [{pol}/I]", y=1.2)
 
-    plt.show()
+        divider = make_axes_locatable(axs[i])
+        cax = divider.append_axes("top", size="5%", pad=0.1)
+        cax.coords[0].set_ticklabel_position("t")
+        cax.coords[0].set_axislabel_position("t")
+        cax.coords[0].set_axislabel("Fractional Leakage")
+        cax.coords[1].set_ticks(
+            alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
+        )
+        plt.colorbar(im, cax=cax, orientation="horizontal")
 
-    return gleam_beam
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+        ax.label_outer()
+
+    axs[1].coords[1].set_ticks_visible(False)
+    axs[1].coords[1].set_ticklabel_visible(False)
+    axs[2].coords[1].set_ticks_visible(False)
+    axs[2].coords[1].set_ticklabel_visible(False)
+
+    plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
 
     gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
-    mfs_dir = Path("../data/leakage/1120300352")
-    metafits = Path(f"{mfs_dir}/1120300352_metafits_ppds.fits")
 
-    # MWA coordinates
-    mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
-    mwa_lat = mwa_loc.latitude.degrees
-    mwa_lon = mwa_loc.longitude.degrees
-    mwa_el = mwa_loc.elevation.m
+    dirs = ["fee_1120300352", "fee_1120300232", "ana_1120300352", "ana_1120300232"]
 
-    lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+    for d in dirs:
 
-    gleam_beam = gleam_by_beam(
-        gleam_cat=gleam_cat,
-        mfs_fits=f"{mfs_dir}/uvdump-MFS-I-image.fits",
-        lst=lst,
-        mwa_lat=mwa_lat,
-        freqcent=freqcent,
-        delays=delays,
-        smin=2.0,
-        beam_thresh=0.3,
-        plot=False,
-    )
+        _, obsid = d.split("_")
 
-    gleam_beam = fit_leakage(gleam_beam=gleam_beam, mfs_dir=mfs_dir)
+        mfs_dir = Path(f"../data/leakage/{d}")
+        metafits = Path(f"{mfs_dir}/{obsid}_metafits_ppds.fits")
+
+        # MWA coordinates
+        mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
+        mwa_lat = mwa_loc.latitude.degrees
+        mwa_lon = mwa_loc.longitude.degrees
+        mwa_el = mwa_loc.elevation.m
+
+        lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+
+        gleam_beam = gleam_by_beam(
+            gleam_cat=gleam_cat,
+            mfs_fits=f"{mfs_dir}/uvdump-MFS-I-image.fits",
+            lst=lst,
+            mwa_lat=mwa_lat,
+            freqcent=freqcent,
+            delays=delays,
+            smin=2.0,
+            beam_thresh=0.3,
+            plot=False,
+        )
+
+        gleam_beam = fit_leakage(gleam_beam=gleam_beam, mfs_dir=mfs_dir, title=f"{d}")
 
     # Get ra, dec coords of all pixels
     # https://github.com/astropy/astropy/issues/1587
