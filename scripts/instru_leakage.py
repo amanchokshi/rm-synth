@@ -21,6 +21,7 @@ Chris Riseley - correct_leakage.py
 
 from pathlib import Path
 
+import mwa_hyperbeam
 import numpy as np
 import pandas as pd
 from astropy import units as u
@@ -74,6 +75,41 @@ def read_metafits(metafits):
         delays = np.fromstring(hdr["DELAYS"], dtype=int, sep=",")
 
     return lst, obsid, freqcent, ra_point, dec_point, delays
+
+
+def makeUnpolInstrumentalResponse(j1, j2):
+    """Convert Jones matracies to unpolarised beam responses.
+
+    Form the visibility matrix in instrumental response from two Jones
+    matrices assuming unpolarised sources (hence the brightness matrix is
+    the identity matrix)
+
+    Designed to work with jones matracies output from mwa_hyperbeam, which
+    have shape of first axis being equal to number of az/za being evaluated
+    with the last axis having 4 values. [[az][za], 4]
+
+    Modified from: https://github.com/MWATelescope/mwa_pb - beam_tools.py
+
+
+    Parameters
+    ----------
+    j1 : numpy.array
+        Jones matrix output from mwa_pb. [[az], 4]
+    j2 : numpy.array
+        Jones matrix output from mwa_pb. [[az], 4]
+
+    Returns
+    -------
+    numpy.array
+       Shape [[az][za], [xx, xy, yx, yy]]
+    """
+    result = np.empty_like(j1)
+
+    result[:, 0] = j1[:, 0] * j2[:, 0].conjugate() + j1[:, 1] * j2[:, 1].conjugate()
+    result[:, 3] = j1[:, 2] * j2[:, 2].conjugate() + j1[:, 3] * j2[:, 3].conjugate()
+    result[:, 1] = j1[:, 0] * j2[:, 2].conjugate() + j1[:, 1] * j2[:, 3].conjugate()
+    result[:, 2] = j1[:, 2] * j2[:, 0].conjugate() + j1[:, 3] * j2[:, 1].conjugate()
+    return result
 
 
 def band_avg_flux(freqcent, gleam_df):
@@ -163,7 +199,13 @@ def eq2horz(HA, Dec, lat):
 
 
 def get_beam_weights(
-    ras=None, decs=None, LST=None, mwa_lat=None, freqcent=None, delays=None
+    ras=None,
+    decs=None,
+    LST=None,
+    mwa_lat=None,
+    freqcent=None,
+    delays=None,
+    mwa_pb=False,
 ):
     """Get normalized beam weights for an mwa observation
 
@@ -204,21 +246,44 @@ def get_beam_weights(
     za = (90 - Alt) * np.pi / 180
     az = Az * np.pi / 180
 
-    XX, YY = primary_beam.MWA_Tile_full_EE(
-        [za],
-        [az],
-        freq=freqcent,
-        delays=delays,
-        zenithnorm=True,
-        power=True,
-        interp=False,
-    )
+    if mwa_pb:
 
-    # Old way of combining XX and YY - end up with beam values greater than 1, not good!
-    # beam_weights = sqrt(XX[0]**2+YY[0]**2)
-    beam_weights = np.asarray((XX[0] + YY[0]) / 2.0)
+        XX, YY = primary_beam.MWA_Tile_full_EE(
+            [za],
+            [az],
+            freq=freqcent,
+            delays=delays,
+            zenithnorm=True,
+            power=True,
+            interp=False,
+        )
+        # Old way of combining XX and YY - end up with beam values greater than 1, not good!
+        # beam_weights = sqrt(XX[0]**2+YY[0]**2)
+        beam_weights = np.asarray((XX[0] + YY[0]) / 2.0)
 
-    return beam_weights
+        return beam_weights
+
+    else:
+
+        # We can make a new beam object with a path to the HDF5 file specified by MWA_BEAM_FILE.
+        beam = mwa_hyperbeam.FEEBeam()
+
+        amps = [1.0] * 16
+        norm_to_zenith = True
+
+        # beam.calc_jones is also available, but that makes a single Jones matrix at a
+        # time, so one would need to iterate over az and za. calc_jones_array is done in
+        # parallel with Rust (so it's fast).
+        jones = beam.calc_jones_array(az, za, freqcent, delays, amps, norm_to_zenith)
+
+        unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+        XX = unpol_beam[:, 0]
+        YY = unpol_beam[:, 3]
+
+        beam_weights = np.asarray((XX + YY) / 2.0)
+
+        return beam_weights
 
 
 def gleam_by_beam(
@@ -488,6 +553,11 @@ def fit_leakage(
 
     # Fit leakage surfaces for Q, U, V polarizations
 
+    beam_weights = get_beam_weights(
+        ras=ra_f, decs=dec_f, LST=lst, mwa_lat=mwa_lat, freqcent=freqcent, delays=delays
+    )
+    beam_weights = beam_weights.reshape(ras.shape)
+
     # Dictionary for leakage surface arrays
     leakage_surface = {}
 
@@ -532,6 +602,16 @@ def fit_leakage(
 
         im = axs[i].imshow(leakage_surface[f"{pol}"], origin="lower", cmap="Spectral_r")
 
+        levels = [0.001, 0.01, 0.1, 0.3, 0.6, 0.9]
+        CS = axs[i].contour(
+            beam_weights.real,
+            levels,
+            colors="#222222",
+            linewidths=0.7,
+            linestyles="dotted",
+        )
+        axs[i].clabel(CS, inline=1, fontsize=5)
+
         axs[i].scatter(
             gleam_beam.ra_pix.to_numpy(),
             gleam_beam.dec_pix.to_numpy(),
@@ -543,7 +623,9 @@ def fit_leakage(
             linewidth=0.4,
             vmin=np.amin(leakage_surface[f"{pol}"]),
             vmax=np.amax(leakage_surface[f"{pol}"]),
+            zorder=777,
         )
+
         axs[i].coords.grid(True, color="white", alpha=0.8, ls="dotted")
         axs[i].coords[0].set_format_unit(u.deg)
         axs[i].coords[0].set_auto_axislabel(False)
@@ -574,8 +656,8 @@ def fit_leakage(
     axs[2].coords[1].set_ticks_visible(False)
     axs[2].coords[1].set_ticklabel_visible(False)
 
-    plt.show()
-    #  plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
+    #  plt.show()
+    plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
@@ -585,6 +667,8 @@ if __name__ == "__main__":
     dirs = ["fee_1120300352", "fee_1120300232", "ana_1120300352", "ana_1120300232"]
 
     for d in dirs:
+
+        print(f" ** INFO: Crunching data in - {d}")
 
         _, obsid = d.split("_")
 
@@ -620,4 +704,3 @@ if __name__ == "__main__":
             freqcent=freqcent,
             delays=delays,
         )
-        break
