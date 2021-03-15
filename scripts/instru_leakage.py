@@ -421,7 +421,15 @@ def gleam_by_beam(
     return gleam_beam
 
 
-def fit_leakage(gleam_beam=None, mfs_dir=None, title=None):
+def fit_leakage(
+    gleam_beam=None,
+    mfs_dir=None,
+    title=None,
+    LST=None,
+    mwa_lat=None,
+    freqcent=None,
+    delays=None,
+):
     """Fit leakage surfaces to Q, U, V images."""
 
     # Ra, Dec pixel positions from stokes I mfs image
@@ -566,7 +574,8 @@ def fit_leakage(gleam_beam=None, mfs_dir=None, title=None):
     axs[2].coords[1].set_ticks_visible(False)
     axs[2].coords[1].set_ticklabel_visible(False)
 
-    plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
+    plt.show()
+    #  plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
@@ -602,11 +611,13 @@ if __name__ == "__main__":
             plot=False,
         )
 
-        gleam_beam = fit_leakage(gleam_beam=gleam_beam, mfs_dir=mfs_dir, title=f"{d}")
-
-    # Get ra, dec coords of all pixels
-    # https://github.com/astropy/astropy/issues/1587
-    #  x = np.arange(NAXIS1)
-    #  y = np.arange(NAXIS2)
-    #  X, Y = np.meshgrid(x, y)
-    #  ra, dec = wcs.wcs_pix2world(X, Y, 0)
+        gleam_beam = fit_leakage(
+            gleam_beam=gleam_beam,
+            mfs_dir=mfs_dir,
+            title=f"{d}",
+            LST=lst,
+            mwa_lat=mwa_lat,
+            freqcent=freqcent,
+            delays=delays,
+        )
+        break
