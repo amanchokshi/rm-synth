@@ -78,11 +78,11 @@ if __name__ == "__main__":
     #  plt.tight_layout()
     #  plt.show()
 
-    levels = [0.0001, 0.001, 0.01, 0.1, 0.3, 0.9]
+    levels = [0.001, 0.01, 0.1, 0.3, 0.5, 0.9]
 
     fig, ax = plt.subplots()
     im = ax.imshow(beam_weights.real, norm=LogNorm(vmin=0.0001, vmax=1))
-    CS = ax.contour(beam_weights.real, levels)
-    ax.clabel(CS, inline=1, fontsize=6)
+    CS = ax.contour(beam_weights.real, levels, colors="white", linewidths=0.7)
+    ax.clabel(CS, inline=1, fontsize=5)
     plt.tight_layout()
     plt.show()
