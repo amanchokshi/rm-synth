@@ -610,7 +610,7 @@ def fit_leakage(
             linewidths=0.7,
             linestyles="dotted",
         )
-        axs[i].clabel(CS, inline=1, fontsize=5)
+        axs[i].clabel(CS, inline=1, fontsize=7)
 
         axs[i].scatter(
             gleam_beam.ra_pix.to_numpy(),
