@@ -1,3 +1,5 @@
+"""Plot unpolarised all-sky MWA FEE beam response using hyperbeam."""
+
 import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt

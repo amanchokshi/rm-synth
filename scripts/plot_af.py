@@ -1,3 +1,5 @@
+"""Plot Analytic vs FEE RM Spectra."""
+
 from matplotlib import pyplot as plt
 
 from plot_rm import pogs_obj_loc, read_noise, read_rm_cube
@@ -40,7 +42,7 @@ ax.set_title("POGSII-EG-321 Analytic vs FEE Beam")
 ax.grid(True, color="white", linewidth=1.2, alpha=0.9, ls="dotted")
 
 leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
-leg.get_frame().set_edgecolor('#22222233')
+leg.get_frame().set_edgecolor("#22222233")
 leg.get_frame().set_facecolor("none")
 for le in leg.legendHandles:
     le.set_alpha(1)

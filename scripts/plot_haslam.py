@@ -1,3 +1,5 @@
+"""Plot haslam map with pogs sources and eor fields."""
+
 import matplotlib
 import numpy as np
 from astropy import units as u
@@ -8,13 +10,11 @@ from astropy_healpix import HEALPix
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from colormaps import spectral
 
-
-def read_haslam(fits_file):
+def read_haslam(haslam_fits):
     """Read the healpix haslam map."""
 
-    with fits.open("haslam408_dsds_Remazeilles2014.fits") as hdus:
+    with fits.open(haslam_fits) as hdus:
         nside = hdus[1].header["NSIDE"]
         order = hdus[1].header["ORDERING"]
         temp = np.ravel((hdus[1].data["TEMPERATURE"][:, :]))
@@ -45,11 +45,13 @@ if __name__ == "__main__":
     # HASLAM MAP
     # ----------
     # Download Haslam fits file at https://lambda.gsfc.nasa.gov/product/foreground/fg_2014_haslam_408_get.cfm
-    temp, nside, order = read_haslam("haslam408_dsds_Remazeilles2014.fits")
+    temp, nside, order = read_haslam(
+        "../data/leakage/haslam408_dsds_Remazeilles2014.fits"
+    )
 
     # Read the POGs tables in to return an astropy Table object
-    exgal = Table.read("POGS-II_ExGal.fits")
-    psr = Table.read("POGS-II_PsrCat.fits")
+    exgal = Table.read("../data/leakage/POGS-II_ExGal.fits")
+    psr = Table.read("../data/leakage/POGS-II_PsrCat.fits")
 
     df_ex = exgal.to_pandas()
     df_psr = psr.to_pandas()
@@ -93,9 +95,6 @@ if __name__ == "__main__":
 
     plt.rcParams.update(nice_fonts)
 
-    # Custom spectral colormap
-    spec, spec_r = spectral()
-
     # Figure
     fig = plt.figure(figsize=(14, 7))
     ax = fig.add_subplot(1, 1, 1)
@@ -103,7 +102,7 @@ if __name__ == "__main__":
     # Haslam map
     haslam = plt.imshow(
         tmap,
-        cmap=spec,
+        cmap="Spectral_r",
         extent=[-180, 180, -90, 90],
         norm=matplotlib.colors.LogNorm(),
         aspect="auto",
@@ -169,5 +168,5 @@ if __name__ == "__main__":
     ax.axis("scaled")
 
     plt.tight_layout()
-    plt.savefig("haslam_pogs.png")
-    #  plt.show()
+    #  plt.savefig("haslam_pogs.png")
+    plt.show()

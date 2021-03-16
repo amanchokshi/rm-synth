@@ -1,5 +1,5 @@
 """
-Compare a set of RM Spectra
+Compare a set of RM Spectra.
 """
 
 from matplotlib import pyplot as plt

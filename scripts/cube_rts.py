@@ -1,5 +1,5 @@
 """
-Convert RTS fine channel images in spectral cube
+Convert RTS fine channel images in spectral cube.
 """
 
 import re

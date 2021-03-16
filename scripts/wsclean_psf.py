@@ -1,3 +1,5 @@
+"""Plot the PSF of a wsclean image."""
+
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -47,7 +49,7 @@ plt.plot(
     dec[int(center_pix - width / 2) : int(center_pix + width / 2)],
     data[0, 0, int(center_pix - width / 2) : int(center_pix + width / 2), center_pix],
     lw=2,
-    color="seagreen"
+    color="seagreen",
 )
 plt.title(f"MWA PSF @ {hdr['CRVAL3']} Hz")
 plt.xlabel("Declination [deg]")

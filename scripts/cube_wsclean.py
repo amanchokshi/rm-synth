@@ -1,5 +1,5 @@
 """
-Convert WSClean fine channel images in spectral cube
+Convert WSClean fine channel images in spectral cube.
 """
 
 from pathlib import Path
