@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import Galactic, SkyCoord
@@ -6,6 +8,9 @@ from astropy.table import Table
 from astropy_healpix import HEALPix
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from skyfield.api import wgs84
+
+from instru_leakage import get_beam_weights, read_metafits
 
 
 def read_haslam(haslam_fits):
@@ -19,18 +24,7 @@ def read_haslam(haslam_fits):
     return temp, nside, order
 
 
-def eor_field(fov, radec):
-    """Plot an EoR field outline.
-
-    fov:        Field of view of half power beam
-    ra, dec:    Right ascension & Declination list
-    """
-    return plt.Circle(
-        (15 * radec[0], radec[1]), fov / 2, ec="w", lw=2.1, ls=":", fill=None, zorder=4,
-    )
-
-
-def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
+def plt_field(ra_point, dec_point, fov, haslam_fits, pogs_fits):
 
     temp, nside, order = read_haslam(haslam_fits)
 
@@ -39,22 +33,24 @@ def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
     df_ex = exgal.to_pandas()
 
     # Rescale RA from (0, 360) to (-180, 180)
-    df_ex["ra"] = [i - 360 if i > 180 else i for i in df_ex.ra]
+    #  df_ex["ra"] = [i - 360 if i > 180 else i for i in df_ex.ra]
 
     # Crop around EoR Field
     df_ex_cr = df_ex[
-        (df_ex.ra < (eor[0] * 15 + (fov / 2)))
-        & (df_ex.ra > (eor[0] * 15 - (fov / 2)))
-        & (df_ex.dec < (eor[1] + (fov / 2)))
-        & (df_ex.dec > (eor[1] - (fov / 2)))
+        (df_ex.ra < (ra_point + (fov / 2)))
+        & (df_ex.ra > (ra_point - (fov / 2)))
+        & (df_ex.dec < (dec_point + (fov / 2)))
+        & (df_ex.dec > (dec_point - (fov / 2)))
     ]
 
     # Size of the marker based on absolute value of rm
     s_exgal = np.absolute(df_ex_cr.rm)
 
     # Sample a grid in RA/Dec
-    ra = np.linspace((eor[0] * 15 - (fov / 2)), (eor[0] * 15 + (fov / 2)), 261) * u.deg
-    dec = np.linspace((eor[1] - (fov / 2)), (eor[1] + (fov / 2)), 261) * u.deg
+    ra = np.linspace((ra_point - (fov / 2)), (ra_point + (fov / 2)), 261) * u.deg
+    dec = np.linspace((dec_point - (fov / 2)), (dec_point + (fov / 2)), 261) * u.deg
+
+    # Setup ra/dec grid
     ra_grid, dec_grid = np.meshgrid(ra, dec)
 
     # Set up Astropy coordinate objects
@@ -88,10 +84,10 @@ def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
         tmap,
         cmap="Spectral_r",
         extent=[
-            (eor[0] * 15 - (fov / 2)),
-            (eor[0] * 15 + (fov / 2)),
-            (eor[1] - (fov / 2)),
-            (eor[1] + (fov / 2)),
+            (ra_point - (fov / 2)),
+            (ra_point + (fov / 2)),
+            (dec_point - (fov / 2)),
+            (dec_point + (fov / 2)),
         ],
         #  norm=matplotlib.colors.LogNorm(),
         aspect="auto",
@@ -124,7 +120,6 @@ def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
         )
 
     # Labels, ticks, etc
-    ax.set_title(f"{fname} Field $&$ POGS")
     ax.set_xlabel("Right ascension [$deg$]")
     ax.set_ylabel("Declination [$deg$]")
 
@@ -137,28 +132,38 @@ def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
     fig.colorbar(ex, cax=cax2, label="RM [$rad\ m^{-2}$]")
 
     # EoR fields
-    e0 = eor_field(fov, eor)
-    ax.add_patch(e0)
-    ax.axis("scaled")
+    #  e0 = eor_field(fov, eor)
+    #  ax.add_patch(e0)
+    #  ax.axis("scaled")
     plt.tight_layout()
 
-    if save:
-        plt.savefig(f"{fname}_pogs.png")
-    else:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
 
-    # EoR Fields - [α, δ]
-    # -------------------
-    eor0 = [0, -27]
-    eor1 = [4, -27]
-    eor2 = [10.3, -10]
     fov = 26  # half power beam
     haslam_fits = "../data/leakage/haslam408_dsds_Remazeilles2014.fits"
     pogs_fits = "../data/leakage/POGS-II_ExGal.fits"
+    dirs = ["fee_1120300352", "fee_1120300232", "ana_1120300352", "ana_1120300232"]
 
-    plt_field(eor0, fov, "EoR0", haslam_fits, pogs_fits)
-    #  plt_field(eor1, fov, "EoR1", save=True)
-    #  plt_field(eor2, fov, "EoR2", save=True)
+    for d in dirs:
+
+        print(f" ** INFO: Crunching data in - {d}")
+
+        _, obsid = d.split("_")
+
+        mfs_dir = Path(f"../data/leakage/{d}")
+        metafits = Path(f"{mfs_dir}/{obsid}_metafits_ppds.fits")
+
+        # MWA coordinates
+        mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
+        mwa_lat = mwa_loc.latitude.degrees
+        mwa_lon = mwa_loc.longitude.degrees
+        mwa_el = mwa_loc.elevation.m
+
+        lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+
+        plt_field(ra_point, dec_point, fov, haslam_fits, pogs_fits)
+
+        break
