@@ -7,13 +7,11 @@ from astropy_healpix import HEALPix
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from colormaps import spectral
 
-
-def read_haslam(fits_file):
+def read_haslam(haslam_fits):
     """Read the healpix haslam map."""
 
-    with fits.open("haslam408_dsds_Remazeilles2014.fits") as hdus:
+    with fits.open(haslam_fits) as hdus:
         nside = hdus[1].header["NSIDE"]
         order = hdus[1].header["ORDERING"]
         temp = np.ravel((hdus[1].data["TEMPERATURE"][:, :]))
@@ -32,12 +30,12 @@ def eor_field(fov, radec):
     )
 
 
-def plt_field(eor, fov, fname, save=False):
+def plt_field(eor, fov, fname, haslam_fits, pogs_fits, save=False):
 
-    temp, nside, order = read_haslam("haslam408_dsds_Remazeilles2014.fits")
+    temp, nside, order = read_haslam(haslam_fits)
 
     # Read the POGs tables in to return an astropy Table object
-    exgal = Table.read("POGS-II_ExGal.fits")
+    exgal = Table.read(pogs_fits)
     df_ex = exgal.to_pandas()
 
     # Rescale RA from (0, 360) to (-180, 180)
@@ -81,9 +79,6 @@ def plt_field(eor, fov, fname, save=False):
 
     plt.rcParams.update(nice_fonts)
 
-    # Custom spectral colormap
-    spec, spec_r = spectral()
-
     # Figure
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
@@ -91,7 +86,7 @@ def plt_field(eor, fov, fname, save=False):
     # Haslam map
     haslam = plt.imshow(
         tmap,
-        cmap=spec,
+        cmap="Spectral_r",
         extent=[
             (eor[0] * 15 - (fov / 2)),
             (eor[0] * 15 + (fov / 2)),
@@ -161,7 +156,9 @@ if __name__ == "__main__":
     eor1 = [4, -27]
     eor2 = [10.3, -10]
     fov = 26  # half power beam
+    haslam_fits = "../data/leakage/haslam408_dsds_Remazeilles2014.fits"
+    pogs_fits = "../data/leakage/POGS-II_ExGal.fits"
 
-    plt_field(eor0, fov, "EoR0", save=True)
-    plt_field(eor1, fov, "EoR1", save=True)
-    plt_field(eor2, fov, "EoR2", save=True)
+    plt_field(eor0, fov, "EoR0", haslam_fits, pogs_fits)
+    #  plt_field(eor1, fov, "EoR1", save=True)
+    #  plt_field(eor2, fov, "EoR2", save=True)
