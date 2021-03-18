@@ -62,7 +62,7 @@ def gaussian(x, sigma):
 # and I had an arugment over which was better. Both were equivalent, as I expected. (Take that, Jamie!)
 
 
-def noise_map(phi_mask, cuffs_prefix, cube_dir):
+def noise_map(phi_mask, cuffs_prefix, cube_dir, plot=False):
     """Create noise map from RM fits cube.
 
     Noise maps are created from polarized intensity
@@ -130,7 +130,7 @@ def noise_map(phi_mask, cuffs_prefix, cube_dir):
         for j in range(data.shape[0]):
 
             #  print(
-                #  f" ** INFO: Fitting noise Ra: {i}/{data.shape[1]}, Dec ind:{j}/{data.shape[0]}"
+            #  f" ** INFO: Fitting noise Ra: {i}/{data.shape[1]}, Dec ind:{j}/{data.shape[0]}"
             #  )
 
             # Extract RM Spectra for RA, Dec
@@ -174,35 +174,36 @@ def noise_map(phi_mask, cuffs_prefix, cube_dir):
             noise[i, j] = np.abs(popt[0])
 
             # Plot a sample noise fit of a pixel at the center of the image
-            if i == int(round(data.shape[1] / 2)) and j == int(
-                round(data.shape[0] / 2)
-            ):
-                print(" ** INFO: Writing noise fit plot")
-                plt.style.use("seaborn")
-                plt.hist(
-                    rm_masked,
-                    30,
-                    density=True,
-                    color="#ef8d32",
-                    alpha=0.8,
-                    edgecolor="#cc561edd",
-                    linewidth=0.8,
-                    label="Density",
-                )
-                plt.plot(
-                    bin_c, rayleigh(bin_c, *popt), color="#28527a", label="Rayleigh"
-                )
-                plt.xlabel("RM bins [rad/m^2]")
-                plt.title("RM Spectra Noise Histogram and Fit")
-                plt.ylabel("Count")
+            if plot is True:
+                if i == int(round(data.shape[1] / 2)) and j == int(
+                    round(data.shape[0] / 2)
+                ):
+                    print(" ** INFO: Writing noise fit plot")
+                    plt.style.use("seaborn")
+                    plt.hist(
+                        rm_masked,
+                        30,
+                        density=True,
+                        color="#ef8d32",
+                        alpha=0.8,
+                        edgecolor="#cc561edd",
+                        linewidth=0.8,
+                        label="Density",
+                    )
+                    plt.plot(
+                        bin_c, rayleigh(bin_c, *popt), color="#28527a", label="Rayleigh"
+                    )
+                    plt.xlabel("RM bins [rad/m^2]")
+                    plt.title("RM Spectra Noise Histogram and Fit")
+                    plt.ylabel("Count")
 
-                leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
-                leg.get_frame().set_facecolor("white")
-                for le in leg.legendHandles:
-                    le.set_alpha(1)
+                    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+                    leg.get_frame().set_facecolor("white")
+                    for le in leg.legendHandles:
+                        le.set_alpha(1)
 
-                plt.tight_layout()
-                plt.savefig(f"{cube_dir}/noise_fit_cen.png", dpi=300)
+                    plt.tight_layout()
+                    plt.savefig(f"{cube_dir}/{cuffs_prefix}noise_fit_cen.png", dpi=300)
 
     # Create FITS header for noise map, save map to file.
     print(" ** INFO: Writing output noise image")
@@ -220,7 +221,7 @@ def noise_map(phi_mask, cuffs_prefix, cube_dir):
     del new_header["NAXIS3"]
 
     hdul = fits.PrimaryHDU(data=noise, header=new_header)
-    hdul.writeto(f"{cube_dir}/cube_noise.fits")
+    hdul.writeto(f"{cube_dir}/{cuffs_prefix}cube_noise.fits")
 
     #  chi_sq = np.sum((rayleigh(bin_c, popt[0]) - density) ** 2 / sigma ** 2)
     #  print(f"Chisq:, {chi_sq}, {chi_sq/(len(hist)-1)}")
@@ -262,6 +263,12 @@ if __name__ == "__main__":
         help="Path to dir with cuffs fits cubes",
     )
 
+    parser.add_argument(
+        "--plot",
+        action="store_true",
+        help="<FLAG> - Plot a sample noise fit of a pixel at the center of the image",
+    )
+
     args = parser.parse_args()
 
-    noise_map(args.phi_mask, args.cuffs_prefix, args.cube_dir)
+    noise_map(args.phi_mask, args.cuffs_prefix, args.cube_dir, plot=args.plot)
