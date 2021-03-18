@@ -31,7 +31,7 @@ def read_rm_cube(cube_dir, cube_name):
     """
 
     # Open cube and grab header and data
-    with fits.open(f"{cube_dir}/{cube_name}_q.phi.dirty.fits") as hdus:
+    with fits.open(f"{cube_dir}/{cube_name}_p.phi.dirty.fits") as hdus:
         hdu = hdus[0]
         hdr = hdu.header
         data = hdu.data
