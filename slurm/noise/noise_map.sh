@@ -12,10 +12,11 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/noise-%A.err
 
 
-obsid=1120300352
+obsid=$1
+tag=$2
 phi_mask=20
-cuffs_prefix=rts_imgr_
-cube_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs/cubes_iono
+cuffs_prefix="$tag"_"$obsid"_
+cube_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$tag"/imgs/cubes
 
 module purge
 module use /pawsey/mwa/software/python3/modulefiles
