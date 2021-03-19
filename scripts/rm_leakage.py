@@ -11,8 +11,10 @@ from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from instru_leakage import read_metafits
 
-def read_rm_cube(cube_dir, cube_name):
+
+def read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov):
     """Read rm fits cube created by cuFFS.
 
     cuFFS creates spectral cubes with the weird
@@ -29,6 +31,10 @@ def read_rm_cube(cube_dir, cube_name):
     cube_dir: str
         Path to directory with rm cubes
     """
+
+    # Read noise image
+    with fits.open(f"{cube_dir}/{cube_name}_cube_noise.fits") as hdus:
+        noise = hdus[0].data
 
     # Open cube and grab header and data
     with fits.open(f"{cube_dir}/{cube_name}_p.phi.dirty.fits") as hdus:
@@ -51,11 +57,60 @@ def read_rm_cube(cube_dir, cube_name):
 
     rm_leak = data[:, :, phi_0_idx]
 
+    # Get metadata of obs
+    #  lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+    ra_point = 199
+    dec_point = -30
+
+    # Read the POGs tables in to return an astropy Table object
+    exgal = Table.read(pogs_fits)
+    df_ex = exgal.to_pandas()
+
+    # Rescale RA from (0, 360) to (-180, 180)
+    #  df_ex["ra"] = [i - 360 if i > 180 else i for i in df_ex.ra]
+
+    # Crop around EoR Field
+    df_ex_cr = df_ex[
+        (df_ex.ra < (ra_point + (fov / 2)))
+        & (df_ex.ra > (ra_point - (fov / 2)))
+        & (df_ex.dec < (dec_point + (fov / 2)))
+        & (df_ex.dec > (dec_point - (fov / 2)))
+    ]
+
+    # Size of the marker based on absolute value of rm
+    s_exgal = np.absolute(df_ex_cr.rm)
+
+    # Plotting stuff
     plt.style.use("seaborn")
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111, projection=wcs[:, :, int(phi_0_idx)])
 
-    im = ax.imshow(rm_leak, origin="lower", cmap="Spectral_r")
+    im = ax.imshow(
+        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmax=0.1
+    )
+
+    ras_cr = df_ex_cr.ra.to_numpy()
+    decs_cr = df_ex_cr.dec.to_numpy()
+    ids_cr = df_ex_cr.catalog_id.to_numpy()
+
+    ex = plt.scatter(
+        ras_cr,
+        decs_cr,
+        s=s_exgal * 7,
+        c=df_ex_cr.rm,
+        cmap="RdYlBu_r",
+        ec="#222",
+        label="exgal",
+        zorder=2,
+    )
+
+    for i in range(len(ids_cr)):
+        plt.annotate(
+            ids_cr[i].decode("utf-8"),
+            xy=(ras_cr[i], decs_cr[i]),
+            xytext=(ras_cr[i] + 0.7, decs_cr[i] - 0.7),
+            fontsize=6,
+        )
 
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
@@ -95,7 +150,10 @@ if __name__ == "__main__":
 
     names = ["ana_1120300232", "fee_1120300232", "ana_1120300352", "fee_1120300352"]
 
-    cube_name = names[0]
+    cube_name = names[1]
     cube_dir = "../data/leakage/rm_cubes"
+    pogs_fits = "../data/leakage/POGS-II_ExGal.fits"
+    metafits = "../data/leakage/ana_1120300352/1120300352_metafits_ppds.fits"
+    fov = 10
 
-    read_rm_cube(cube_dir, cube_name)
+    read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov)
