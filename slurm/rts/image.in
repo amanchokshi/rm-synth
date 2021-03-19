@@ -3,7 +3,7 @@
 //----------------------------------------------//
 
 MakeImage=1
-FieldOfViewDegrees=10
+FieldOfViewDegrees=24
 MakeStokesSnapshots=1
 
 // ImageOversampling [float]: Sets oversampling of imaging pixel. Default value is 3.
