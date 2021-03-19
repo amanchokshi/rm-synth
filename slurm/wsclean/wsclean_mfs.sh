@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=12:00:00
+#SBATCH --time=8:00:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
 #SBATCH --mem=128gb
@@ -13,8 +13,8 @@
 
 module load wsclean
 
-obsid=1120300352
-tag=ana_leakage
+obsid=$1
+tag=$2
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 out_dir=wsc_mfs
 prefix=uvdump_

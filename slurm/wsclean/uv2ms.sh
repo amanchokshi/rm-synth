@@ -12,8 +12,8 @@
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/uv2ms-%A.err
 
 
-obsid=1120300232
-tag=ana_leakage
+obsid=$1
+tag=$2
 data_dir=/astro/mwaeor/achokshi/rm-synth/data
 prefix=uvdump_
 
