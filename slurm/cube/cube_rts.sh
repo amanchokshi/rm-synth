@@ -11,9 +11,9 @@
 #SBATCH --output=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cube_rts-%A.out
 #SBATCH --error=/astro/mwaeor/achokshi/rm-synth/data/slurm-logs/cube_rts-%A.err
 
-
-obsid=1120300352
-data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$1"/imgs
+obsid=$1
+tag=$2
+data_dir=/astro/mwaeor/achokshi/rm-synth/data/"$obsid"/"$tag"/imgs
 
 module load python
 module load numpy
@@ -22,5 +22,5 @@ module load astropy
 time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
     --fits_dir="$data_dir"/stokes --out_dir="$data_dir"/cubes
 
-time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
-    --fits_dir="$data_dir"/stokes_iono --out_dir="$data_dir"/cubes_iono
+# time python /astro/mwaeor/achokshi/rm-synth/scripts/cube_rts.py \
+    # --fits_dir="$data_dir"/stokes_iono --out_dir="$data_dir"/cubes_iono
