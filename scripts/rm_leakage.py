@@ -6,9 +6,7 @@ from pathlib import Path
 
 import numpy as np
 from astropy import units as u
-from astropy.coordinates import SkyCoord
 from astropy.io import fits
-from astropy.table import Table
 from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -25,10 +23,10 @@ except Exception as e:
     mwa_loc = Topos(latitude=-26.703319, longitude=116.670815, elevation_m=337.83)
 
 
-from instru_leakage import read_metafits
+from instru_leakage import get_beam_weights, read_metafits
 
 
-def read_rm_cube(rm_cube, noise_cube, obsid, beam, band, fname, outdir):
+def read_rm_cube(rm_cube, noise_cube, metafits, obsid, beam, band, fname, outdir):
     """Read rm fits cube created by cuFFS.
 
     cuFFS creates spectral cubes with the weird
@@ -71,6 +69,27 @@ def read_rm_cube(rm_cube, noise_cube, obsid, beam, band, fname, outdir):
 
     rm_leak = data[:, :, phi_0_idx]
 
+    # Pixel indices along Ra: x, Dec: y
+    x = np.arange(hdr["NAXIS2"])
+    y = np.arange(hdr["NAXIS3"])
+
+    # Pixel meshgrid
+    X, Y = np.meshgrid(x, y)
+    _, ras, decs, = wcs.wcs_pix2world(phi_0_idx, X, Y, 0)
+
+    # Rescale ras from -180, 180 to 0, 360
+    #  ras = np.mod(ras, 360)
+
+    # Flatten 2D ras, decs arrays
+    ra_f = ras.flatten()
+    dec_f = decs.flatten()
+
+    lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+    beam_weights = get_beam_weights(
+        ras=ra_f, decs=dec_f, LST=lst, mwa_lat=mwa_lat, freqcent=freqcent, delays=delays
+    )
+    beam_weights = beam_weights.reshape(ras.shape)
+
     # Plotting stuff
     plt.style.use("seaborn")
     fig = plt.figure(figsize=(7, 7))
@@ -79,6 +98,16 @@ def read_rm_cube(rm_cube, noise_cube, obsid, beam, band, fname, outdir):
     im = ax.imshow(
         rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmin=0.0, vmax=0.10
     )
+
+    levels = [0.001, 0.01, 0.1, 0.3, 0.6, 0.9]
+    CS = ax.contour(
+        beam_weights.real,
+        levels,
+        colors="#222222",
+        linewidths=0.7,
+        linestyles="dotted",
+    )
+    ax.clabel(CS, inline=1, fontsize=7)
 
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
@@ -89,14 +118,14 @@ def read_rm_cube(rm_cube, noise_cube, obsid, beam, band, fname, outdir):
     ax.coords[1].set_auto_axislabel(False)
     ax.set_ylabel("Declination [deg]")
 
-    #  ax.set_title(f"Quadratic Leakage Surface [{pol}/I]", y=1.2)
-
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("top", size="5%", pad=0.1)
     cax.coords[0].set_ticklabel_position("t")
     cax.coords[0].set_axislabel_position("t")
 
-    cax.coords[0].set_axislabel(f"Polarized Flux Density at $\phi$ = 0 : {obsid} {beam} {band}")
+    cax.coords[0].set_axislabel(
+        f"Polarized Flux Density at $\phi$ = 0 : {obsid} {beam} {band}"
+    )
     cax.coords[1].set_ticks(
         alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
     )
@@ -126,8 +155,6 @@ if __name__ == "__main__":
 
             print(f" ** INFO: Crunching data - {rm_cube}")
 
-            #  lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
-
             if o in low_band:
                 band = "167-200 MHz"
                 fname = f"{o}_{b.upper()}_167-200MHz_rm_phi_0.png"
@@ -135,4 +162,4 @@ if __name__ == "__main__":
                 band = "200-230 MHz"
                 fname = f"{o}_{b.upper()}_200-230MHz_rm_phi_0.png"
 
-            read_rm_cube(rm_cube, noise_cube, o, b, band, fname, "./")
+            read_rm_cube(rm_cube, noise_cube, metafits, o, b, band, fname, "./")
