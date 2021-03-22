@@ -31,15 +31,18 @@ from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from scipy.linalg import lstsq
+
 #  from mwa_pb import primary_beam
 
 try:
     from skyfield.api import wgs84
+
     mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
 
 except Exception as e:
     print(e)
     from skyfield.api import Topos
+
     mwa_loc = Topos(latitude=-26.703319, longitude=116.670815, elevation_m=337.83)
 
 
@@ -747,7 +750,6 @@ if __name__ == "__main__":
 
         for b in ["ana", "fee"]:
 
-
             mfs_dir = Path(f"../data/{o}/{b}_leakage/wsc_mfs")
             metafits = Path(f"../data/{o}/{b}_leakage/{o}_metafits_ppds.fits")
 
@@ -786,5 +788,5 @@ if __name__ == "__main__":
                 pogs_fits=pogs_fits,
                 ra_point=ra_point,
                 dec_point=dec_point,
-                outdir="./"
+                outdir="./",
             )
