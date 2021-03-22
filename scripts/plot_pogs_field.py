@@ -104,7 +104,7 @@ def plt_field(ra_point, dec_point, fov, haslam_fits, pogs_fits):
         decs_cr,
         s=s_exgal * 7,
         c=df_ex_cr.rm,
-        cmap="rdylbu_r",
+        cmap="RdYlBu_r",
         ec="#222",
         label="exgal",
         zorder=2,

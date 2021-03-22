@@ -490,10 +490,15 @@ def fit_leakage(
     gleam_beam=None,
     mfs_dir=None,
     title=None,
+    fname=None,
     LST=None,
     mwa_lat=None,
     freqcent=None,
     delays=None,
+    pogs_fits=None,
+    ra_point=None,
+    dec_point=None,
+    fov=26,
 ):
     """Fit leakage surfaces to Q, U, V images."""
 
@@ -592,6 +597,34 @@ def fit_leakage(
 
         leakage_surface[f"{pol}"] = Z
 
+    # Read the POGs tables in to return an astropy Table object
+    exgal = Table.read(pogs_fits)
+    df_ex = exgal.to_pandas()
+
+    # Crop around EoR Field
+    df_ex_cr = df_ex[
+        (df_ex.ra < (ra_point + (fov / 2)))
+        & (df_ex.ra > (ra_point - (fov / 2)))
+        & (df_ex.dec < (dec_point + (fov / 2)))
+        & (df_ex.dec > (dec_point - (fov / 2)))
+    ]
+
+    # Size of the marker based on absolute value of rm
+    s_exgal = np.absolute(df_ex_cr.rm)
+
+    ras_cr = df_ex_cr.ra.to_numpy()
+    decs_cr = df_ex_cr.dec.to_numpy()
+    ids_cr = df_ex_cr.catalog_id.to_numpy()
+
+    # Convert gleam ra, dec to pix coordinates
+    ras_cr_pix = []
+    decs_cr_pix = []
+    for i in range(ras_cr.shape[0]):
+        coord = wcs.wcs_world2pix(ras_cr[i], decs_cr[i], 0, 0, 0,)
+        ras_cr_pix.append(coord[0])
+        decs_cr_pix.append(coord[1])
+
+    # Plotting stuff
     plt.style.use("seaborn")
     fig, axs = plt.subplots(
         1, 3, figsize=(16, 6), subplot_kw=dict(projection=wcs[0, 0, :, :])
@@ -612,19 +645,42 @@ def fit_leakage(
         )
         axs[i].clabel(CS, inline=1, fontsize=7)
 
+        # Gleam sources used for leakage fitting
         axs[i].scatter(
             gleam_beam.ra_pix.to_numpy(),
             gleam_beam.dec_pix.to_numpy(),
             c=gleam_beam[f"{pol}_leak"].to_numpy(),
             marker="s",
             cmap="Spectral_r",
-            s=77,
+            s=18,
             edgecolor="black",
-            linewidth=0.4,
+            linewidth=0.21,
             vmin=np.amin(leakage_surface[f"{pol}"]),
             vmax=np.amax(leakage_surface[f"{pol}"]),
             zorder=777,
         )
+
+        # Plot pogs sources
+        ex = axs[i].scatter(
+            ras_cr_pix,
+            decs_cr_pix,
+            s=s_exgal * 4,
+            c=df_ex_cr.rm,
+            cmap="RdYlBu_r",
+            ec="#222",
+            label="exgal",
+            zorder=888,
+        )
+
+        # Annotate pogs sources
+        for j in range(len(ids_cr)):
+            axs[i].annotate(
+                ids_cr[j].decode("utf-8"),
+                xy=(ras_cr_pix[j], decs_cr_pix[j]),
+                xytext=(ras_cr_pix[j] + 60, decs_cr_pix[j] - 70),
+                fontsize=6,
+                zorder=999,
+            )
 
         axs[i].coords.grid(True, color="white", alpha=0.8, ls="dotted")
         axs[i].coords[0].set_format_unit(u.deg)
@@ -638,7 +694,8 @@ def fit_leakage(
         axs[i].set_title(f"Quadratic Leakage Surface [{pol}/I]", y=1.2)
 
         divider = make_axes_locatable(axs[i])
-        cax = divider.append_axes("top", size="5%", pad=0.1)
+        cax = divider.append_axes("top", size="3%", pad=0.1)
+        #  cax2 = divider.append_axes("top", size="3%", pad=0.1)
         cax.coords[0].set_ticklabel_position("t")
         cax.coords[0].set_axislabel_position("t")
         cax.coords[0].set_axislabel("Fractional Leakage")
@@ -646,6 +703,7 @@ def fit_leakage(
             alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
         )
         plt.colorbar(im, cax=cax, orientation="horizontal")
+        #  plt.colorbar(ex, cax=cax2, orientation="horizontal")
 
     # Hide x labels and tick labels for top plots and y ticks for right plots.
     for ax in axs.flat:
@@ -657,12 +715,22 @@ def fit_leakage(
     axs[2].coords[1].set_ticklabel_visible(False)
 
     #  plt.show()
-    plt.savefig(f"../data/leakage/{title}.png", bbox_inches="tight", dpi=300)
+    plt.savefig(f"../data/leakage/{fname}", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
 
     gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
+    pogs_fits = Path("../data/leakage/POGS-II_ExGal.fits")
+
+    # MWA coordinates
+    mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
+    mwa_lat = mwa_loc.latitude.degrees
+    mwa_lon = mwa_loc.longitude.degrees
+    mwa_el = mwa_loc.elevation.m
+
+    low_band = ["1120300232", "1120082744"]
+    high_band = ["1120300352", "1120082864"]
 
     dirs = ["fee_1120300352", "fee_1120300232", "ana_1120300352", "ana_1120300232"]
 
@@ -670,16 +738,10 @@ if __name__ == "__main__":
 
         print(f" ** INFO: Crunching data in - {d}")
 
-        _, obsid = d.split("_")
+        beam_model, obsid = d.split("_")
 
         mfs_dir = Path(f"../data/leakage/{d}")
         metafits = Path(f"{mfs_dir}/{obsid}_metafits_ppds.fits")
-
-        # MWA coordinates
-        mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
-        mwa_lat = mwa_loc.latitude.degrees
-        mwa_lon = mwa_loc.longitude.degrees
-        mwa_el = mwa_loc.elevation.m
 
         lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
 
@@ -695,12 +757,24 @@ if __name__ == "__main__":
             plot=False,
         )
 
+        if obsid in low_band:
+            title = f"{obsid}: {beam_model.upper()}: 167-200 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
+            fname = f"{obsid}_{beam_model.upper()}_167-200MHz.png"
+        else:
+            title = f"{obsid}: {beam_model.upper()}: 200-230 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
+            fname = f"{obsid}_{beam_model.upper()}_200-230MHz.png"
+
         gleam_beam = fit_leakage(
             gleam_beam=gleam_beam,
             mfs_dir=mfs_dir,
-            title=f"{d}",
+            title=title,
+            fname=fname,
             LST=lst,
             mwa_lat=mwa_lat,
             freqcent=freqcent,
             delays=delays,
+            pogs_fits=pogs_fits,
+            ra_point=ra_point,
+            dec_point=dec_point,
         )
+        #  break
