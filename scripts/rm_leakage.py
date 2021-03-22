@@ -96,7 +96,7 @@ def read_rm_cube(rm_cube, noise_cube, metafits, obsid, beam, band, fname, outdir
     ax = fig.add_subplot(111, projection=wcs[:, :, int(phi_0_idx)])
 
     im = ax.imshow(
-        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmin=0.0, vmax=0.10
+        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmin=0.0, vmax=0.12
     )
 
     levels = [0.001, 0.01, 0.1, 0.3, 0.6, 0.9]
@@ -104,12 +104,12 @@ def read_rm_cube(rm_cube, noise_cube, metafits, obsid, beam, band, fname, outdir
         beam_weights.real,
         levels,
         colors="#222222",
-        linewidths=0.7,
+        linewidths=2.1,
         linestyles="dotted",
     )
-    ax.clabel(CS, inline=1, fontsize=7)
+    ax.clabel(CS, inline=1, fontsize=9)
 
-    ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
+    ax.coords.grid(True, color="white", alpha=1, linewidth=2.1, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
     ax.coords[0].set_auto_axislabel(False)
     ax.set_xlabel("Right Ascension [deg]")
@@ -124,7 +124,7 @@ def read_rm_cube(rm_cube, noise_cube, metafits, obsid, beam, band, fname, outdir
     cax.coords[0].set_axislabel_position("t")
 
     cax.coords[0].set_axislabel(
-        f"Polarized Flux Density at $\phi$ = 0 : {obsid} {beam} {band}"
+        f"Polarized Flux at $\phi$ = 0: {obsid}: {beam.upper()}: {band}: [{ra_point:.1f} {dec_point:.1f}]"
     )
     cax.coords[1].set_ticks(
         alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
