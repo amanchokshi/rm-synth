@@ -563,11 +563,14 @@ def fit_leakage(
         ras, decs, _, _ = wcs.wcs_pix2world(X, Y, 0, 0, 0)
 
         # Rescale ras from -180, 180 to 0, 360
-        ras = np.mod(ras, 360)
+        #  ras = np.mod(ras, 360)
 
         # Flatten 2D ras, decs arrays
         ra_f = ras.flatten()
         dec_f = decs.flatten()
+
+        XX = X.flatten()
+        YY = Y.flatten()
 
     # Fit leakage surfaces for Q, U, V polarizations
 
@@ -584,9 +587,15 @@ def fit_leakage(
         # http://inversionlabs.com/2016/03/21/best-fit-surfaces-for-3-dimensional-data.html
         # Create data array to fit quadratic surface to
         # x, y, z in array columns
+        #  data = np.c_[
+            #  gleam_beam.RAJ2000.to_numpy(),
+            #  gleam_beam.DEJ2000.to_numpy(),
+            #  gleam_beam[f"{pol}_leak"].to_numpy(),
+        #  ]
+
         data = np.c_[
-            gleam_beam.RAJ2000.to_numpy(),
-            gleam_beam.DEJ2000.to_numpy(),
+            gleam_beam.ra_pix.to_numpy(),
+            gleam_beam.dec_pix.to_numpy(),
             gleam_beam[f"{pol}_leak"].to_numpy(),
         ]
 
@@ -601,9 +610,16 @@ def fit_leakage(
         C, _, _, _ = lstsq(A, B)
 
         # Evaluate the fit on the ra, dec 2D grid
+        #  Z = np.dot(
+            #  np.c_[
+                #  np.ones(ra_f.shape), ra_f, dec_f, ra_f * dec_f, ra_f ** 2, dec_f ** 2
+            #  ],
+            #  C,
+        #  ).reshape(ras.shape)
+
         Z = np.dot(
             np.c_[
-                np.ones(ra_f.shape), ra_f, dec_f, ra_f * dec_f, ra_f ** 2, dec_f ** 2
+                np.ones(XX.shape), XX, YY, XX * YY,  XX ** 2, YY ** 2
             ],
             C,
         ).reshape(ras.shape)
