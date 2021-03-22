@@ -2,6 +2,8 @@
 Plot the 𝜙 = 0 slice of rm cubes as a measure of leakage.
 """
 
+from pathlib import Path
+
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -11,10 +13,22 @@ from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+try:
+    from skyfield.api import wgs84
+
+    mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
+
+except Exception as e:
+    print(e)
+    from skyfield.api import Topos
+
+    mwa_loc = Topos(latitude=-26.703319, longitude=116.670815, elevation_m=337.83)
+
+
 from instru_leakage import read_metafits
 
 
-def read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov):
+def read_rm_cube(rm_cube, noise_cube, beam, band, fname, outdir):
     """Read rm fits cube created by cuFFS.
 
     cuFFS creates spectral cubes with the weird
@@ -33,11 +47,11 @@ def read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov):
     """
 
     # Read noise image
-    with fits.open(f"{cube_dir}/{cube_name}_cube_noise.fits") as hdus:
+    with fits.open(noise_cube) as hdus:
         noise = hdus[0].data
 
     # Open cube and grab header and data
-    with fits.open(f"{cube_dir}/{cube_name}_p.phi.dirty.fits") as hdus:
+    with fits.open(rm_cube) as hdus:
         hdu = hdus[0]
         hdr = hdu.header
         data = hdu.data
@@ -57,60 +71,14 @@ def read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov):
 
     rm_leak = data[:, :, phi_0_idx]
 
-    # Get metadata of obs
-    #  lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
-    ra_point = 199
-    dec_point = -30
-
-    # Read the POGs tables in to return an astropy Table object
-    exgal = Table.read(pogs_fits)
-    df_ex = exgal.to_pandas()
-
-    # Rescale RA from (0, 360) to (-180, 180)
-    #  df_ex["ra"] = [i - 360 if i > 180 else i for i in df_ex.ra]
-
-    # Crop around EoR Field
-    df_ex_cr = df_ex[
-        (df_ex.ra < (ra_point + (fov / 2)))
-        & (df_ex.ra > (ra_point - (fov / 2)))
-        & (df_ex.dec < (dec_point + (fov / 2)))
-        & (df_ex.dec > (dec_point - (fov / 2)))
-    ]
-
-    # Size of the marker based on absolute value of rm
-    s_exgal = np.absolute(df_ex_cr.rm)
-
     # Plotting stuff
     plt.style.use("seaborn")
     fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111, projection=wcs[:, :, int(phi_0_idx)])
 
     im = ax.imshow(
-        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmax=0.1
+        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmax=0.12
     )
-
-    ras_cr = df_ex_cr.ra.to_numpy()
-    decs_cr = df_ex_cr.dec.to_numpy()
-    ids_cr = df_ex_cr.catalog_id.to_numpy()
-
-    ex = plt.scatter(
-        ras_cr,
-        decs_cr,
-        s=s_exgal * 7,
-        c=df_ex_cr.rm,
-        cmap="RdYlBu_r",
-        ec="#222",
-        label="exgal",
-        zorder=2,
-    )
-
-    for i in range(len(ids_cr)):
-        plt.annotate(
-            ids_cr[i].decode("utf-8"),
-            xy=(ras_cr[i], decs_cr[i]),
-            xytext=(ras_cr[i] + 0.7, decs_cr[i] - 0.7),
-            fontsize=6,
-        )
 
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
     ax.coords[0].set_format_unit(u.deg)
@@ -128,32 +96,43 @@ def read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov):
     cax.coords[0].set_ticklabel_position("t")
     cax.coords[0].set_axislabel_position("t")
 
-    if "1120300232" in cube_name:
-        band = "167-200MHz"
-    else:
-        band = "200-230MHz"
-
-    if "ana" in cube_name:
-        beam = "Analytic"
-    else:
-        beam = "FEE"
-
     cax.coords[0].set_axislabel(f"Polarized Flux Density at $\phi$ = 0 : {beam} {band}")
     cax.coords[1].set_ticks(
         alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
     )
     plt.colorbar(im, cax=cax, orientation="horizontal")
-    plt.show()
+    plt.savefig(f"{outdir}/{fname}", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
 
-    names = ["ana_1120300232", "fee_1120300232", "ana_1120300352", "fee_1120300352"]
+    # MWA coordinates
+    mwa_lat = mwa_loc.latitude.degrees
+    mwa_lon = mwa_loc.longitude.degrees
+    mwa_el = mwa_loc.elevation.m
 
-    cube_name = names[1]
-    cube_dir = "../data/leakage/rm_cubes"
-    pogs_fits = "../data/leakage/POGS-II_ExGal.fits"
-    metafits = "../data/leakage/ana_1120300352/1120300352_metafits_ppds.fits"
-    fov = 10
+    low_band = ["1120300232", "1120082744"]
+    high_band = ["1120300352", "1120082864"]
 
-    read_rm_cube(cube_dir, cube_name, pogs_fits, metafits, fov)
+    obsids = low_band + high_band
+
+    for o in obsids:
+
+        for b in ["ana", "fee"]:
+
+            rm_cube = f"../data/{o}/{b}_wide/imgs/cubes/{b}_wide_{o}_p.phi.dirty.fits"
+            noise_cube = f"../data/{o}/{b}_wide/imgs/cubes/{b}_wide_{o}_cube_noise.fits"
+            metafits = Path(f"../data/{o}/{b}_wide/{o}_metafits_ppds.fits")
+
+            print(f" ** INFO: Crunching data - {rm_cube}")
+
+            #  lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+
+            if o in low_band:
+                band = "167-200 MHz"
+                fname = f"{o}_{b.upper()}_167-200MHz_rm_phi_0.png"
+            else:
+                band = "200-230 MHz"
+                fname = f"{o}_{b.upper()}_200-230MHz_rm_phi_0.png"
+
+            read_rm_cube(rm_cube, noise_cube, b, band, fname, "./")
