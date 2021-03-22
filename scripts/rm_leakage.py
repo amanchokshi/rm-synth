@@ -28,7 +28,7 @@ except Exception as e:
 from instru_leakage import read_metafits
 
 
-def read_rm_cube(rm_cube, noise_cube, beam, band, fname, outdir):
+def read_rm_cube(rm_cube, noise_cube, obsid, beam, band, fname, outdir):
     """Read rm fits cube created by cuFFS.
 
     cuFFS creates spectral cubes with the weird
@@ -77,7 +77,7 @@ def read_rm_cube(rm_cube, noise_cube, beam, band, fname, outdir):
     ax = fig.add_subplot(111, projection=wcs[:, :, int(phi_0_idx)])
 
     im = ax.imshow(
-        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmax=0.12
+        rm_leak[:, :, 0] - noise, origin="lower", cmap="Spectral_r", vmin=0.0, vmax=0.10
     )
 
     ax.coords.grid(True, color="white", alpha=0.8, ls="dotted")
@@ -96,7 +96,7 @@ def read_rm_cube(rm_cube, noise_cube, beam, band, fname, outdir):
     cax.coords[0].set_ticklabel_position("t")
     cax.coords[0].set_axislabel_position("t")
 
-    cax.coords[0].set_axislabel(f"Polarized Flux Density at $\phi$ = 0 : {beam} {band}")
+    cax.coords[0].set_axislabel(f"Polarized Flux Density at $\phi$ = 0 : {obsid} {beam} {band}")
     cax.coords[1].set_ticks(
         alpha=0, color="w", size=0, values=[] * u.dimensionless_unscaled
     )
@@ -135,4 +135,4 @@ if __name__ == "__main__":
                 band = "200-230 MHz"
                 fname = f"{o}_{b.upper()}_200-230MHz_rm_phi_0.png"
 
-            read_rm_cube(rm_cube, noise_cube, b, band, fname, "./")
+            read_rm_cube(rm_cube, noise_cube, o, b, band, fname, "./")

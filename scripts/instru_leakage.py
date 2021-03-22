@@ -771,10 +771,10 @@ if __name__ == "__main__":
 
             if o in low_band:
                 title = f"{obsid}: {b.upper()}: 167-200 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
-                fname = f"{obsid}_{b.upper()}_167-200MHz.png"
+                fname = f"{obsid}_{b.upper()}_167-200MHz_leakage.png"
             else:
                 title = f"{obsid}: {b.upper()}: 200-230 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
-                fname = f"{obsid}_{b.upper()}_200-230MHz.png"
+                fname = f"{obsid}_{b.upper()}_200-230MHz_leakage.png"
 
             gleam_beam = fit_leakage(
                 gleam_beam=gleam_beam,
@@ -788,5 +788,5 @@ if __name__ == "__main__":
                 pogs_fits=pogs_fits,
                 ra_point=ra_point,
                 dec_point=dec_point,
-                outdir="./",
+                outdir="../data/leakage_plots",
             )
