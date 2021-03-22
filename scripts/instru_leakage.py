@@ -30,9 +30,18 @@ from astropy.table import Table
 from astropy.wcs import WCS
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from mwa_pb import primary_beam
 from scipy.linalg import lstsq
-from skyfield.api import wgs84
+#  from mwa_pb import primary_beam
+
+try:
+    from skyfield.api import wgs84
+    mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
+
+except Exception as e:
+    print(e)
+    from skyfield.api import Topos
+    mwa_loc = Topos(latitude=-26.703319, longitude=116.670815, elevation_m=337.83)
+
 
 # Ignore SettingWithCopyWarning
 # https://stackoverflow.com/questions/20625582/how-to-deal-with-settingwithcopywarning-in-pandas
@@ -499,6 +508,7 @@ def fit_leakage(
     ra_point=None,
     dec_point=None,
     fov=26,
+    outdir=None,
 ):
     """Fit leakage surfaces to Q, U, V images."""
 
@@ -715,16 +725,15 @@ def fit_leakage(
     axs[2].coords[1].set_ticklabel_visible(False)
 
     #  plt.show()
-    plt.savefig(f"../data/leakage/{fname}", bbox_inches="tight", dpi=300)
+    plt.savefig(f"{outdir}/{fname}", bbox_inches="tight", dpi=300)
 
 
 if __name__ == "__main__":
 
-    gleam_cat = Path("../data/leakage/GLEAM_EGC_v2.fits")
-    pogs_fits = Path("../data/leakage/POGS-II_ExGal.fits")
+    gleam_cat = Path("../data/catalogs/GLEAM_EGC_v2.fits")
+    pogs_fits = Path("../data/catalogs/POGS-II_ExGal.fits")
 
     # MWA coordinates
-    mwa_loc = wgs84.latlon(-26.703319, 116.670815, 337.83)
     mwa_lat = mwa_loc.latitude.degrees
     mwa_lon = mwa_loc.longitude.degrees
     mwa_el = mwa_loc.elevation.m
@@ -732,49 +741,50 @@ if __name__ == "__main__":
     low_band = ["1120300232", "1120082744"]
     high_band = ["1120300352", "1120082864"]
 
-    dirs = ["fee_1120300352", "fee_1120300232", "ana_1120300352", "ana_1120300232"]
+    obsids = low_band + high_band
 
-    for d in dirs:
+    for o in obsids:
 
-        print(f" ** INFO: Crunching data in - {d}")
+        for b in ["ana", "fee"]:
 
-        beam_model, obsid = d.split("_")
 
-        mfs_dir = Path(f"../data/leakage/{d}")
-        metafits = Path(f"{mfs_dir}/{obsid}_metafits_ppds.fits")
+            mfs_dir = Path(f"../data/{o}/{b}_leakage/wsc_mfs")
+            metafits = Path(f"../data/{o}/{b}_leakage/{o}_metafits_ppds.fits")
 
-        lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
+            print(f" ** INFO: Crunching data in - {mfs_dir}")
 
-        gleam_beam = gleam_by_beam(
-            gleam_cat=gleam_cat,
-            mfs_fits=f"{mfs_dir}/uvdump-MFS-I-image.fits",
-            lst=lst,
-            mwa_lat=mwa_lat,
-            freqcent=freqcent,
-            delays=delays,
-            smin=2.0,
-            beam_thresh=0.3,
-            plot=False,
-        )
+            lst, obsid, freqcent, ra_point, dec_point, delays = read_metafits(metafits)
 
-        if obsid in low_band:
-            title = f"{obsid}: {beam_model.upper()}: 167-200 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
-            fname = f"{obsid}_{beam_model.upper()}_167-200MHz.png"
-        else:
-            title = f"{obsid}: {beam_model.upper()}: 200-230 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
-            fname = f"{obsid}_{beam_model.upper()}_200-230MHz.png"
+            gleam_beam = gleam_by_beam(
+                gleam_cat=gleam_cat,
+                mfs_fits=f"{mfs_dir}/uvdump-MFS-I-image.fits",
+                lst=lst,
+                mwa_lat=mwa_lat,
+                freqcent=freqcent,
+                delays=delays,
+                smin=2.0,
+                beam_thresh=0.3,
+                plot=False,
+            )
 
-        gleam_beam = fit_leakage(
-            gleam_beam=gleam_beam,
-            mfs_dir=mfs_dir,
-            title=title,
-            fname=fname,
-            LST=lst,
-            mwa_lat=mwa_lat,
-            freqcent=freqcent,
-            delays=delays,
-            pogs_fits=pogs_fits,
-            ra_point=ra_point,
-            dec_point=dec_point,
-        )
-        #  break
+            if o in low_band:
+                title = f"{obsid}: {b.upper()}: 167-200 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
+                fname = f"{obsid}_{b.upper()}_167-200MHz.png"
+            else:
+                title = f"{obsid}: {b.upper()}: 200-230 MHz: [{ra_point:.2f}, {dec_point:.2f}]"
+                fname = f"{obsid}_{b.upper()}_200-230MHz.png"
+
+            gleam_beam = fit_leakage(
+                gleam_beam=gleam_beam,
+                mfs_dir=mfs_dir,
+                title=title,
+                fname=fname,
+                LST=lst,
+                mwa_lat=mwa_lat,
+                freqcent=freqcent,
+                delays=delays,
+                pogs_fits=pogs_fits,
+                ra_point=ra_point,
+                dec_point=dec_point,
+                outdir="./"
+            )
