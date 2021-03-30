@@ -98,8 +98,71 @@ def get_IQUV_complex(
     return I, Q, U, V
 
 
+def stokes_instru(I, Q, U, V):
+    """convert stokes parameters to instrumental frame.
+
+    parameters
+    ----------
+    i, q, u, v : numpy.array
+        complex stokes parameters
+
+    returns
+    -------
+    xx, yy, xy, yx : numpy.array
+        instrumental polarized measurement
+    """
+
+    XX = I + Q
+    YY = I - Q
+    XY = U + 1j * V
+    YX = U - 1j * V
+
+    return XX, YY, XY, YX
+
+
+def instru_stokes(XX, YY, XY, YX):
+    """convert instrumental measurement to stokes parameters.
+
+    parameters
+    ----------
+    XX, YY, XY, YX : numpy.array
+        instrumental polarized measurement
+
+    returns
+    -------
+    I, Q, U, V : numpy.array
+        complex stokes parameters
+    """
+
+    I = (XX + YY) / 2
+    Q = (XX - YY) / 2
+    U = (XY + YX) / 2
+    V = (1j * (XY + YX)) / 2
+
+    return I, Q, U, V
+
+
 def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
-    """Do RM Synthesis on stokes Q & U vectors."""
+    """Do RM Synthesis on stokes Q & U vectors.
+
+    Parameters
+    ----------
+    freqs : numpy.array / float
+        An array of freqencies in Hz at which flux is to be determined
+    Q, U : numpy.array
+        Linear stokes vectors
+    phi_lim : float
+        Faraday depth limit, default : +-200
+    dphi : float
+        Faraday depth resolution, default : 0.5
+
+    Returns
+    -------
+    numpy.array
+        FDF (Faraday Dispersion Function)
+        RMSF (Rotation Measure Spread Function)
+        Phi (Array of faraday depths)
+    """
 
     # Wavelengths
     lambdas = const.c / freqs
@@ -155,54 +218,67 @@ if __name__ == "__main__":
     #  Q = 0.1 * I + Q
     #  I = 0.9 * I
 
+    XX, YY, XY, YX = stokes_instru(I, Q, U, V)
+    I, Q, U, V = instru_stokes(XX, YY, XY, YX)
+
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
     # Plot stokes vectors, FDF, RMSF
     plt.style.use("seaborn")
-    fig = plt.figure(figsize=(10, 7))
+    fig = plt.figure(figsize=(14, 8))
 
-    ax1 = plt.subplot(121)
+    # Plot stokes vectors
+    ax1 = plt.subplot(221)
     colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
-
+    ax1.set_ylabel("Flux [Jy]")
+    ax1.set_title("Stoke Fluxes vs Frequency")
     stokes = [I, Q, U, V]
-
     for i, st in enumerate(["I", "Q", "U", "V"]):
         ax1.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
-
-    ax1.set_xlabel("Frequency [MHz]")
-    ax1.set_ylabel("Stokes Flux [Jy]")
-    ax1.set_title("Stoke Fluxes vs Frequency")
 
     leg = ax1.legend(frameon=True, markerscale=1, handlelength=1)
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
 
+    # Plot RMSF
     ax2 = plt.subplot(222)
+    ax2.set_xlim([-20, 20])
     ax2.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
     ax2.plot(phi, np.real(rmsf), label=r"$ real(R) $")
     ax2.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
-    ax2.set_xlim([-20, 20])
+    ax2.set_title("RMSF [-20, 20]")
+    ax2.set_ylabel("RMSF")
 
     leg = ax2.legend(frameon=True, markerscale=1, handlelength=1)
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
 
-    ax2.set_title("RMSF [-20, 20]")
-    #  ax2.set_xlabel("Faraday Depth [rad/m$^2$]")
-    ax2.set_ylabel("RMSF")
+    # Plot Instrumental Polarizations
+    ax3 = plt.subplot(223)
+    colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+    instru = [XX, YY, XY, YX]
+    for i, inst in enumerate(["XX", "YY", "XY", "YX"]):
+        ax3.plot(freqs / 1e6, np.real(instru[i]), color=colors[i], label=inst)
 
-    ax3 = plt.subplot(224)
-    ax3.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
-    ax3.set_xlim([-10, 50])
-
-    ax3.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
-    ax3.set_xlabel("Faraday Depth [rad/m$^2$]")
-    ax3.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-
+    ax3.set_xlabel("Frequency [MHz]")
+    ax3.set_ylabel("Flux [Jy]")
+    ax3.set_title("Instrumental Pol Fluxes vs Frequency")
     leg = ax3.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
+    # Plot FDF
+    ax4 = plt.subplot(224)
+    ax4.set_xlim([-10, 50])
+    ax4.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
+    ax4.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
+    ax4.set_xlabel("Faraday Depth [rad/m$^2$]")
+    ax4.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+    leg = ax4.legend(frameon=True, markerscale=1, handlelength=1)
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
