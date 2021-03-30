@@ -117,10 +117,10 @@ def stokes_instru(I, Q, U, V):
     XY = U + 1j * V
     YX = U - 1j * V
 
-    return XX, YY, XY, YX
+    return XX, XY, YX, YY
 
 
-def instru_stokes(XX, YY, XY, YX):
+def instru_stokes(XX, XY, YX, YY):
     """convert instrumental measurement to stokes parameters.
 
     parameters
@@ -140,6 +140,17 @@ def instru_stokes(XX, YY, XY, YX):
     V = (1j * (XY + YX)) / 2
 
     return I, Q, U, V
+
+
+def leakage(XX, XY, YX, YY, D):
+    """Hamaker Dipole leakage."""
+
+    XX_measured = XX + D * XY + D * YX + D ** 2 * YY
+    XY_measured = -D * XX + XY - D ** 2 * YX + D * YY
+    YX_measured = -D * XX - D ** 2 * XY + YX + D * YY
+    YY_measured = D ** 2 * XX - D * XY - D * YX + YY
+
+    return XX_measured, XY_measured, YX_measured, YY_measured
 
 
 def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
@@ -218,8 +229,16 @@ if __name__ == "__main__":
     #  Q = 0.1 * I + Q
     #  I = 0.9 * I
 
-    XX, YY, XY, YX = stokes_instru(I, Q, U, V)
-    I, Q, U, V = instru_stokes(XX, YY, XY, YX)
+    # Convert stokes to instrumental pols
+    XX, XY, YX, YY = stokes_instru(I, Q, U, V)
+    print(XX[0])
+
+    # Leakage as defined by Hamaker - I
+    XX, XY, YX, YY = leakage(XX, XY, YX, YY, 0.0)
+    print(XX[0])
+
+    # Convert back to stokes
+    I, Q, U, V = instru_stokes(XX, XY, YX, YY)
 
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
