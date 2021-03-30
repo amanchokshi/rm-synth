@@ -98,45 +98,6 @@ def get_IQUV_complex(
     return I, Q, U, V
 
 
-def plot_iquv(freqs, I, Q, U, V):
-    """Plot Stokes parameters vs frequency.
-
-    Parameters
-    ----------
-    freqs : numpy.array / float
-        An array of freqencies in Hz at which flux is to be determined
-    I, Q, U, V : numpy.array
-        Arrays of complex stokes fluxes
-
-    Returns
-    -------
-    matplotlib.pyplot.figure
-    """
-
-    plt.style.use("seaborn")
-    fig = plt.figure(figsize=(9, 7))
-    ax = fig.add_subplot(111)
-
-    colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
-
-    stokes = [I, Q, U, V]
-
-    for i, st in enumerate(["I", "Q", "U", "V"]):
-        plt.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
-
-    ax.set_xlabel("Frequency [MHz]")
-    ax.set_ylabel("Stokes Flux [Jy]")
-    ax.set_title("Stoke Fluxes vs Frequency")
-
-    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
-    leg.get_frame().set_facecolor("white")
-    for le in leg.legendHandles:
-        le.set_alpha(1)
-
-    plt.tight_layout()
-    plt.show()
-
-
 def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
     """Do RM Synthesis on stokes Q & U vectors."""
 
@@ -191,37 +152,60 @@ if __name__ == "__main__":
         freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
     )
 
-    # Plot I, Q, U, V
-    plot_iquv(freqs, I, Q, U, V)
+    #  Q = 0.1 * I + Q
+    #  I = 0.9 * I
 
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
-    # Plot RMSF
+    # Plot stokes vectors, FDF, RMSF
     plt.style.use("seaborn")
-    plt.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
-    plt.plot(phi, np.real(rmsf), label=r"$ real(R) $")
-    plt.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
-    plt.xlim([-20, 20])
+    fig = plt.figure(figsize=(10, 7))
 
-    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+    ax1 = plt.subplot(121)
+    colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+
+    stokes = [I, Q, U, V]
+
+    for i, st in enumerate(["I", "Q", "U", "V"]):
+        ax1.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
+
+    ax1.set_xlabel("Frequency [MHz]")
+    ax1.set_ylabel("Stokes Flux [Jy]")
+    ax1.set_title("Stoke Fluxes vs Frequency")
+
+    leg = ax1.legend(frameon=True, markerscale=1, handlelength=1)
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
 
-    plt.xlabel("Faraday Depth [rad/m$^2$]")
-    plt.ylabel("RMSF")
+    ax2 = plt.subplot(222)
+    ax2.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
+    ax2.plot(phi, np.real(rmsf), label=r"$ real(R) $")
+    ax2.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
+    ax2.set_xlim([-20, 20])
 
-    plt.tight_layout()
-    plt.show()
+    leg = ax2.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
 
-    # Plot FDF
-    plt.style.use("seaborn")
-    plt.plot(phi, np.abs(fdf), label=r"$ \vert R \vert $", zorder=3)
-    plt.xlim([-10, 50])
+    ax2.set_title("RMSF [-20, 20]")
+    #  ax2.set_xlabel("Faraday Depth [rad/m$^2$]")
+    ax2.set_ylabel("RMSF")
 
-    plt.xlabel("Faraday Depth [rad/m$^2$]")
-    plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+    ax3 = plt.subplot(224)
+    ax3.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
+    ax3.set_xlim([-10, 50])
+
+    ax3.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
+    ax3.set_xlabel("Faraday Depth [rad/m$^2$]")
+    ax3.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+
+    leg = ax3.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
 
     plt.tight_layout()
     plt.show()
