@@ -49,7 +49,9 @@ def pol_angle_lamba(rm, lambdas, ref_chi):
     return ref_chi + rm * lambdas ** 2
 
 
-def get_IQU_complex(freqs, rm, ref_I_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6):
+def get_IQUV_complex(
+    freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+):
     """
     Get I, Q, U stokes parameters as a function of freqency.
 
@@ -91,7 +93,9 @@ def get_IQU_complex(freqs, rm, ref_I_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200
 
     U = Q * np.tan(2 * pol_ang)
 
-    return I, Q, U
+    V = spectal_index(freqs, SI, ref_V_Jy, ref_freq=200e6)
+
+    return I, Q, U, V
 
 
 def plot_iquv(freqs, I, Q, U, V):
@@ -133,6 +137,38 @@ def plot_iquv(freqs, I, Q, U, V):
     plt.show()
 
 
+def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
+    """Do RM Synthesis on stokes Q & U vectors."""
+
+    # Wavelengths
+    lambdas = const.c / freqs
+
+    # Uniform weights
+    weights = np.ones(Q.shape)
+
+    # Eqn 38 (B&dB 2005)
+    K = 1 / np.sum(weights)
+
+    # Eqn 32 (B&dB 2005) - weighted mean on lambda^2
+    lam0sq = K * np.sum(weights * lambdas ** 2)
+
+    # Phi array - range of faraday depths
+    phi_arr = np.arange(-phi_lim, phi_lim + dphi, dphi)
+
+    # Complex linear polarization
+    P = Q + 1j * U
+
+    FDF = K * np.sum(
+        P * np.exp(np.outer(-2.0j * phi_arr, (lambdas ** 2 - lam0sq))), axis=1
+    )
+
+    RMSF = K * np.sum(
+        weights * np.exp(np.outer(-2.0j * phi_arr, (lambdas ** 2 - lam0sq))), axis=1
+    )
+
+    return FDF, RMSF, phi_arr
+
+
 if __name__ == "__main__":
 
     # MWA constants
@@ -142,8 +178,8 @@ if __name__ == "__main__":
 
     # RM Source Constants
     SI = -0.7
-    rm = 49
-    frac_pol = 0.21
+    rm = 20
+    frac_pol = 0.20
     ref_I_Jy = 7
     ref_V_Jy = 1
 
@@ -151,13 +187,41 @@ if __name__ == "__main__":
     freqs = np.arange(low_freq, high_freq + fine_channel, fine_channel)
 
     # Get stokes parameters as a function of frequency
-    I, Q, U = get_IQU_complex(
-        freqs, rm, ref_I_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+    I, Q, U, V = get_IQUV_complex(
+        freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
     )
-    V = spectal_index(freqs, SI, ref_V_Jy, ref_freq=200e6)
-
-    # Complex linear polarization
-    P = Q + 1j * U
 
     # Plot I, Q, U, V
     plot_iquv(freqs, I, Q, U, V)
+
+    # Determine FDF, RMSF
+    fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+
+    # Plot RMSF
+    plt.style.use("seaborn")
+    plt.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
+    plt.plot(phi, np.real(rmsf), label=r"$ real(R) $")
+    plt.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
+    plt.xlim([-20, 20])
+
+    leg = plt.legend(frameon=True, markerscale=1, handlelength=1)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
+    plt.xlabel("Faraday Depth [rad/m$^2$]")
+    plt.ylabel("RMSF")
+
+    plt.tight_layout()
+    plt.show()
+
+    # Plot FDF
+    plt.style.use("seaborn")
+    plt.plot(phi, np.abs(fdf), label=r"$ \vert R \vert $", zorder=3)
+    plt.xlim([-10, 50])
+
+    plt.xlabel("Faraday Depth [rad/m$^2$]")
+    plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+
+    plt.tight_layout()
+    plt.show()
