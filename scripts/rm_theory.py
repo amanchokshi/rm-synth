@@ -278,49 +278,11 @@ def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
 
     return FDF, RMSF, phi_arr
 
-
-if __name__ == "__main__":
-
-    # MWA constants
-    low_freq = 160e6
-    high_freq = 230e6
-    fine_channel = 40e3
-
-    # RM Source Constants
-    SI = -0.7
-    rm = 20
-    frac_pol = 0.20
-    ref_I_Jy = 7
-    ref_V_Jy = 1
-
-    # Arrays of freqencies in Hz
-    freqs = np.arange(low_freq, high_freq + fine_channel, fine_channel)
-
-    # Get stokes parameters as a function of frequency
-    I, Q, U, V = get_IQUV_complex(
-        freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
-    )
-
-    #  Q = 0.1 * I + Q
-    #  I = 0.9 * I
-
-    # Convert stokes to instrumental pols
-    XX, XY, YX, YY = stokes_instru(I, Q, U, V)
-
-    # Leakage as defined by Hamaker - I
-    #  XX, XY, YX, YY = leakage(XX, XY, YX, YY, 0.0)
-
-    # Convert back to stokes
-    #  I, Q, U, V = instru_stokes(XX, XY, YX, YY)
-
-    I, Q, U, V = rm_leakage(I, Q, U, V)
-
-    # Determine FDF, RMSF
-    fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+def plot_rm_grid(I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
 
     # Plot stokes vectors, FDF, RMSF
     plt.style.use("seaborn")
-    fig = plt.figure(figsize=(14, 8))
+    plt.figure(figsize=(14, 8))
 
     # Plot stokes vectors
     ax1 = plt.subplot(221)
@@ -379,3 +341,45 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
+
+if __name__ == "__main__":
+
+    # MWA constants
+    low_freq = 160e6
+    high_freq = 230e6
+    fine_channel = 40e3
+
+    # RM Source Constants
+    SI = -0.7
+    rm = 20
+    frac_pol = 0.20
+    ref_I_Jy = 7
+    ref_V_Jy = 1
+
+    # Arrays of freqencies in Hz
+    freqs = np.arange(low_freq, high_freq + fine_channel, fine_channel)
+
+    # Get stokes parameters as a function of frequency
+    I, Q, U, V = get_IQUV_complex(
+        freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+    )
+
+    #  Q = 0.1 * I + Q
+    #  I = 0.9 * I
+
+    # Convert stokes to instrumental pols
+    XX, XY, YX, YY = stokes_instru(I, Q, U, V)
+
+    # Leakage as defined by Hamaker - I
+    #  XX, XY, YX, YY = leakage(XX, XY, YX, YY, 0.0)
+
+    # Convert back to stokes
+    #  I, Q, U, V = instru_stokes(XX, XY, YX, YY)
+
+    I, Q, U, V = rm_leakage(I, Q, U, V)
+
+    # Determine FDF, RMSF
+    fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+
+    plot_rm_grid(I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
+
