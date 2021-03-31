@@ -142,18 +142,8 @@ def instru_stokes(XX, XY, YX, YY):
     return I, Q, U, V
 
 
-def rm_leakage(I, Q, U, V):
+def rm_leakage(I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By):
     """Hamaker based leakage."""
-
-    G_Ax = 1 + 0j
-    G_Ay = 1 + 0j
-    G_Bx = 1 + 0j
-    G_By = 1 + 0j
-
-    l_Ax = 0 + 0j
-    l_Ay = 0 + 0j
-    l_Bx = 0 + 0j
-    l_By = 0 + 0j
 
     # Complex conjugate of Jones matrix B
     G_Bx_c = np.conj(G_Bx)
@@ -215,17 +205,6 @@ def rm_leakage(I, Q, U, V):
     )
 
     return I_m, Q_m, U_m, V_m
-
-
-#  def leakage(XX, XY, YX, YY, D):
-#  """Hamaker Dipole leakage."""
-
-#  XX_measured = XX + D * XY + D * YX + D ** 2 * YY
-#  XY_measured = -D * XX + XY - D ** 2 * YX + D * YY
-#  YX_measured = -D * XX - D ** 2 * XY + YX + D * YY
-#  YY_measured = D ** 2 * XX - D * XY - D * YX + YY
-
-#  return XX_measured, XY_measured, YX_measured, YY_measured
 
 
 def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
@@ -372,13 +351,19 @@ if __name__ == "__main__":
     # Convert stokes to instrumental pols
     XX, XY, YX, YY = stokes_instru(I, Q, U, V)
 
-    # Leakage as defined by Hamaker - I
-    #  XX, XY, YX, YY = leakage(XX, XY, YX, YY, 0.0)
+    # Apply Hamaker leakage
 
-    # Convert back to stokes
-    #  I, Q, U, V = instru_stokes(XX, XY, YX, YY)
+    G_Ax = 1 + 0j
+    G_Ay = 1 + 0j
+    G_Bx = 1 + 0j
+    G_By = 1 + 0j
 
-    I, Q, U, V = rm_leakage(I, Q, U, V)
+    l_Ax = 0 + 0j
+    l_Ay = 0 + 0j
+    l_Bx = 0 + 0j
+    l_By = 0 + 0j
+
+    I, Q, U, V = rm_leakage(I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By)
 
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
