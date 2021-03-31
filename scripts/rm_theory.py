@@ -278,7 +278,8 @@ def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
 
     return FDF, RMSF, phi_arr
 
-def plot_rm_grid(I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
+
+def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
 
     # Plot stokes vectors, FDF, RMSF
     plt.style.use("seaborn")
@@ -342,6 +343,7 @@ def plot_rm_grid(I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
 
     # MWA constants
@@ -381,5 +383,4 @@ if __name__ == "__main__":
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
-    plot_rm_grid(I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
-
+    plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
