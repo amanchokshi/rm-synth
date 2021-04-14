@@ -258,6 +258,19 @@ def rm_synth(freqs, Q, U, phi_lim=200, dphi=0.5):
     return FDF, RMSF, phi_arr
 
 
+def rm_clean(FDF, RMSF, phi_arr, clean_cut=2):
+    """RMCLEAN - Heald et al. 2009"""
+
+    # STD and Median of ||FDF||
+    noise = np.std(np.abs(FDF))
+    noise_floor = np.median(np.abs(FDF))
+
+    # Will perform rm clean upto clean_cut*noise above the noise_floor
+    clean_floor = clean_cut * noise + noise_floor
+
+    print(noise, noise_floor, clean_floor)
+
+
 def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
 
     # Plot stokes vectors, FDF, RMSF
@@ -368,4 +381,6 @@ if __name__ == "__main__":
     # Determine FDF, RMSF
     fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
-    plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
+    rm_clean(fdf, rmsf, phi)
+
+    #  plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
