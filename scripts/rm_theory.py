@@ -275,7 +275,7 @@ def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
 
     # Plot stokes vectors, FDF, RMSF
     plt.style.use("seaborn")
-    plt.figure(figsize=(14, 8))
+    plt.figure(figsize=(11, 7))
 
     # Plot stokes vectors
     ax1 = plt.subplot(221)
@@ -354,33 +354,273 @@ if __name__ == "__main__":
     freqs = np.arange(low_freq, high_freq + fine_channel, fine_channel)
 
     # Get stokes parameters as a function of frequency
-    I, Q, U, V = get_IQUV_complex(
-        freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
-    )
+    #  I, Q, U, V = get_IQUV_complex(
+    #  freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+    #  )
 
     #  Q = 0.1 * I + Q
     #  I = 0.9 * I
 
     # Convert stokes to instrumental pols
-    XX, XY, YX, YY = stokes_instru(I, Q, U, V)
+    #  XX, XY, YX, YY = stokes_instru(I, Q, U, V)
 
     # Apply Hamaker leakage
 
-    G_Ax = 1 + 0j
-    G_Ay = 1 + 0j
-    G_Bx = 1 + 0j
-    G_By = 1 + 0j
+    #  G_Ax = 1 + 0j
+    #  G_Ay = 1 + 0j
+    #  G_Bx = 1 + 0j
+    #  G_By = 1 + 0j
 
-    l_Ax = 0 + 0j
-    l_Ay = 0 + 0j
-    l_Bx = 0 + 0j
-    l_By = 0 + 0j
+    #  l_Ax = 0 + 0j
+    #  l_Ay = 0 + 0j
+    #  l_Bx = 0 + 0j
+    #  l_By = 0 + 0j
 
-    I, Q, U, V = rm_leakage(I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By)
+    #  I, Q, U, V = rm_leakage(I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By)
 
     # Determine FDF, RMSF
-    fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+    #  fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
-    rm_clean(fdf, rmsf, phi)
+    #  rm_clean(fdf, rmsf, phi)
 
     #  plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi)
+
+    #####################################################################
+    #                                                                   #
+    #           Save frames of gain amplitude test animation            #
+    #                                                                   #
+    #####################################################################
+
+    Save = False
+
+    if Save:
+
+        # Get stokes parameters as a function of frequency
+        I, Q, U, V = get_IQUV_complex(
+            freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+        )
+
+        for fr, a in enumerate(np.linspace(0.88, 1, 1024)[::-1]):
+
+            print(f"{fr:04d}: {a:.5f}")
+
+            G = a * np.exp(2j * np.pi)
+
+            # Apply some Hamaker leakage
+            G_Ax = G
+            G_Ay = 1 + 0j
+            G_Bx = G
+            G_By = 1 + 0j
+
+            l_Ax = 0 + 0j
+            l_Ay = 0 + 0j
+            l_Bx = 0 + 0j
+            l_By = 0 + 0j
+
+            I, Q, U, V = rm_leakage(
+                I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By
+            )
+
+            # Convert stokes to instrumental pols
+            XX, XY, YX, YY = stokes_instru(I, Q, U, V)
+
+            # Determine FDF, RMSF
+            fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+
+            # Plot stokes vectors, FDF, RMSF
+            plt.style.use("seaborn")
+            fig = plt.figure(figsize=(14, 8))
+
+            # Plot stokes vectors
+            ax1 = plt.subplot(221)
+            colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+            ax1.set_ylabel("Flux [Jy]")
+            ax1.set_title("Stoke Fluxes vs Frequency")
+            stokes = [I, Q, U, V]
+            for i, st in enumerate(["I", "Q", "U", "V"]):
+                ax1.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
+
+            leg = ax1.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot RMSF
+            ax2 = plt.subplot(222)
+            ax2.set_xlim([-20, 20])
+            ax2.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
+            ax2.plot(phi, np.real(rmsf), label=r"$ real(R) $")
+            ax2.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
+            ax2.set_title("RMSF [-20, 20]")
+            ax2.set_ylabel("RMSF")
+
+            leg = ax2.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot Instrumental Polarizations
+            ax3 = plt.subplot(223)
+            colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+            instru = [XX, YY, XY, YX]
+            for i, inst in enumerate(["XX", "YY", "XY", "YX"]):
+                ax3.plot(freqs / 1e6, np.real(instru[i]), color=colors[i], label=inst)
+
+            ax3.set_xlabel("Frequency [MHz]")
+            ax3.set_ylabel("Flux [Jy]")
+            ax3.set_title("Instrumental Pol Fluxes vs Frequency")
+            leg = ax3.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot FDF
+            ax4 = plt.subplot(224)
+            ax4.set_xlim([-50, 50])
+            ax4.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
+            ax4.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
+            ax4.set_xlabel("Faraday Depth [rad/m$^2$]")
+            ax4.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+            leg = ax4.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            fig.suptitle(
+                f"Amplitude Errors to Gains of X Dipoles : [{a:.5f}]", fontsize=16
+            )
+            plt.savefig(
+                f"../data/rm_theory/amp/amp_{fr:04d}_{a:.5f}.png",
+                bbox_inches="tight",
+                dpi=200,
+            )
+            plt.close()
+
+    #####################################################################
+    #                                                                   #
+    #             Save frames of gain phase test animation              #
+    #                                                                   #
+    #####################################################################
+
+    Save = False
+
+    if Save:
+
+        # Get stokes parameters as a function of frequency
+        I, Q, U, V = get_IQUV_complex(
+            freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+        )
+
+        for fr, a in enumerate(np.linspace(0, np.pi, 2048)):
+
+            deg = np.rad2deg(a)
+            print(f"{fr:04d}: {deg:7.3f}")
+
+            G = 1.0 * np.exp(1j * a)
+
+            # Apply some Hamaker leakage
+            G_Ax = G
+            G_Ay = 1 + 0j
+            G_Bx = G
+            G_By = 1 + 0j
+
+            l_Ax = 0 + 0j
+            l_Ay = 0 + 0j
+            l_Bx = 0 + 0j
+            l_By = 0 + 0j
+
+            I, Q, U, V = rm_leakage(
+                I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By
+            )
+
+            # Convert stokes to instrumental pols
+            XX, XY, YX, YY = stokes_instru(I, Q, U, V)
+
+            # Determine FDF, RMSF
+            fdf, rmsf, phi = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+
+            # Plot stokes vectors, FDF, RMSF
+            plt.style.use("seaborn")
+            fig = plt.figure(figsize=(14, 8))
+
+            # Plot stokes vectors
+            ax1 = plt.subplot(221)
+            colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+            ax1.set_ylabel("Flux [Jy]")
+            ax1.set_title("Stoke Fluxes vs Frequency")
+            stokes = [I, Q, U, V]
+            for i, st in enumerate(["I", "Q", "U", "V"]):
+                ax1.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
+
+            leg = ax1.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot RMSF
+            ax2 = plt.subplot(222)
+            ax2.set_xlim([-20, 20])
+            ax2.plot(phi, np.abs(rmsf), label=r"$ \vert R \vert $", zorder=3)
+            ax2.plot(phi, np.real(rmsf), label=r"$ real(R) $")
+            ax2.plot(phi, np.imag(rmsf), label=r"$ imag(R) $")
+            ax2.set_title("RMSF [-20, 20]")
+            ax2.set_ylabel("RMSF")
+
+            leg = ax2.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot Instrumental Polarizations
+            ax3 = plt.subplot(223)
+            colors = plt.cm.Spectral([0.01, 0.14, 0.86, 0.99])
+            instru = [XX, YY, XY, YX]
+            for i, inst in enumerate(["XX", "YY", "XY", "YX"]):
+                ax3.plot(freqs / 1e6, np.real(instru[i]), color=colors[i], label=inst)
+
+            ax3.set_xlabel("Frequency [MHz]")
+            ax3.set_ylabel("Flux [Jy]")
+            ax3.set_title("Instrumental Pol Fluxes vs Frequency")
+            leg = ax3.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            # Plot FDF
+            ax4 = plt.subplot(224)
+            ax4.set_xlim([-50, 50])
+            ax4.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
+            ax4.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
+            ax4.set_xlabel("Faraday Depth [rad/m$^2$]")
+            ax4.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+            leg = ax4.legend(
+                frameon=True, markerscale=1, handlelength=1, loc="upper right"
+            )
+            leg.get_frame().set_facecolor("white")
+            for le in leg.legendHandles:
+                le.set_alpha(1)
+
+            fig.suptitle(
+                f"Amplitude Errors to Gains of X Dipoles : [{deg:7.3f}$^\circ$]",
+                fontsize=16,
+            )
+            plt.savefig(
+                f"../data/rm_theory/phase/phase_{fr:04d}_{deg:7.3f}.png",
+                dpi=200,
+                bbox_inches="tight",
+            )
+            plt.close()
