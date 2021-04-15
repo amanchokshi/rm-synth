@@ -391,7 +391,7 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
-    Save = False
+    Save = True
 
     if Save:
 
@@ -400,7 +400,7 @@ if __name__ == "__main__":
             freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
         )
 
-        for fr, a in enumerate(np.linspace(0.88, 1, 1024)[::-1]):
+        for fr, a in enumerate(np.linspace(0.96, 1, 777)[::-1]):
 
             print(f"{fr:04d}: {a:.5f}")
 
