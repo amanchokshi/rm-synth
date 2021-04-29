@@ -286,7 +286,7 @@ def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
     for i, st in enumerate(["I", "Q", "U", "V"]):
         ax1.plot(freqs / 1e6, np.real(stokes[i]), color=colors[i], label=st)
 
-    leg = ax1.legend(frameon=True, markerscale=1, handlelength=1)
+    leg = ax1.legend(frameon=True, markerscale=1, handlelength=1, loc="upper right")
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
@@ -300,7 +300,7 @@ def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
     ax2.set_title("RMSF [-20, 20]")
     ax2.set_ylabel("RMSF")
 
-    leg = ax2.legend(frameon=True, markerscale=1, handlelength=1)
+    leg = ax2.legend(frameon=True, markerscale=1, handlelength=1, loc="upper right")
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
@@ -315,19 +315,19 @@ def plot_rm_grid(freqs, I, Q, U, V, XX, XY, YX, YY, rmsf, fdf, phi):
     ax3.set_xlabel("Frequency [MHz]")
     ax3.set_ylabel("Flux [Jy]")
     ax3.set_title("Instrumental Pol Fluxes vs Frequency")
-    leg = ax3.legend(frameon=True, markerscale=1, handlelength=1)
+    leg = ax3.legend(frameon=True, markerscale=1, handlelength=1, loc="upper right")
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
 
     # Plot FDF
     ax4 = plt.subplot(224)
-    ax4.set_xlim([-10, 50])
+    ax4.set_xlim([-50, 50])
     ax4.plot(phi, np.abs(fdf), label=r"FDF", zorder=3)
     ax4.set_title(r"FDF : $\phi$=20 rad m$^{-2}$")
     ax4.set_xlabel("Faraday Depth [rad/m$^2$]")
     ax4.set_ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-    leg = ax4.legend(frameon=True, markerscale=1, handlelength=1)
+    leg = ax4.legend(frameon=True, markerscale=1, handlelength=1, loc="upper right")
     leg.get_frame().set_facecolor("white")
     for le in leg.legendHandles:
         le.set_alpha(1)
@@ -391,7 +391,7 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
-    Save = True
+    Save = False
 
     if Save:
 
@@ -510,7 +510,7 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
-    Save = True
+    Save = False
 
     if Save:
 
@@ -631,7 +631,7 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
-    Save = True
+    Save = False
 
     if Save:
 
@@ -751,7 +751,7 @@ if __name__ == "__main__":
     #                                                                   #
     #####################################################################
 
-    Save = True
+    Save = False
 
     if Save:
 
