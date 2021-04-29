@@ -4,6 +4,9 @@ import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
+from tqdm import tqdm
+
+import rm_theory as rmt
 
 
 def makeUnpolInstrumentalResponse(j1, j2):
@@ -56,7 +59,7 @@ if __name__ == "__main__":
     az_f = az_grid.flatten()
     za_f = za_grid.flatten()
 
-    freq = 200000000
+    freq = 200e6
     delays = [0] * 16
     amps_16 = [1.0] * 16
     norm_to_zenith = True
@@ -66,12 +69,124 @@ if __name__ == "__main__":
     # parallel with Rust (so it's fast).
     jones_16 = beam.calc_jones_array(az_f, za_f, freq, delays, amps_16, norm_to_zenith)
 
-    amps_15 = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0]
+    # last dipole is dead
+    amps_15 = [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0,
+    ]
     jones_15 = beam.calc_jones_array(az_f, za_f, freq, delays, amps_15, norm_to_zenith)
 
-    jones_err = jones_16 - jones_15
+    # Difference b/w jones matracies added to a unit matrix which
+    # represents the perfect response of the instrument
+    jones_err = jones_16 - jones_15 + np.array([1.0, 0.0, 0.0, 1.0])
 
-    print(jones_err[125500])
+    # MWA constants
+    low_freq = 160e6
+    high_freq = 230e6
+    fine_channel = 40e3
+
+    # RM Source Constants
+    SI = -0.7
+    rm = 20
+    frac_pol = 0.20
+    ref_I_Jy = 7
+    ref_V_Jy = 1
+
+    # Arrays of freqencies in Hz
+    freqs = np.arange(low_freq, high_freq + fine_channel, fine_channel)
+
+    # Get stokes parameters as a function of frequency
+    I, Q, U, V = rmt.get_IQUV_complex(
+        freqs, rm, ref_I_Jy, ref_V_Jy, SI, frac_pol, ref_chi=0.0, ref_freq=200e6
+    )
+
+    # Convert stokes to instrumental pols
+    XX, XY, YX, YY = rmt.stokes_instru(I, Q, U, V)
+
+    fractional_leakage = []
+
+    print(len(jones_err))
+
+    #  for i, j_err in enumerate(jones_err):
+    for i in tqdm(range(len(jones_err))):
+
+        j_err = jones_err[i]
+
+        if np.nan in j_err:
+            fractional_leakage.append(np.nan)
+        else:
+            # Apply Hamaker leakage
+            j_err = jones_err[125500]
+
+            G_Ax = j_err[0]
+            G_Ay = 1 + 0j
+            G_Bx = j_err[3]
+            G_By = 1 + 0j
+
+            l_Ax = j_err[1]
+            l_Ay = 0 + 0j
+            l_Bx = j_err[2]
+            l_By = 0 + 0j
+
+            I, Q, U, V = rmt.rm_leakage(
+                I, Q, U, V, G_Ax, G_Ay, G_Bx, G_By, l_Ax, l_Ay, l_Bx, l_By
+            )
+
+            # Determine FDF, RMSF
+            fdf, rmsf, phi = rmt.rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+
+            # Find peak of leakage and FDF
+            leak_flux = np.amax(np.abs(fdf)[np.where((phi > -1) & (phi < 1))])
+            pos_flux = np.amax(np.abs(fdf)[np.where((phi > rm - 1) & (phi < rm + 1))])
+            neg_flux = np.amax(
+                np.abs(fdf)[np.where((phi > -1 * rm - 1) & (phi < -1 * rm + 1))]
+            )
+
+            if neg_flux > pos_flux:
+                p = -20
+                rm_flux = -1 * neg_flux
+            else:
+                p = 20
+                rm_flux = pos_flux
+
+            frac_leak = leak_flux / rm_flux
+
+            fractional_leakage.append(frac_leak)
+
+    #  plt.style.use("seaborn")
+    #  plt.plot(phi, np.abs(fdf))
+    #  plt.xlim([-50, 50])
+    #  plt.title(rf"FDF : $\phi$=20 rad m$^{{-2}}$, Frac Leakage : {frac_leak:.2f}")
+    #  plt.xlabel("Faraday Depth [rad/m$^2$]")
+    #  plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+    #  plt.scatter(
+    #  [0, p],
+    #  [leak_flux, rm_flux],
+    #  marker="o",
+    #  color="midnightblue",
+    #  facecolor="none",
+    #  linewidth=2.1,
+    #  zorder=7,
+    #  )
+
+    #  plt.tight_layout()
+    #  plt.show()
+
+    ####################################################################
 
     #  unpol_beam = makeUnpolInstrumentalResponse(jones_err, jones_err)
 
@@ -95,3 +210,16 @@ if __name__ == "__main__":
     #  ax.clabel(CS, inline=1, fontsize=5)
     #  plt.tight_layout()
     #  plt.show()
+
+    fractional_leakage = np.asarray(fractional_leakage)
+    print("Saving fractional leakage data to npy file")
+    np.save("beam_leak.npy", fractional_leakage)
+
+    print("Saving fractional leakage plot")
+    plt.style.use("seaborn")
+    fractional_leakage = fractional_leakage.reshape(az_grid.shape)
+    fig, ax = plt.subplots()
+    im = ax.imshow(fractional_leakage)
+    plt.tight_layout()
+    plt.savefig("beam_leak.png")
+    plt.show()
