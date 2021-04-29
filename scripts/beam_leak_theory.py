@@ -164,26 +164,26 @@ if __name__ == "__main__":
 
                     fractional_leakage.append(frac_leak)
 
-                    plt.style.use("seaborn")
-                    plt.plot(phi, np.abs(fdf))
-                    plt.xlim([-50, 50])
-                    plt.title(
-                        rf"FDF : $\phi$=20 rad m$^{{-2}}$, Frac Leakage : {frac_leak:.2f}"
-                    )
-                    plt.xlabel("Faraday Depth [rad/m$^2$]")
-                    plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
-                    plt.scatter(
-                        [0, p],
-                        [leak_flux, rm_flux],
-                        marker="o",
-                        color="midnightblue",
-                        facecolor="none",
-                        linewidth=2.1,
-                        zorder=7,
-                    )
-                    plt.tight_layout()
-                    plt.savefig(f"./rm_leak/{i}.png")
-                    plt.close()
+                    #  plt.style.use("seaborn")
+                    #  plt.plot(phi, np.abs(fdf))
+                    #  plt.xlim([-50, 50])
+                    #  plt.title(
+                    #  rf"FDF : $\phi$=20 rad m$^{{-2}}$, Frac Leakage : {frac_leak:.2f}"
+                    #  )
+                    #  plt.xlabel("Faraday Depth [rad/m$^2$]")
+                    #  plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
+                    #  plt.scatter(
+                    #  [0, p],
+                    #  [leak_flux, rm_flux],
+                    #  marker="o",
+                    #  color="midnightblue",
+                    #  facecolor="none",
+                    #  linewidth=2.1,
+                    #  zorder=7,
+                    #  )
+                    #  plt.tight_layout()
+                    #  plt.savefig(f"./rm_leak/{i}.png")
+                    #  plt.close()
 
             fractional_leakage = np.asarray(fractional_leakage)
             np.save(f"./rm_leak/beam_leak_{j}.npy", fractional_leakage)
