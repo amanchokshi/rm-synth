@@ -203,7 +203,7 @@ if __name__ == "__main__":
             hpx.plot_healpix(
                 data_map=beam_rm_leak, sub=(1, 1, 1), cmap="Spectral",
             )
-            plt.savefig(f"./rm_leak/beam_leak_{j}.png", bbox_inches="tight")
+            plt.savefig(f"./rm_leak/beam_leak_{j}.pdf", bbox_inches="tight")
 
             #  plt.style.use("seaborn")
             #  fractional_leakage = fractional_leakage.reshape(az_grid.shape)
