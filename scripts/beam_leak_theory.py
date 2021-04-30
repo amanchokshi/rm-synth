@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 y=0.92,
             )
             hpx.plot_healpix(
-                data_map=beam_rm_leak, sub=(1, 1, 1), cmap="coolwarm",
+                data_map=beam_rm_leak, sub=(1, 1, 1), cmap="Spectral",
             )
             plt.savefig(f"./rm_leak/beam_leak_{j}.png", bbox_inches="tight")
 
