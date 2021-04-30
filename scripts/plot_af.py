@@ -10,10 +10,10 @@ if __name__=="__main__":
     pogs_fits = "../data/catalogs/POGS-II_ExGal.fits"
 
     pogs_obsids = {
-        "1120300232" : ["POGSII-EG-337", "POGSII-EG-338", "POGSII-EG-339"],
-        "1120300352" : ["POGSII-EG-337", "POGSII-EG-338", "POGSII-EG-339"],
-        "1120082744" : ["POGSII-EG-034", "POGSII-EG-032", "POGSII-EG-048"],
-        "1120082864" : ["POGSII-EG-034", "POGSII-EG-032", "POGSII-EG-048"],
+        "1120300232" : ["POGSII-EG-337", "POGSII-EG-338", "POGSII-EG-339", "POGSII-EG-321", "POGSII-EG-313"],
+        "1120300352" : ["POGSII-EG-337", "POGSII-EG-338", "POGSII-EG-339", "POGSII-EG-321", "POGSII-EG-313"],
+        "1120082744" : ["POGSII-EG-034", "POGSII-EG-032", "POGSII-EG-048", "POGSII-EG-009", "POGSII-EG-010"],
+        "1120082864" : ["POGSII-EG-034", "POGSII-EG-032", "POGSII-EG-048", "POGSII-EG-009", "POGSII-EG-010"],
     }
 
     obsids = list(pogs_obsids.keys())
