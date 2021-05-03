@@ -1,8 +1,5 @@
 """Plot unpolarised all-sky MWA FEE beam response using hyperbeam."""
 
-import concurrent.futures
-from itertools import repeat
-
 import healpy as hp
 import mwa_hyperbeam
 import numpy as np
