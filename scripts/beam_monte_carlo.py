@@ -5,6 +5,7 @@ import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import random
+from scipy.stats import median_abs_deviation as mad
 from tqdm import tqdm
 
 import healpix as hpx
@@ -64,6 +65,8 @@ if __name__ == "__main__":
     N = 1000
     amps_rand = random.uniform(low=0.0, high=1.0, size=(16, N))
 
+    mads = []
+
     for i in tqdm(range(N)):
         amps = amps_rand[:, i]
 
@@ -73,22 +76,10 @@ if __name__ == "__main__":
         XX = np.real(unpol_beam[:, 0])
         YY = np.real(unpol_beam[:, 3])
 
-    #  npix = hp.nside2npix(nside=32)
-    #  beam_response_XX = np.zeros(npix)
-    #  beam_response_YY = np.zeros(npix)
-    #  above_horizon = range(int(npix / 2))
-    #  beam_response_XX[above_horizon] = XX
-    #  beam_response_YY[above_horizon] = YY
+        resi = XX_15 - XX
+        mads.append(mad(resi))
 
-    #  plt.style.use("seaborn")
-    #  fig = plt.figure(figsize=(6, 6))
-    #  fig.suptitle("MWA HYPERBEAM FEE MAP XX", fontsize=16, y=0.92)
-    #  hpx.plot_healpix(
-    #  data_map=10 * np.log10(beam_response_XX),
-    #  sub=(1, 1, 1),
-    #  cmap="viridis",
-    #  vmin=-50,
-    #  vmax=0,
-    #  )
-    #  plt.show()
-    #  #  plt.savefig("XX.png", bbox_inches="tight")
+    plt.style.use("seaborn")
+    plt.scatter(amps_rand[0], mads)
+    plt.tight_layout()
+    plt.show()
