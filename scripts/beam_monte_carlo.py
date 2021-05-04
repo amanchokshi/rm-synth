@@ -4,7 +4,6 @@ import healpy as hp
 import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import random
 from scipy.stats import median_abs_deviation as mad
 from tqdm import tqdm
 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
 
     # define a set of N random dipole amps between 0, 1
     N = 1000
-    amps_rand = random.uniform(low=0.0, high=1.0, size=(16, N))
+    amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N))
 
     mads = []
 
