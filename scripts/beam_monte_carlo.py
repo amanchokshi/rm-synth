@@ -90,4 +90,16 @@ if __name__ == "__main__":
     # define a set of N random dipole amps between 0, 1
 
     N = 1000
-    amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N))
+
+    # Array of uniformly distributed amplitudes
+    # The first column represents the initial conditions of the MCMC
+    amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N + 1))
+
+    for i in tqdm(range(N)):
+        amps = amps_rand[:, i]
+
+        jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
+        unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+        XX = np.real(unpol_beam[:, 0])
+        YY = np.real(unpol_beam[:, 3])
