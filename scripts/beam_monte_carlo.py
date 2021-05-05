@@ -1,10 +1,8 @@
 """Monte Carle to determine MWA beam dipole amplitudes."""
 
-import healpy as hp
 import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.stats import median_abs_deviation as mad
 from tqdm import tqdm
 
 import healpix as hpx
@@ -36,6 +34,29 @@ def makeUnpolInstrumentalResponse(j1, j2):
     return result
 
 
+def chisq_prob(data=None, model=None):
+    """Chi-square goodness of fit test.
+
+    Determine the probability that a model fits the data
+
+    Parameter
+    ---------
+    data : numpy.array
+        A data array
+    model : numpy.array
+        A model array of same size as data
+
+    Returns
+    -------
+    p_value : float
+        The probability that the model fits the data
+    """
+    chisq = np.sum(np.square(data - model) / model)
+    p_value = np.exp(-0.5 * chisq)
+
+    return p_value
+
+
 if __name__ == "__main__":
 
     # We can make a new beam object with a path to the HDF5 file specified by MWA_BEAM_FILE.
@@ -43,14 +64,21 @@ if __name__ == "__main__":
 
     # Healpix map with given nside
     nside = 32
+
+    # Zenith angle and Azimuth of healpix pixels
     za, az = hpx.healpix_za_az(nside=nside)
 
+    # Satellite beam map frequency
     freq = 138e6
+
+    # Zenith Pointing
     delays = [0] * 16
+
+    # Normalize maps to zenith
     norm_to_zenith = True
 
     # Setup a beam with the first dipole dead
-    # We'll try and determine which dipole is dead using monte carlo magic
+    # We'll try and determine which dipole is dead using MCMC magic
     amps_15 = [0.0] * 1 + [1.0] * 15
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = makeUnpolInstrumentalResponse(jones_15, jones_15)
@@ -59,26 +87,7 @@ if __name__ == "__main__":
     YY_15 = np.real(unpol_beam_15[:, 3])
 
     # Monte Carlo Magic Below
-
     # define a set of N random dipole amps between 0, 1
+
     N = 1000
     amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N))
-
-    mads = []
-
-    for i in tqdm(range(N)):
-        amps = amps_rand[:, i]
-
-        jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
-        unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
-
-        XX = np.real(unpol_beam[:, 0])
-        YY = np.real(unpol_beam[:, 3])
-
-        resi = XX_15 - XX
-        mads.append(mad(resi))
-
-    plt.style.use("seaborn")
-    plt.scatter(amps_rand[0], mads)
-    plt.tight_layout()
-    plt.show()
