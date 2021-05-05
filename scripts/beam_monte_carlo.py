@@ -54,7 +54,7 @@ def chisq_prob(data=None, model=None):
     chisq = np.sum(np.square(data - model) / model)
     p_value = np.exp(-0.5 * chisq)
 
-    return p_value
+    return p_value, chisq
 
 
 if __name__ == "__main__":
@@ -89,17 +89,52 @@ if __name__ == "__main__":
     # Monte Carlo Magic Below
     # define a set of N random dipole amps between 0, 1
 
-    N = 1000
+    N = 100000
 
     # Array of uniformly distributed amplitudes
     # The first column represents the initial conditions of the MCMC
     amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N + 1))
 
+    # Initialisation
+    amps_ini = amps_rand[:, 0]
+
+    # Evaluate the beam with the initial amplitudes
+    jones = beam.calc_jones_array(az, za, freq, delays, amps_ini, norm_to_zenith)
+    unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+    XX = np.real(unpol_beam[:, 0])
+    #  YY = np.real(unpol_beam[:, 3])
+
+    # This is the probability of the initial amplitude guess
+    prob_old, _ = chisq_prob(data=XX_15, model=XX)
+
+    amps_accepted = [amps_ini]
+    chi_sq = []
+
     for i in tqdm(range(N)):
-        amps = amps_rand[:, i]
+
+        # A candidate jump
+        amps = amps_rand[:, i + 1]
 
         jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
         unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
 
         XX = np.real(unpol_beam[:, 0])
-        YY = np.real(unpol_beam[:, 3])
+        #  YY = np.real(unpol_beam[:, 3])
+
+        # Probability of new model, with random amps
+        prob_new, chisq = chisq_prob(data=XX_15, model=XX)
+
+        # Evaluate whether it's worth making this jump
+        if prob_new / prob_old > np.random.rand():
+
+            # The new probability becomes the initial condition for the next loop
+            prob_old = prob_new
+            amps_accepted.append(amps)
+            chi_sq.append(chisq)
+
+    amps_accepted = np.array(amps_accepted)
+    chi_sq = np.array(chi_sq)
+
+    np.save("./mcmc/amps_accepted.npy", amps_accepted)
+    np.save("./mcmc/chisq_accepted.npy", chi_sq)
