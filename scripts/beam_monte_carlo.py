@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # Monte Carlo Magic Below
     # define a set of N random dipole amps between 0, 1
 
-    N = 100000
+    N = 200000
 
     # Array of uniformly distributed amplitudes
     # The first column represents the initial conditions of the MCMC
