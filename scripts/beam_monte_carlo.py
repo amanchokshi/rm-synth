@@ -79,6 +79,76 @@ if __name__ == "__main__":
 
     # Setup a beam with the first dipole dead
     # We'll try and determine which dipole is dead using MCMC magic
+    # amps_15 = [0.0] * 1 + [1.0] * 15
+    # jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
+    # unpol_beam_15 = makeUnpolInstrumentalResponse(jones_15, jones_15)
+
+    # XX_15 = np.real(unpol_beam_15[:, 0])
+    # YY_15 = np.real(unpol_beam_15[:, 3])
+
+    # Monte Carlo Magic Below
+    # define a set of N random dipole amps between 0, 1
+
+    # N = 1000
+
+    # # Array of uniformly distributed amplitudes
+    # # The first column represents the initial conditions of the MCMC
+    # amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N + 1))
+
+    # # Initialisation
+    # amps_ini = amps_rand[:, 0]
+
+    # # Evaluate the beam with the initial amplitudes
+    # jones = beam.calc_jones_array(az, za, freq, delays, amps_ini, norm_to_zenith)
+    # unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+    # XX = np.real(unpol_beam[:, 0])
+    # #  YY = np.real(unpol_beam[:, 3])
+
+    # # This is the probability of the initial amplitude guess
+    # prob_old, _ = chisq_prob(data=XX_15, model=XX)
+
+    # amps_accepted = [amps_ini]
+    # chi_sq = []
+
+    # for i in tqdm(range(N)):
+
+    #     # A candidate jump
+    #     amps = amps_rand[:, i + 1]
+
+    #     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
+    #     unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+    #     XX = np.real(unpol_beam[:, 0])
+    #     #  YY = np.real(unpol_beam[:, 3])
+
+    #     # Probability of new model, with random amps
+    #     prob_new, chisq = chisq_prob(data=XX_15, model=XX)
+
+    #     # Evaluate whether it's worth making this jump
+    #     if prob_new / prob_old > np.random.rand():
+
+    #         # The new probability becomes the initial condition for the next loop
+    #         prob_old = prob_new
+    #         amps_accepted.append(amps)
+    #         chi_sq.append(chisq)
+
+    # amps_accepted = np.array(amps_accepted)
+    # chi_sq = np.array(chi_sq)
+
+    # np.save("./mcmc/amps_accepted.npy", amps_accepted)
+    # np.save("./mcmc/chisq_accepted.npy", chi_sq)
+
+    # MCMC Below
+
+    # Number of jumps to try
+    N = 300000
+
+    # Standard deviation of normal distribution from which to draw candidate jumps
+    #  step = 0.14
+    step = 0.2
+
+    # Lets create synthetic data at try to recover the input parameters
     amps_15 = [0.0] * 1 + [1.0] * 15
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = makeUnpolInstrumentalResponse(jones_15, jones_15)
@@ -86,55 +156,83 @@ if __name__ == "__main__":
     XX_15 = np.real(unpol_beam_15[:, 0])
     YY_15 = np.real(unpol_beam_15[:, 3])
 
-    # Monte Carlo Magic Below
-    # define a set of N random dipole amps between 0, 1
+    # Limits of dipole amplitudes
+    amp_min = 0
+    amp_max = 1
 
-    N = 200000
-
-    # Array of uniformly distributed amplitudes
-    # The first column represents the initial conditions of the MCMC
-    amps_rand = np.random.uniform(low=0.0, high=1.0, size=(16, N + 1))
-
-    # Initialisation
-    amps_ini = amps_rand[:, 0]
+    amps_proposal = np.random.uniform(low=amp_min, high=amp_max, size=16)
 
     # Evaluate the beam with the initial amplitudes
-    jones = beam.calc_jones_array(az, za, freq, delays, amps_ini, norm_to_zenith)
+    jones = beam.calc_jones_array(az, za, freq, delays, amps_proposal, norm_to_zenith)
     unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
 
     XX = np.real(unpol_beam[:, 0])
     #  YY = np.real(unpol_beam[:, 3])
 
     # This is the probability of the initial amplitude guess
-    prob_old, _ = chisq_prob(data=XX_15, model=XX)
+    prob_old, chi_old = chisq_prob(data=XX_15, model=XX)
 
-    amps_accepted = [amps_ini]
-    chi_sq = []
+    amps_old = amps_proposal
 
-    for i in tqdm(range(N)):
+    amps_list = [amps_old]
+    chisq_list = [chi_old]
 
-        # A candidate jump
-        amps = amps_rand[:, i + 1]
+    # Jump proposal
 
-        jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
-        unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+    count = 0
 
-        XX = np.real(unpol_beam[:, 0])
-        #  YY = np.real(unpol_beam[:, 3])
+    while count <= N:
 
-        # Probability of new model, with random amps
-        prob_new, chisq = chisq_prob(data=XX_15, model=XX)
+        #  print(count)
 
-        # Evaluate whether it's worth making this jump
-        if prob_new / prob_old > np.random.rand():
+        jump = False
+        while jump is False:
 
-            # The new probability becomes the initial condition for the next loop
-            prob_old = prob_new
-            amps_accepted.append(amps)
-            chi_sq.append(chisq)
+            amps_proposal = np.array(
+                [
+                    np.random.normal(loc=amps_old[i], scale=step, size=1)[0]
+                    for i in range(16)
+                ]
+            )
 
-    amps_accepted = np.array(amps_accepted)
-    chi_sq = np.array(chi_sq)
+            if np.all(amps_proposal <= amp_max) & np.all(amps_proposal >= amp_min):
+                jump = True
+                count += 1
 
-    np.save("./mcmc/amps_accepted.npy", amps_accepted)
-    np.save("./mcmc/chisq_accepted.npy", chi_sq)
+                # Evaluate the beam with proposed amplitudes
+                jones = beam.calc_jones_array(
+                    az, za, freq, delays, amps_proposal, norm_to_zenith
+                )
+                unpol_beam = makeUnpolInstrumentalResponse(jones, jones)
+
+                XX = np.real(unpol_beam[:, 0])
+                #  YY = np.real(unpol_beam[:, 3])
+
+                # This is the probability of the initial amplitude guess
+                prob_new, chi_new = chisq_prob(data=XX_15, model=XX)
+
+                if (prob_new / prob_old) > np.random.rand():
+                    amps_list.append(amps_proposal)
+                    chisq_list.append(chi_new)
+
+                    # This successful jump becomes the initial condition
+                    # of the next jump - a markov chain has been formed
+                    prob_old = prob_new
+                    amps_new = amps_proposal
+
+    amps_list = np.array(amps_list)
+    chisq_list = np.array(chisq_list)
+
+    np.save("../data/mcmc/amps_list.npy", amps_list)
+    np.save("../data/mcmc/chisq_list.npy", chisq_list)
+
+    #  plt.style.use("seaborn")
+    #  plt.plot(range(len(chisq_list)), chisq_list, "-o", color="seagreen")
+    #  plt.xlabel("Jump Number")
+    #  plt.ylabel("Chi Square")
+    #  plt.tight_layout()
+    #  plt.show()
+
+    #  plt.hist(np.array(amps_list)[:, 0], bins=30, ec="k")
+    #  plt.tight_layout()
+    #  plt.show()
