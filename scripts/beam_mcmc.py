@@ -93,7 +93,7 @@ if __name__ == "__main__":
     #  print(ll)
 
     # number of ensemble walkers
-    nwalkers = 36
+    nwalkers = 100
 
     # Our walkers will be centralised to this location
     amps_guess = [0.5] * 16
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * n_walkers measurements of the posterior
-    n_iterations = 200
+    n_iterations = 5000
 
     # Saving MCMC chains
     filename = "beam_mcmc.h5"
