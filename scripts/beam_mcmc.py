@@ -87,26 +87,21 @@ def log_posterior(amps):
 
 if __name__ == "__main__":
 
-    #  amps = [1.0] * 15 + [0] * 1
-
-    #  ll = log_likelihood(amps)
-    #  print(ll)
-
     # number of ensemble walkers
-    nwalkers = 100
+    nwalkers = 66
 
     # Our walkers will be centralised to this location
     amps_guess = [0.5] * 16
-    ndim = len(amps_guess)  # number of dimensions in sample space
+
+    # number of dimensions in sample space
+    ndim = len(amps_guess)
 
     # Add gaussian perturbation to guess location for each walker
-    amps_init = []
-    for i in range(nwalkers):
-        amps_init.append([x + np.random.uniform(0, 1e-2 * x) for x in amps_guess])
+    amps_init = [amps_guess + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * n_walkers measurements of the posterior
-    n_iterations = 5000
+    n_iterations = 20000
 
     # Saving MCMC chains
     filename = "beam_mcmc.h5"
@@ -118,16 +113,3 @@ if __name__ == "__main__":
 
     # start the chain!
     sampler.run_mcmc(amps_init, n_iterations, progress=True)
-
-    #  fig, axes = plt.subplots(16, figsize=(10, 7), sharex=True)
-    #  samples = sampler.get_chain()
-    #  #  labels = ["A", r"$\beta$", "B", r"$\omega$"]
-    #  for i in range(ndim):
-    #  ax = axes[i]
-    #  ax.plot(samples[:, :, i], "k", alpha=0.2)
-    #  ax.set_xlim(0, len(samples))
-    #  #  ax.set_ylabel(labels[i])
-    #  ax.yaxis.set_label_coords(-0.1, 0.5)
-
-    #  axes[-1].set_xlabel("iteration")
-    #  plt.show()
