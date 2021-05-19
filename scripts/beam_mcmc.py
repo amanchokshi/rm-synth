@@ -9,7 +9,7 @@ from scipy.stats import median_abs_deviation as mad
 import beam_utils as bu
 
 
-def log_likelihood(amps):
+def log_likelihood(amps, data):
     """Log likelihood of a beam model give some data.
 
     Parameter
@@ -59,7 +59,8 @@ def log_likelihood(amps):
     model_XX = np.real(unpol_beam[:, 0])
     #  model_YY = np.real(unpol_beam[:, 3])
 
-    chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
+    # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
+    chisq = np.sum(np.square(data - model_XX) / mad(data - model_XX))
     log_lik = -0.5 * np.log(chisq)
 
     return log_lik
@@ -74,7 +75,7 @@ def log_prior(amps):
         return -np.inf
 
 
-def log_posterior(amps):
+def log_posterior(amps, data=None):
     """Posterior distribution in log space."""
 
     # calculate prior
@@ -85,7 +86,7 @@ def log_posterior(amps):
         return -np.inf
 
     # ln posterior = ln likelihood + ln prior
-    return lp + log_likelihood(amps)
+    return lp + log_likelihood(amps, data)
 
 
 if __name__ == "__main__":
@@ -129,11 +130,11 @@ if __name__ == "__main__":
 
     # Add gaussian perturbation to guess location for each walker
     # amps_init = [amps_guess + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
-    amps_init = [amps_guess + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
+    amps_init = [amps_guess + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * nwalkers measurements of the posterior
-    n_iterations = 2000
+    n_iterations = 20000
 
     # Saving MCMC chains
     filename = "beam_mcmc_2_amps.h5"
@@ -141,7 +142,9 @@ if __name__ == "__main__":
     backend.reset(nwalkers, ndim)
 
     # initialise sampler object
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_posterior, backend=backend)
+    sampler = emcee.EnsembleSampler(
+        nwalkers, ndim, log_posterior, kwargs=({"data": data_XX_15}), backend=backend
+    )
 
     # start the chain!
     sampler.run_mcmc(amps_init, n_iterations, progress=True)
