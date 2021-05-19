@@ -49,6 +49,9 @@ def log_likelihood(amps):
     data_XX_15 = np.real(unpol_beam_15[:, 0])
     #  data_YY_15 = np.real(unpol_beam_15[:, 3])
 
+    # This is for the trial with 2 parameters
+    amps = list(amps) + [1.0] * 14
+
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
@@ -91,20 +94,23 @@ if __name__ == "__main__":
     nwalkers = 66
 
     # Our walkers will be centralised to this location
-    amps_guess = [0.5] * 16
+    # amps_guess = [0.5] * 16
+    amps_guess = [0.5] * 2
 
     # number of dimensions in sample space
-    ndim = len(amps_guess)
+    # ndim = len(amps_guess)
+    ndim = 2
 
     # Add gaussian perturbation to guess location for each walker
+    # amps_init = [amps_guess + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
     amps_init = [amps_guess + 1e-2 * np.random.randn(ndim) for i in range(nwalkers)]
 
     # no. of MCMC iterations - this means there will
-    # be n_iterations * n_walkers measurements of the posterior
-    n_iterations = 20000
+    # be n_iterations * nwalkers measurements of the posterior
+    n_iterations = 2000
 
     # Saving MCMC chains
-    filename = "beam_mcmc.h5"
+    filename = "beam_mcmc_2_amps.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
