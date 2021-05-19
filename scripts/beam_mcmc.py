@@ -41,13 +41,13 @@ def log_likelihood(amps):
     # Normalize maps to zenith
     norm_to_zenith = True
 
-    # Create synthetic data at try to recover the input parameters
-    amps_15 = [0.0] * 1 + [1.0] * 15
-    jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
-    unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
+    # # Create synthetic data at try to recover the input parameters
+    # amps_15 = [0.0] * 1 + [1.0] * 15
+    # jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
+    # unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
-    data_XX_15 = np.real(unpol_beam_15[:, 0])
-    #  data_YY_15 = np.real(unpol_beam_15[:, 3])
+    # data_XX_15 = np.real(unpol_beam_15[:, 0])
+    # #  data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # This is for the trial with 2 parameters
     amps = list(amps) + [1.0] * 14
@@ -89,6 +89,32 @@ def log_posterior(amps):
 
 
 if __name__ == "__main__":
+
+    # Make a new beam object
+    beam = mwa_hyperbeam.FEEBeam()
+
+    # Healpix map with given nside
+    nside = 32
+
+    # Zenith angle and Azimuth of healpix pixels
+    za, az = bu.healpix_za_az(nside=nside)
+
+    # Satellite beam map frequency
+    freq = 138e6
+
+    # Zenith Pointing
+    delays = [0] * 16
+
+    # Normalize maps to zenith
+    norm_to_zenith = True
+
+    # Create synthetic data at try to recover the input parameters
+    amps_15 = [0.0] * 1 + [1.0] * 15
+    jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
+    unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
+
+    data_XX_15 = np.real(unpol_beam_15[:, 0])
+    #  data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # number of ensemble walkers
     nwalkers = 66
