@@ -110,7 +110,7 @@ if __name__ == "__main__":
     norm_to_zenith = True
 
     # Create synthetic data at try to recover the input parameters
-    amps_15 = [0.0] * 1 + [1.0] * 15
+    amps_15 = [0.5] * 1 + [0.8] * 1 + [1.0] * 14
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     n_iterations = 20000
 
     # Saving MCMC chains
-    filename = "beam_mcmc_2_amps.h5"
+    filename = "beam_mcmc_2_amps_v2.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
