@@ -110,7 +110,7 @@ if __name__ == "__main__":
     norm_to_zenith = True
 
     # Create synthetic data at try to recover the input parameters
-    amps_15 = [0.5] * 1 + [0.8] * 1 + [1.0] * 14
+    amps_15 = [0.4] * 1 + [0.8] * 1 + [1.0] * 14
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #  data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # number of ensemble walkers
-    nwalkers = 66
+    nwalkers = 16
 
     # Our walkers will be centralised to this location
     # amps_guess = [0.5] * 16
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * nwalkers measurements of the posterior
-    n_iterations = 20000
+    n_iterations = 100000
 
     # Saving MCMC chains
     filename = "beam_mcmc_2_amps_v2.h5"
