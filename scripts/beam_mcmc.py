@@ -137,7 +137,7 @@ if __name__ == "__main__":
     n_iterations = 100000
 
     # Saving MCMC chains
-    filename = "beam_mcmc_2_amps_v2.h5"
+    filename = "beam_mcmc_2_amps_v3.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
