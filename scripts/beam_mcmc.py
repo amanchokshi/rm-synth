@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * nwalkers measurements of the posterior
-    n_iterations = 100000
+    n_iterations = 200000
 
     # Saving MCMC chains
     filename = "beam_mcmc_amps_v4.h5"
