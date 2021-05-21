@@ -128,7 +128,7 @@ if __name__ == "__main__":
     #  data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # number of ensemble walkers
-    nwalkers = 36
+    nwalkers = 64
 
     # Our walkers will be centralised to this location
     amps_guess = [0.5] * 16
