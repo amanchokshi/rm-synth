@@ -76,24 +76,25 @@ if __name__ == "__main__":
     norm_to_zenith = True
 
     # Create synthetic data at try to recover the input parameters
-    amps_15 = [
-        0.2,
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.8,
-        0.9,
-        0.9,
-        0.8,
-        0.7,
-        0.6,
-        0.5,
-        0.4,
-        0.3,
-        0.2,
-    ]
+    # amps_15 = [
+    #     0.2,
+    #     0.3,
+    #     0.4,
+    #     0.5,
+    #     0.6,
+    #     0.7,
+    #     0.8,
+    #     0.9,
+    #     0.9,
+    #     0.8,
+    #     0.7,
+    #     0.6,
+    #     0.5,
+    #     0.4,
+    #     0.3,
+    #     0.2,
+    # ]
+    amps_15 = np.linspace(0.0, 1.0, 16)
 
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     # data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # Our walkers will be centralised to this location
-    nwalkers = 64
+    nwalkers = 128
     amps_guess = [0.5] * 16
     amps_init = [
         amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
@@ -113,7 +114,7 @@ if __name__ == "__main__":
     min_amps = []
 
     for i in range(nwalkers):
-        print(f"Walker {i}")
+        print(f"Walker : [{i}/{nwalkers}]")
         result = minimize(
             likelihood,
             amps_guess,
@@ -142,4 +143,4 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    np.save("beam_min.npy", min_amps)
+    np.save("beam_min_v2.npy", min_amps)
