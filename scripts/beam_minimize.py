@@ -113,6 +113,7 @@ if __name__ == "__main__":
     min_amps = []
 
     for i in range(nwalkers):
+        print(f"Walker {i}")
         result = minimize(
             likelihood,
             amps_guess,
