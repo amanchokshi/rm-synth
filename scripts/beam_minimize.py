@@ -102,30 +102,43 @@ if __name__ == "__main__":
     # data_YY_15 = np.real(unpol_beam_15[:, 3])
 
     # Our walkers will be centralised to this location
+    nwalkers = 64
     amps_guess = [0.5] * 16
+    amps_init = [
+        amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
+    ]
 
-    result = minimize(
-        likelihood,
-        amps_guess,
-        args=(data_XX_15),
-        bounds=(
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, 1),
-        ),
-        options={"maxiter": 10000, "disp": True},
-    )
-    print(result.x)
+    # Loop over initial amps and minimize
+
+    min_amps = []
+
+    for i in range(nwalkers):
+        result = minimize(
+            likelihood,
+            amps_guess,
+            args=(data_XX_15),
+            bounds=(
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+                (0, 1),
+            ),
+            options={"maxiter": 10000, "disp": False},
+        )
+        min_amps.append(result.x)
+
+    min_amps = np.array(min_amps)
+
+    np.save("beam_min.npy", min_amps)
