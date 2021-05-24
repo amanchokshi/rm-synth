@@ -52,8 +52,8 @@ def log_likelihood(amps, data):
     #  model_YY = np.real(unpol_beam[:, 3])
 
     # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
-    chisq = np.sum(np.square(data - model_XX) / mad(data - model_XX))
-    log_lik = -0.5 * np.log(chisq)
+    chisq = np.sum(np.square(data - model_XX))
+    log_lik = np.log(chisq)
 
     return log_lik
 
@@ -145,10 +145,10 @@ if __name__ == "__main__":
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * nwalkers measurements of the posterior
-    n_iterations = 200000
+    n_iterations = 10000
 
     # Saving MCMC chains
-    filename = "beam_mcmc_amps_v4.h5"
+    filename = "beam_mcmc_amps_v5.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
