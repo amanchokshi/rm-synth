@@ -53,7 +53,7 @@ def log_likelihood(amps, data):
 
     # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
     chisq = np.sum(np.square(data - model_XX))
-    log_lik = np.log(chisq)
+    log_lik = -0.5 * np.log(chisq)
 
     return log_lik
 
