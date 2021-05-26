@@ -50,6 +50,10 @@ def likelihood(amps, data):
     model_XX = np.real(unpol_beam[:, 0])
     #  model_YY = np.real(unpol_beam[:, 3])
 
+    # Remove NaNs from data & model arrays
+    model_XX = model_XX[~np.isnan(data)]
+    data = data[~np.isnan(data)]
+
     chisq = np.sum(np.square(data - model_XX))
 
     return np.log(chisq)
@@ -75,6 +79,8 @@ if __name__ == "__main__":
     # Normalize maps to zenith
     norm_to_zenith = True
 
+    ###################################################################
+
     # Create synthetic data at try to recover the input parameters
     # amps_15 = [
     #     0.2,
@@ -94,16 +100,22 @@ if __name__ == "__main__":
     #     0.3,
     #     0.2,
     # ]
-    amps_15 = np.linspace(0.0, 1.0, 16)
+    # amps_15 = np.linspace(0.0, 1.0, 16)
 
-    jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
-    unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
+    # jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
+    # unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
-    data_XX_15 = np.real(unpol_beam_15[:, 0])
+    # data_XX_15 = np.real(unpol_beam_15[:, 0])
     # data_YY_15 = np.real(unpol_beam_15[:, 3])
 
+    ###################################################################
+
+    data_S06XX = np.load("../data/embers_healpix/S06XX_rf1XX_0.npz")["beam_map"][
+        : az.shape[0]
+    ]
+
     # Our walkers will be centralised to this location
-    nwalkers = 128
+    nwalkers = 4
     amps_guess = [0.5] * 16
     amps_init = [
         amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
@@ -118,7 +130,7 @@ if __name__ == "__main__":
         result = minimize(
             likelihood,
             amps_guess,
-            args=(data_XX_15),
+            args=(data_S06XX),
             bounds=(
                 (0, 1),
                 (0, 1),
@@ -143,4 +155,4 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    np.save("beam_min_v2.npy", min_amps)
+    np.save("S06XX_beam_min_4walk.npy", min_amps)
