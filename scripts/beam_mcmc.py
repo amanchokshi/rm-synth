@@ -53,8 +53,7 @@ def log_likelihood(amps, data):
 
     # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
     chisq = np.sum(np.square(data - model_XX))
-    #  log_lik = -0.5 * np.log(chisq)
-    log_lik = np.log(chisq)
+    log_lik = -0.5 * np.log(chisq)
 
     return log_lik
 
@@ -132,7 +131,7 @@ if __name__ == "__main__":
     n_iterations = 10000
 
     # Saving MCMC chains
-    filename = "beam_mcmc_2amps_v6.h5"
+    filename = "beam_mcmc_2amps_v7.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
