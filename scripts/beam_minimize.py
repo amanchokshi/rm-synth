@@ -4,6 +4,7 @@ import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
+from scipy.stats import median_abs_deviation as mad
 
 import beam_utils as bu
 
@@ -40,9 +41,6 @@ def likelihood(amps, data):
     # Normalize maps to zenith
     norm_to_zenith = True
 
-    # This is for the trial with 2 parameters
-    #  amps = list(amps) + [1.0] * 14
-
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
@@ -61,14 +59,16 @@ def likelihood(amps, data):
 
 if __name__ == "__main__":
 
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
-
     # Healpix map with given nside
     nside = 32
 
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
+
+    ###################################################################
+
+    # Make a new beam object
+    beam = mwa_hyperbeam.FEEBeam()
 
     # Satellite beam map frequency
     freq = 138e6
@@ -78,8 +78,6 @@ if __name__ == "__main__":
 
     # Normalize maps to zenith
     norm_to_zenith = True
-
-    ###################################################################
 
     # Create synthetic data at try to recover the input parameters
     # amps_15 = [
@@ -100,59 +98,74 @@ if __name__ == "__main__":
     #     0.3,
     #     0.2,
     # ]
-    # amps_15 = np.linspace(0.0, 1.0, 16)
+    # amps_15 = np.linspace(0.85, 1.0, 16)
+    amps_15 = [1.0, 0.95] + [1.0] * 14
 
-    # jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
-    # unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
+    jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
+    unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
-    # data_XX_15 = np.real(unpol_beam_15[:, 0])
+    data_XX_15 = np.real(unpol_beam_15[:, 0])
     # data_YY_15 = np.real(unpol_beam_15[:, 3])
+
+    chi = []
+    for i in np.linspace(0.1, 1.0, 101):
+        amps = [1.0] * 15 + [i]
+        prob = likelihood(amps, data_XX_15)
+        chi.append(prob)
+
+    plt.style.use("seaborn")
+    plt.plot(np.linspace(0.1, 1.0, 101), chi, "-o", color="midnightblue")
+    plt.xlabel("$A_0$")
+    plt.ylabel("Prob")
+    plt.tight_layout()
+    plt.show()
 
     ###################################################################
 
-    data_S06XX = np.load("../data/embers_healpix/S06XX_rf1XX_0.npz")["beam_map"][
-        : az.shape[0]
-    ]
+    # data_S06XX = np.load("../data/embers_healpix/S06XX_rf1XX_0.npz")["beam_map"][
+    #     : az.shape[0]
+    # ]
 
-    # Our walkers will be centralised to this location
-    nwalkers = 4
-    amps_guess = [0.5] * 16
-    amps_init = [
-        amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
-    ]
+    # # Our walkers will be centralised to this location
+    # nwalkers = 1
+    # amps_guess = [0.5] * 16
+    # amps_init = [
+    #     amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
+    # ]
 
-    # Loop over initial amps and minimize
+    # # Loop over initial amps and minimize
 
-    min_amps = []
+    # min_amps = []
 
-    for i in range(nwalkers):
-        print(f"Walker : [{i}/{nwalkers}]")
-        result = minimize(
-            likelihood,
-            amps_guess,
-            args=(data_S06XX),
-            bounds=(
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-                (0, 1),
-            ),
-            options={"maxiter": 10000, "disp": False},
-        )
-        min_amps.append(result.x)
+    # for i in range(nwalkers):
+    #     print(f"Walker : [{i}/{nwalkers}]")
+    #     result = minimize(
+    #         likelihood,
+    #         amps_init[i],
+    #         args=(data_S06XX),
+    #         bounds=(
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #             (0, 1),
+    #         ),
+    #         options={"maxiter": 10000, "disp": True},
+    #     )
+    #     min_amps.append(result.x)
+    #     print(result.x)
 
-    min_amps = np.array(min_amps)
+    # min_amps = np.array(min_amps)
 
-    np.save("S06XX_beam_min_4walk.npy", min_amps)
+    #  np.save("S06XX_beam_min_4walk.npy", min_amps)
