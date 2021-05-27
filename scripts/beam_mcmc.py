@@ -42,7 +42,7 @@ def log_likelihood(amps, data):
     norm_to_zenith = True
 
     # This is for the trial with 2 parameters
-    #  amps = list(amps) + [1.0] * 14
+    amps = list(amps) + [1.0] * 14
 
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
@@ -53,7 +53,8 @@ def log_likelihood(amps, data):
 
     # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
     chisq = np.sum(np.square(data - model_XX))
-    log_lik = -0.5 * np.log(chisq)
+    #  log_lik = -0.5 * np.log(chisq)
+    log_lik = np.log(chisq)
 
     return log_lik
 
@@ -102,25 +103,8 @@ if __name__ == "__main__":
     norm_to_zenith = True
 
     # Create synthetic data at try to recover the input parameters
-    #  amps_15 = [0.4] * 1 + [0.8] * 1 + [1.0] * 14
-    amps_15 = [
-        0.2,
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.8,
-        0.9,
-        0.9,
-        0.8,
-        0.7,
-        0.6,
-        0.5,
-        0.4,
-        0.3,
-        0.2,
-    ]
+    amps_15 = [0.7, 0.8] + [1.0] * 14
+
     jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
     unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
 
@@ -131,13 +115,13 @@ if __name__ == "__main__":
     nwalkers = 64
 
     # Our walkers will be centralised to this location
-    amps_guess = [0.5] * 16
-    # amps_guess = [0.5] * 2
+    #  amps_guess = [0.5] * 16
+    amps_guess = [0.5] * 2
 
     # number of dimensions in sample space
     # ndim = len(amps_guess)
-    # ndim = 2
-    ndim = 16
+    ndim = 2
+    #  ndim = 16
 
     # Add gaussian perturbation to guess location for each walker
     amps_init = [amps_guess + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
@@ -148,7 +132,7 @@ if __name__ == "__main__":
     n_iterations = 10000
 
     # Saving MCMC chains
-    filename = "beam_mcmc_amps_v5.h5"
+    filename = "beam_mcmc_2amps_v6.h5"
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
