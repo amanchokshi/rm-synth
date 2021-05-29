@@ -132,13 +132,23 @@ if __name__ == "__main__":
 
     # Saving MCMC chains
     filename = "beam_mcmc_amps_v8.h5"
-    backend = emcee.backends.HDFBackend(filename)
-    backend.reset(nwalkers, ndim)
+    #  backend = emcee.backends.HDFBackend(filename)
+    new_backend = emcee.backends.HDFBackend(filename)
+    print("Initial size: {0}".format(new_backend.iteration))
+    #  backend.reset(nwalkers, ndim)
 
     # initialise sampler object
-    sampler = emcee.EnsembleSampler(
-        nwalkers, ndim, log_posterior, kwargs=({"data": data_XX_15}), backend=backend
+    # sampler = emcee.EnsembleSampler(
+    #     nwalkers, ndim, log_posterior, kwargs=({"data": data_XX_15}), backend=backend
+    # )
+    new_sampler = emcee.EnsembleSampler(
+        nwalkers,
+        ndim,
+        log_posterior,
+        kwargs=({"data": data_XX_15}),
+        backend=new_backend,
     )
 
     # start the chain!
-    sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    new_sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    print("Final size: {0}".format(new_backend.iteration))
