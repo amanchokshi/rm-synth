@@ -128,7 +128,7 @@ if __name__ == "__main__":
     ###################################################################
 
     # Our walkers will be centralised to this location
-    nwalkers = 16
+    nwalkers = 512
     amps_guess = [0.5] * 16
     amps_init = [
         amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
@@ -169,4 +169,4 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    np.save("S06XX_beam_min_16walk.npy", min_amps)
+    np.save("S06XX_beam_min_512_walk.npy", min_amps)
