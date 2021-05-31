@@ -128,7 +128,7 @@ if __name__ == "__main__":
     ###################################################################
 
     # Our walkers will be centralised to this location
-    nwalkers = 1
+    nwalkers = 16
     amps_guess = [0.5] * 16
     amps_init = [
         amps_guess + 1e-1 * np.random.randn(len(amps_guess)) for i in range(nwalkers)
@@ -141,8 +141,7 @@ if __name__ == "__main__":
         print(f"Walker : [{i}/{nwalkers}]")
         result = minimize(
             likelihood,
-            #  amps_init[i],
-            [1] * 16,
+            amps_init[i],
             args=(data_S06XX),
             bounds=(
                 (0, 1),
@@ -162,12 +161,12 @@ if __name__ == "__main__":
                 (0, 1),
                 (0, 1),
             ),
-            options={"maxiter": 10000, "disp": True},
+            options={"maxiter": 10000, "disp": False},
             #  method="Powell",
         )
-        #  min_amps.append(result.x)
-        print(result.x)
+        min_amps.append(result.x)
+        #  print(result.x)
 
-    #  min_amps = np.array(min_amps)
+    min_amps = np.array(min_amps)
 
-    #  np.save("S06XX_beam_min_4walk.npy", min_amps)
+    np.save("S06XX_beam_min_16walk.npy", min_amps)
