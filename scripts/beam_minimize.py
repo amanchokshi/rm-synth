@@ -46,14 +46,16 @@ def likelihood(amps, data):
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
 
-    model_XX = 10 * np.log10(np.real(unpol_beam[:, 0]))
-    #  model_YY = np.real(unpol_beam[:, 3])
+    # model_XX = 10 * np.log10(np.real(unpol_beam[:, 0]))
+    model_YY = 10 * np.log10(np.real(unpol_beam[:, 3]))
 
     # Remove NaNs from data & model arrays
-    model_XX = model_XX[~np.isnan(data)]
+    # model_XX = model_XX[~np.isnan(data)]
+    model_YY = model_YY[~np.isnan(data)]
     data = data[~np.isnan(data)]
 
-    chisq = np.sum(np.square(data - model_XX))
+    # chisq = np.sum(np.square(data - model_XX))
+    chisq = np.sum(np.square(data - model_YY))
 
     return np.log(chisq)
 
@@ -111,6 +113,9 @@ if __name__ == "__main__":
     data_S06XX = np.load("../data/embers_healpix/S06XX_rf1XX_0.npz")["beam_map"][
         : az.shape[0]
     ]
+    data_S06YY = np.load("../data/embers_healpix/S06YY_rf1YY_0.npz")["beam_map"][
+        : az.shape[0]
+    ]
 
     #  chi = []
     #  for i in np.linspace(0.0, 1.0, 101):
@@ -142,7 +147,7 @@ if __name__ == "__main__":
         result = minimize(
             likelihood,
             amps_init[i],
-            args=(data_S06XX),
+            args=(data_S06YY),
             bounds=(
                 (0, 1),
                 (0, 1),
@@ -169,4 +174,4 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    np.save("S06XX_beam_min_512_walk.npy", min_amps)
+    np.save("S06YY_beam_min_512_walk.npy", min_amps)
