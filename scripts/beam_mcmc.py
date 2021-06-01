@@ -154,7 +154,8 @@ if __name__ == "__main__":
     n_iterations = 100000
 
     # Saving MCMC chains
-    filename = f"./beam_mcmc_{map_name}.h5"
+    filename = f"/astro/mwaeor/achokshi/rm-synth/data/beam_mcmc/beam_mcmc_{map_name}.h5"
+
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
