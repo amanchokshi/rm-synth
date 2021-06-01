@@ -118,7 +118,7 @@ if __name__ == "__main__":
         mask_30dB = np.where(model_perfect >= -30)
 
     # Our walkers will be centralised to this location
-    nwalkers = 1024
+    nwalkers = 512
 
     # Loop over initial amps and minimize
     min_amps = []
@@ -157,4 +157,4 @@ if __name__ == "__main__":
     out_dir = Path("/astro/mwaeor/achokshi/rm-synth/data/beam_min/")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    np.save(f"{out_dir}/{map_name}_beam_min_1024_walk_mask.npy", min_amps)
+    np.save(f"{out_dir}/{map_name}_beam_min_{nwalkers}_walk_mask.npy", min_amps)
