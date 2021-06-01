@@ -49,7 +49,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     #  beam_min = np.load("../data/mcmc/S06XX_beam_min_1024_walk.npy")
-    tiles = ["S08YY", "S12YY"]
+    tiles = ["S07YY", "S08YY", "S12YY"]
 
     for tile in tiles:
 
