@@ -3,19 +3,23 @@
 import emcee
 import mwa_hyperbeam
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.stats import median_abs_deviation as mad
 
 import beam_utils as bu
 
 
-def log_likelihood(amps, data):
-    """Log likelihood of a beam model give some data.
+def log_likelihood(amps, data, mask, pol):
+    """Likelihood of a beam model give some data.
 
     Parameter
     ---------
     amps : numpy.array
         16 element dipole amplitude array
+    data : numpy.array
+        Satellite beam model healpix array
+    mask : numpy.array
+        Indicies of data array where beam power >= -30dB
+    pol : string
+        Either XX, YY, indicating the polarization of current map
 
     Returns
     -------
@@ -26,36 +30,35 @@ def log_likelihood(amps, data):
     # Make a new beam object
     beam = mwa_hyperbeam.FEEBeam()
 
-    # Healpix map with given nside
+    # Hyperbeam settings
     nside = 32
+    freq = 138e6
+    delays = [0] * 16
+    norm_to_zenith = True
 
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
-
-    # Satellite beam map frequency
-    freq = 138e6
-
-    # Zenith Pointing
-    delays = [0] * 16
-
-    # Normalize maps to zenith
-    norm_to_zenith = True
-
-    # This is for the trial with 2 parameters
-    #  amps = list(amps) + [1.0] * 14
 
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
 
-    model_XX = np.real(unpol_beam[:, 0])
-    #  model_YY = np.real(unpol_beam[:, 3])
+    if pol == "XX":
+        model = 10 * np.log10(np.real(unpol_beam[:, 0]))
+    else:
+        model = 10 * np.log10(np.real(unpol_beam[:, 3]))
 
-    # chisq = np.sum(np.square(data_XX_15 - model_XX) / mad(data_XX_15 - model_XX))
-    chisq = np.sum(np.square(data - model_XX))
-    log_lik = -0.5 * np.log(chisq)
+    # Remove NaNs from data & model arrays
+    model = model[~np.isnan(data)]
+    data = data[~np.isnan(data)]
 
-    return log_lik
+    # Mask nulls
+    model = model[mask]
+    data = data[mask]
+
+    chisq = np.sum(np.square(data - model))
+
+    return -0.5 * np.log(chisq)
 
 
 def log_prior(amps):
@@ -67,7 +70,7 @@ def log_prior(amps):
         return -np.inf
 
 
-def log_posterior(amps, data=None):
+def log_posterior(amps, data=None, mask=None, pol=None):
     """Posterior distribution in log space."""
 
     # calculate prior
@@ -78,77 +81,94 @@ def log_posterior(amps, data=None):
         return -np.inf
 
     # ln posterior = ln likelihood + ln prior
-    return lp + log_likelihood(amps, data)
+    return lp + log_likelihood(amps, data, mask, pol)
 
 
 if __name__ == "__main__":
+
+    import argparse
+    from multiprocessing import Pool
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(
+        description="Determine best fit beam gain parameters",
+    )
+
+    parser.add_argument(
+        "--sat_map",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Path to satellite beam data map",
+    )
+
+    args = parser.parse_args()
+
+    sat_map = Path(args.sat_map)
+
+    map_name = sat_map.stem.split("_")[0]
+
+    if "XX" in map_name:
+        pol = "XX"
+    else:
+        pol = "YY"
 
     # Make a new beam object
     beam = mwa_hyperbeam.FEEBeam()
 
     # Healpix map with given nside
     nside = 32
+    freq = 138e6
+    delays = [0] * 16
+    norm_to_zenith = True
 
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
 
-    # Satellite beam map frequency
-    freq = 138e6
+    # Load satellite beam map
+    data_sat = np.load(sat_map)["beam_map"][: az.shape[0]]
 
-    # Zenith Pointing
-    delays = [0] * 16
+    # Create mask based on -30dB threshold of perfect FEE model
+    jones_perfect = beam.calc_jones_array(
+        az, za, freq, delays, [1.0] * 16, norm_to_zenith
+    )
+    unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
 
-    # Normalize maps to zenith
-    norm_to_zenith = True
-
-    # Create synthetic data at try to recover the input parameters
-    amps_15 = np.linspace(0.85, 1.0, 16)
-
-    jones_15 = beam.calc_jones_array(az, za, freq, delays, amps_15, norm_to_zenith)
-    unpol_beam_15 = bu.makeUnpolInstrumentalResponse(jones_15, jones_15)
-
-    data_XX_15 = np.real(unpol_beam_15[:, 0])
-    #  data_YY_15 = np.real(unpol_beam_15[:, 3])
+    if pol == "XX":
+        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
+        mask_30dB = np.where(model_perfect >= -30)
+    else:
+        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
+        mask_30dB = np.where(model_perfect >= -30)
 
     # number of ensemble walkers
     nwalkers = 64
-
-    # Our walkers will be centralised to this location
-    amps_guess = [0.5] * 16
-    #  amps_guess = [0.5] * 2
-
-    # number of dimensions in sample space
-    # ndim = len(amps_guess)
-    #  ndim = 2
     ndim = 16
 
     # Add gaussian perturbation to guess location for each walker
-    amps_init = [amps_guess + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
-    # amps_init = [amps_guess + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
+    #  amps_init = [amps_guess + 1e-1 * np.random.randn(ndim) for i in range(nwalkers)]
+    amps_init = np.random.rand(nwalkers, ndim)
 
     # no. of MCMC iterations - this means there will
     # be n_iterations * nwalkers measurements of the posterior
-    n_iterations = 64000
+    n_iterations = 64
 
     # Saving MCMC chains
-    filename = "beam_mcmc_amps_v8.h5"
-    #  backend = emcee.backends.HDFBackend(filename)
-    new_backend = emcee.backends.HDFBackend(filename)
-    print("Initial size: {0}".format(new_backend.iteration))
-    #  backend.reset(nwalkers, ndim)
+    filename = f"./beam_mcmc_{map_name}.h5"
+    backend = emcee.backends.HDFBackend(filename)
+    backend.reset(nwalkers, ndim)
 
-    # initialise sampler object
-    # sampler = emcee.EnsembleSampler(
-    #     nwalkers, ndim, log_posterior, kwargs=({"data": data_XX_15}), backend=backend
-    # )
-    new_sampler = emcee.EnsembleSampler(
-        nwalkers,
-        ndim,
-        log_posterior,
-        kwargs=({"data": data_XX_15}),
-        backend=new_backend,
-    )
+    with Pool() as pool:
 
-    # start the chain!
-    new_sampler.run_mcmc(amps_init, n_iterations, progress=True)
-    print("Final size: {0}".format(new_backend.iteration))
+        # initialise sampler object
+        sampler = emcee.EnsembleSampler(
+            nwalkers,
+            ndim,
+            log_posterior,
+            kwargs=({"data": data_sat, "mask": mask_30dB, "pol": pol}),
+            backend=backend,
+            pool=pool,
+        )
+
+        # start the chain!
+        sampler.run_mcmc(amps_init, n_iterations, progress=True)
