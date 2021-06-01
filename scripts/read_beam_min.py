@@ -150,20 +150,27 @@ if __name__ == "__main__":
     data_min = np.zeros(hp.nside2npix(nside))
     data_min[: data_min_XX.shape[0]] = data_min_XX
 
-    bu.plot_healpix(
-        #  data_map=data_perfect - data_S06XX, vmin=-5, vmax=5, cmap="RdYlGn", title="FEE - Sat S06XX"
-        data_map=data_min - data_S06XX,
-        vmin=-5,
-        vmax=5,
-        cmap="RdYlGn",
-        #  title=f"FEE- Sat S06XX : Chisq [{np.log(np.nansum(np.square(data_perfect - data_S06XX))):.3f}]",
-        title=f"FEE Minimized - Sat S06XX",
-    )
-    plt.tight_layout()
-    plt.savefig("./beam_min/FEE_Min-Sat_S06XX.png")
-    plt.close()
+    # bu.plot_healpix(
+    #     #  data_map=data_perfect - data_S06XX, vmin=-5, vmax=5, cmap="RdYlGn", title="FEE - Sat S06XX"
+    #     data_map=data_min - data_S06XX,
+    #     vmin=-5,
+    #     vmax=5,
+    #     cmap="RdYlGn",
+    #     #  title=f"FEE- Sat S06XX : Chisq [{np.log(np.nansum(np.square(data_perfect - data_S06XX))):.3f}]",
+    #     title=f"FEE Minimized - Sat S06XX",
+    # )
+    # plt.tight_layout()
+    # plt.savefig("./beam_min/FEE_Min-Sat_S06XX.png")
+    # plt.close()
 
-    #  bu.plot_healpix(data_map=data_min - data_S06XX, vmin=-5, vmax=5, cmap="RdYlGn", title="FEE Minimized - Sat S06XX")
+    data_perfect[np.where(data_perfect < -30)] = np.nan
+
+    bu.plot_healpix(
+        data_map=data_perfect,
+        vmin=-50,
+        vmax=0,
+    )
     #  plt.tight_layout()
     #  plt.savefig("FEE_Min-SatS06XX.png")
     #  plt.close()
+    plt.show()
