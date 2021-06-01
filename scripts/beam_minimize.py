@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    out_dir = Path("../data/beam_min/")
+    out_dir = Path("/astro/mwaeor/achokshi/rm-synth/data/beam_min/")
     out_dir.mkdir(parents=True, exist_ok=True)
 
     np.save(f"{out_dir}/{map_name}_beam_min_1024_walk_mask.npy", min_amps)
