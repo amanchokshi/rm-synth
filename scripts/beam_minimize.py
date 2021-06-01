@@ -3,93 +3,119 @@
 import mwa_hyperbeam
 import numpy as np
 from scipy.optimize import minimize
-#  from matplotlib import pyplot as plt
 
 import beam_utils as bu
 
 
-def likelihood(amps, data, mask):
+def likelihood(amps, data, mask, pol):
     """Likelihood of a beam model give some data.
 
     Parameter
     ---------
     amps : numpy.array
         16 element dipole amplitude array
+    data : numpy.array
+        Satellite beam model healpix array
+    mask : numpy.array
+        Indicies of data array where beam power >= -30dB
+    pol : string
+        Either XX, YY, indicating the polarization of current map
 
     Returns
     -------
     :float
-        The inverse log probability that the model fits the data
+        The log probability that the model fits the data
     """
 
     # Make a new beam object
     beam = mwa_hyperbeam.FEEBeam()
 
-    # Healpix map with given nside
+    # Hyperbeam settings
     nside = 32
+    freq = 138e6
+    delays = [0] * 16
+    norm_to_zenith = True
 
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
-
-    # Satellite beam map frequency
-    freq = 138e6
-
-    # Zenith Pointing
-    delays = [0] * 16
-
-    # Normalize maps to zenith
-    norm_to_zenith = True
 
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
 
-    model_XX = 10 * np.log10(np.real(unpol_beam[:, 0]))
+    if pol == "XX":
+        model = 10 * np.log10(np.real(unpol_beam[:, 0]))
+    else:
+        model = 10 * np.log10(np.real(unpol_beam[:, 3]))
 
     # Remove NaNs from data & model arrays
-    model_XX = model_XX[~np.isnan(data)]
+    model = model[~np.isnan(data)]
     data = data[~np.isnan(data)]
 
     # Mask nulls
-    model_XX = model_XX[mask]
+    model = model[mask]
     data = data[mask]
 
-    chisq = np.sum(np.square(data - model_XX))
+    chisq = np.sum(np.square(data - model))
 
     return np.log(chisq)
 
 
 if __name__ == "__main__":
 
-    # Healpix map with given nside
-    nside = 32
+    import argparse
+    from pathlib import Path
 
-    # Zenith angle and Azimuth of healpix pixels
-    za, az = bu.healpix_za_az(nside=nside)
+    parser = argparse.ArgumentParser(
+        description="Determine best fit beam gain parameters",
+    )
+
+    parser.add_argument(
+        "--sat_map",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Path to satellite beam data map",
+    )
+
+    args = parser.parse_args()
+
+    sat_map = Path(args.sat_map)
+
+    map_name = sat_map.stem.split("_")[0]
+
+    if "XX" in map_name:
+        pol = "XX"
+    else:
+        pol = "YY"
 
     # Make a new beam object
     beam = mwa_hyperbeam.FEEBeam()
 
-    # Satellite beam map frequency
+    # Hyperbeam settings
+    nside = 32
     freq = 138e6
-
-    # Zenith Pointing
     delays = [0] * 16
-
-    # Normalize maps to zenith
     norm_to_zenith = True
 
-    data_S06XX = np.load("../data/embers_healpix/S06XX_rf1XX_0.npz")["beam_map"][
-        : az.shape[0]
-    ]
+    # Zenith angle and Azimuth of healpix pixels
+    za, az = bu.healpix_za_az(nside=nside)
 
+    # Load satellite beam map
+    data_sat = np.load(sat_map)["beam_map"][: az.shape[0]]
+
+    # Create mask based on -30dB threshold of perfect FEE model
     jones_perfect = beam.calc_jones_array(
         az, za, freq, delays, [1.0] * 16, norm_to_zenith
     )
     unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
-    model_XX_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
 
-    mask_30dB = np.where(model_XX_perfect >= -30)
+    if pol == "XX":
+        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
+        mask_30dB = np.where(model_perfect >= -30)
+    else:
+        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
+        mask_30dB = np.where(model_perfect >= -30)
 
     # Our walkers will be centralised to this location
     nwalkers = 1024
@@ -102,7 +128,7 @@ if __name__ == "__main__":
         result = minimize(
             likelihood,
             np.random.rand(16),
-            args=(data_S06XX, mask_30dB),
+            args=(data_sat, mask_30dB, pol),
             bounds=(
                 (0, 1),
                 (0, 1),
@@ -128,4 +154,7 @@ if __name__ == "__main__":
 
     min_amps = np.array(min_amps)
 
-    np.save("S06XX_beam_min_1024_walk_mask.npy", min_amps)
+    out_dir = Path("../data/beam_min/")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    np.save(f"{out_dir}/{map_name}_beam_min_1024_walk_mask.npy", min_amps)
