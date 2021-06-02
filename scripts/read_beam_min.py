@@ -33,7 +33,7 @@ def plot_beam_amp(beam_min, dipoles, index, fig, ax):
         linewidth=2,
         linestyle="dashed",
     )
-    ax.set_xlim([0.4, 1.02])
+    ax.set_xlim([0.6, 1.02])
     #  ax.set_ylim([0.0, 7])
     ax.set_xlabel("Dipole Gain Amplitude [0, 1]")
     #  ax.set_yticks([])
