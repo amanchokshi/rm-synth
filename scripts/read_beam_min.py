@@ -49,14 +49,45 @@ if __name__ == "__main__":
     from pathlib import Path
 
     #  beam_min = np.load("../data/mcmc/S06XX_beam_min_1024_walk.npy")
-    tiles = ["S07YY", "S08YY", "S12YY"]
+    tiles = [
+        "S06XX",
+        "S06YY",
+        "S07XX",
+        "S07YY",
+        "S08XX",
+        "S08YY",
+        "S09XX",
+        "S09YY",
+        "S10XX",
+        "S10YY",
+        "S12XX",
+        "S12YY",
+        "S29XX",
+        "S29YY",
+        "S30XX",
+        "S30YY",
+        "S31XX",
+        "S31YY",
+        "S32XX",
+        "S32YY",
+        "S33XX",
+        "S33YY",
+        "S34XX",
+        "S34YY",
+        "S35XX",
+        "S35YY",
+        "S36XX",
+        "S36YY",
+    ]
 
     for tile in tiles:
 
         out_dir = Path(f"../data/mcmc/beam_min_masked_512/{tile}/")
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        beam_min = np.load(f"../data/mcmc/{tile}_beam_min_512_walk_mask.npy")
+        beam_min = np.load(
+            f"../data/mcmc/beam_min_masked_512/data/{tile}_beam_min_512_walk_mask.npy"
+        )
 
         dipoles = [
             "$A_0$",
