@@ -144,54 +144,35 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--sat_map",
+        "--map_dir",
         metavar="\b",
         type=str,
         required=True,
-        help="Path to satellite beam data map",
+        help="Path to satellite map directory",
+    )
+
+    parser.add_argument(
+        "--map_name",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Name of satellite map - Ex: S06XX_rf1XX",
     )
 
     args = parser.parse_args()
 
-    sat_map = Path(args.sat_map)
+    med_map = np.load(Path(f"{args.map_dir}/rf1_med_maps/{args.map_name}_med.npy"))
+    mad_map = np.load(Path(f"{args.map_dir}/rf1_mad_maps/{args.map_name}_mad.npy"))
 
-    map_name = sat_map.stem.split("_")[0]
-
-    if "XX" in map_name:
+    if "XX" in args.map_name:
         pol = "XX"
     else:
         pol = "YY"
 
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
-
-    # Hyperbeam settings
-    nside = 32
-    freq = 138e6
-    delays = [0] * 16
-    norm_to_zenith = True
-
-    # Zenith angle and Azimuth of healpix pixels
-    za, az = bu.healpix_za_az(nside=nside)
-
-    # Load satellite beam map
-    data_sat = np.load(sat_map)["beam_map"][: az.shape[0]]
-
-    # Create mask based on -30dB threshold of perfect FEE model
-    jones_perfect = beam.calc_jones_array(
-        az, za, freq, delays, [1.0] * 16, norm_to_zenith
-    )
-    unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
-
-    if pol == "XX":
-        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
-        mask_30dB = np.where(model_perfect >= -30)
-    else:
-        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
-        mask_30dB = np.where(model_perfect >= -30)
+    mask = beam_mask(med_map, mad_map, pol=pol, db_thresh=-30, zen_mask=20, nside=32)
 
     # Our walkers will be centralised to this location
-    nwalkers = 512
+    nwalkers = 3
 
     # Loop over initial amps and minimize
     min_amps = []
@@ -201,7 +182,7 @@ if __name__ == "__main__":
         result = minimize(
             likelihood,
             np.random.rand(16),
-            args=(data_sat, mask_30dB, pol),
+            args=(med_map, mad_map, mask, pol),
             bounds=(
                 (0, 1),
                 (0, 1),
@@ -220,14 +201,14 @@ if __name__ == "__main__":
                 (0, 1),
                 (0, 1),
             ),
-            options={"maxiter": 10000, "disp": False},
+            options={"maxiter": 10000, "disp": True},
         )
         min_amps.append(result.x)
-        #  print(result.x)
+        print(result.x)
 
-    min_amps = np.array(min_amps)
+    #  min_amps = np.array(min_amps)
 
-    out_dir = Path("/astro/mwaeor/achokshi/rm-synth/data/beam_min/")
-    out_dir.mkdir(parents=True, exist_ok=True)
+    #  out_dir = Path("/astro/mwaeor/achokshi/rm-synth/data/beam_min/")
+    #  out_dir.mkdir(parents=True, exist_ok=True)
 
-    np.save(f"{out_dir}/{map_name}_beam_min_{nwalkers}_walk_mask.npy", min_amps)
+    #  np.save(f"{out_dir}/{map_name}_beam_min_{nwalkers}_walk_mask.npy", min_amps)
