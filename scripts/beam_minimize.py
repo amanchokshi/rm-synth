@@ -159,6 +159,14 @@ if __name__ == "__main__":
         help="Name of satellite map - Ex: S06XX_rf1XX",
     )
 
+    parser.add_argument(
+        "--out_dir",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Output directory to save minimization results",
+    )
+
     args = parser.parse_args()
 
     med_map = np.load(Path(f"{args.map_dir}/rf1_med_maps/{args.map_name}_med.npy"))
@@ -172,7 +180,7 @@ if __name__ == "__main__":
     mask = beam_mask(med_map, mad_map, pol=pol, db_thresh=-30, zen_mask=20, nside=32)
 
     # Our walkers will be centralised to this location
-    nwalkers = 3
+    nwalkers = 1024
 
     # Loop over initial amps and minimize
     min_amps = []
@@ -201,14 +209,14 @@ if __name__ == "__main__":
                 (0, 1),
                 (0, 1),
             ),
-            options={"maxiter": 10000, "disp": True},
+            options={"maxiter": 10000, "disp": False},
         )
         min_amps.append(result.x)
-        print(result.x)
+        #  print(result.x)
 
-    #  min_amps = np.array(min_amps)
+    min_amps = np.array(min_amps)
 
-    #  out_dir = Path("/astro/mwaeor/achokshi/rm-synth/data/beam_min/")
-    #  out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(f"{args.out_dir}")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    #  np.save(f"{out_dir}/{map_name}_beam_min_{nwalkers}_walk_mask.npy", min_amps)
+    np.save(f"{out_dir}/{args.map_name}_beam_min_{nwalkers}_walk_mask.npy", min_amps)
