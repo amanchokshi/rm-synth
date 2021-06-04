@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --partition=workq
-#SBATCH --time=12:00:00
+#SBATCH --time=20:00:00
 #SBATCH --account=mwaeor
 #SBATCH --nodes=1
 #SBATCH --mem=16gb
@@ -22,4 +22,4 @@ export MWA_BEAM_FILE=/astro/mwaeor/achokshi/software/local_python/mwa_pb/data/mw
 module load hyperbeam
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/beam_minimize.py \
-    --sat_map="$1"
+    --map_dir="$1" --map_name="$2" --out_dir="$3"
