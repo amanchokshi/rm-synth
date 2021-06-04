@@ -1,5 +1,6 @@
 """Minimize beam model to determine MWA beam dipole amplitudes."""
 
+import healpy as hp
 import mwa_hyperbeam
 import numpy as np
 from scipy.optimize import minimize
@@ -77,7 +78,8 @@ def beam_mask(med_map, mad_map, pol=None, db_thresh=-30, zen_mask=20, nside=32):
 
     return mask
 
-def likelihood(amps, data, mask, pol):
+
+def likelihood(amps, med_map, mad_map, mask, pol):
     """Likelihood of a beam model give some data.
 
     Parameter
@@ -109,6 +111,11 @@ def likelihood(amps, data, mask, pol):
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
 
+    # Indicies of za, az arrays to be masked and not evaluated
+    mask_za_az = mask[np.where(mask < az.shape[0])]
+    za = np.delete(za, mask_za_az)
+    az = np.delete(az, mask_za_az)
+
     # Create model with given amplitudes
     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
@@ -118,15 +125,11 @@ def likelihood(amps, data, mask, pol):
     else:
         model = 10 * np.log10(np.real(unpol_beam[:, 3]))
 
-    # Remove NaNs from data & model arrays
-    model = model[~np.isnan(data)]
-    data = data[~np.isnan(data)]
+    # Remove masked data from sat data maps
+    med_map = np.delete(med_map, mask)
+    mad_map = np.delete(mad_map, mask)
 
-    # Mask nulls
-    model = model[mask]
-    data = data[mask]
-
-    chisq = np.sum(np.square(data - model))
+    chisq = np.sum(np.square(med_map - model) / mad_map)
 
     return np.log(chisq)
 
