@@ -22,4 +22,5 @@ module load hyperbeam
 module load emcee
 
 time python /astro/mwaeor/achokshi/rm-synth/scripts/beam_mcmc.py \
-    --sat_map="$1"
+    --map_dir="/astro/mwaeor/achokshi/rm-synth/data/embers_maps" \
+    --map_name="S06YY_rf1YY" --out_dir="/astro/mwaeor/achokshi/rm-synth/data/embers_maps/beam_mcmc"
