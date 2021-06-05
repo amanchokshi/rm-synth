@@ -2,7 +2,6 @@ import healpy as hp
 import mwa_hyperbeam
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import stats
 
 import beam_utils as bu
 from beam_minimize import beam_mask
