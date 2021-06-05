@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from scipy import stats
 
 import beam_utils as bu
+from beam_minimize import beam_mask
 
 
 def plot_beam_amp(beam_min, dipoles, index, fig, ax):
@@ -49,7 +50,6 @@ if __name__ == "__main__":
 
     from pathlib import Path
 
-    #  beam_min = np.load("../data/mcmc/S06XX_beam_min_1024_walk.npy")
     tiles = [
         "S06XX_rf1XX",
         "S06YY_rf1YY",
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         "S33XX_rf1XX",
         #  "S33YY_rf1YY",
         "S34XX_rf1XX",
-        "S34YY_rf1YY",
+        #  "S34YY_rf1YY",
         "S35XX_rf1XX",
         "S35YY_rf1YY",
         "S36XX_rf1XX",
@@ -83,9 +83,8 @@ if __name__ == "__main__":
 
     for tile in tiles:
 
-        out_dir = Path("../data/beam_min_1024_masked")
-        #  out_dir = Path(f"../data/beam_min_1024_masked/{tile}/")
-        #  out_dir.mkdir(parents=True, exist_ok=True)
+        out_dir = Path(f"../data/beam_min_1024_masked/{tile}/")
+        out_dir.mkdir(parents=True, exist_ok=True)
 
         beam_min = np.load(
             f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
@@ -151,124 +150,127 @@ if __name__ == "__main__":
         #     ax.label_outer()
 
         plt.tight_layout()
-        #  plt.savefig(f"{out_dir}/{tile}_beam_min.png")
         plt.savefig(f"{out_dir}/{tile}_beam_min.png")
         plt.close()
 
-        # amps_sat = np.median(beam_min, axis=0)
+        amps_sat = np.median(beam_min, axis=0)
 
-        # # Hyperbeam settings
-        # nside = 32
-        # freq = 138e6
-        # delays = [0] * 16
-        # norm_to_zenith = True
+        # Hyperbeam settings
+        nside = 32
+        freq = 138e6
+        delays = [0] * 16
+        norm_to_zenith = True
 
-        # # Zenith angle and Azimuth of healpix pixels
-        # za, az = bu.healpix_za_az(nside=nside)
+        # Zenith angle and Azimuth of healpix pixels
+        za, az = bu.healpix_za_az(nside=nside)
 
-        # # Make a new beam object
-        # beam = mwa_hyperbeam.FEEBeam()
+        # Make a new beam object
+        beam = mwa_hyperbeam.FEEBeam()
 
-        # if "XX" in tile:
-        #     pol = "XX"
-        # else:
-        #     pol = "YY"
+        if "XX" in tile:
+            pol = "XX"
+        else:
+            pol = "YY"
 
-        # # Load satellite beam map
-        # data_sat = np.load(f"../data/embers_healpix/{tile}_rf1{pol}_0.npz")["beam_map"]
+        # Load satellite beam map
+        map_med = np.load(f"../data/embers_maps/rf1_med_maps/{tile}_med.npy")
+        map_mad = np.load(f"../data/embers_maps/rf1_mad_maps/{tile}_mad.npy")
 
-        # # Create mask based on -30dB threshold of perfect FEE model
-        # jones_perfect = beam.calc_jones_array(
-        #     az, za, freq, delays, [1.0] * 16, norm_to_zenith
-        # )
-        # unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
+        mask = beam_mask(map_med, map_mad, pol=pol)
 
-        # if pol == "XX":
-        #     model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
-        #     mask_30dB = np.where(model_perfect < -30)
-        # else:
-        #     model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
-        #     mask_30dB = np.where(model_perfect < -30)
+        jones_perfect = beam.calc_jones_array(
+            az, za, freq, delays, [1.0] * 16, norm_to_zenith
+        )
+        unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
 
-        # fee_perfect = np.zeros(hp.nside2npix(nside))
-        # fee_perfect[: model_perfect.shape[0]] = model_perfect
+        if pol == "XX":
+            fee_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
+        else:
+            fee_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
 
-        # jones_min = beam.calc_jones_array(
-        #     az, za, freq, delays, amps_sat, norm_to_zenith
-        # )
-        # unpol_min = bu.makeUnpolInstrumentalResponse(jones_min, jones_min)
+        fee = np.zeros(hp.nside2npix(nside))
+        fee[: fee_perfect.shape[0]] = fee_perfect
 
-        # if pol == "XX":
-        #     data_min = 10 * np.log10(np.real(unpol_min[:, 0]))
-        # else:
-        #     data_min = 10 * np.log10(np.real(unpol_min[:, 3]))
+        jones_min = beam.calc_jones_array(
+            az, za, freq, delays, amps_sat, norm_to_zenith
+        )
+        unpol_min = bu.makeUnpolInstrumentalResponse(jones_min, jones_min)
 
-        # fee_min = np.zeros(hp.nside2npix(nside))
-        # fee_min[: data_min.shape[0]] = data_min
+        if pol == "XX":
+            data_min = 10 * np.log10(np.real(unpol_min[:, 0]))
+        else:
+            data_min = 10 * np.log10(np.real(unpol_min[:, 3]))
 
-        # plt.rcParams.update(plt.rcParamsDefault)
-        # fig = plt.subplots(1, 1, figsize=(7, 8))
-        # bu.plot_healpix(
-        #     data_map=fee_perfect, vmin=-50, vmax=0, cmap="viridis", title="FEE Perfect",
-        # )
-        # plt.tight_layout()
-        # plt.savefig(f"{out_dir}/FEE.png")
-        # plt.close()
+        fee_min = np.zeros(hp.nside2npix(nside))
+        fee_min[: data_min.shape[0]] = data_min
 
-        # fig = plt.subplots(1, 1, figsize=(7, 8))
-        # bu.plot_healpix(
-        #     data_map=fee_min, vmin=-50, vmax=0, cmap="viridis", title="FEE Minimized",
-        # )
-        # plt.tight_layout()
-        # plt.savefig(f"{out_dir}/FEE_Min.png")
-        # plt.close()
+        plt.rcParams.update(plt.rcParamsDefault)
+        fig = plt.subplots(1, 1, figsize=(7, 8))
+        bu.plot_healpix(
+            data_map=fee, vmin=-50, vmax=0, cmap="viridis", title="FEE Perfect",
+        )
+        plt.tight_layout()
+        plt.savefig(f"{out_dir}/FEE.png")
+        plt.close()
 
-        # fig = plt.subplots(1, 1, figsize=(7, 8))
-        # bu.plot_healpix(
-        #     data_map=data_sat,
-        #     vmin=-50,
-        #     vmax=0,
-        #     cmap="viridis",
-        #     title=f"{tile} Satellite Map",
-        # )
-        # plt.tight_layout()
-        # plt.savefig(f"{out_dir}/{tile}_Sat.png")
-        # plt.close()
+        fig = plt.subplots(1, 1, figsize=(7, 8))
+        bu.plot_healpix(
+            data_map=fee_min, vmin=-50, vmax=0, cmap="viridis", title="FEE Minimized",
+        )
+        plt.tight_layout()
+        plt.savefig(f"{out_dir}/FEE_Min.png")
+        plt.close()
 
-        # fig = plt.subplots(1, 1, figsize=(7, 8))
-        # data_res = fee_perfect - data_sat
-        # fp = fee_perfect
-        # ds = data_sat
-        # fp[mask_30dB] = np.nan
-        # ds[mask_30dB] = np.nan
-        # log_chi_sq = np.log(np.nansum(np.square(fp - ds)))
-        # data_res[mask_30dB] = np.nan
-        # bu.plot_healpix(
-        #     data_map=data_res,
-        #     vmin=-5,
-        #     vmax=5,
-        #     cmap="RdYlGn",
-        #     title=f"FEE - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
-        # )
-        # plt.tight_layout()
-        # plt.savefig(f"{out_dir}/FEE-{tile}_Sat.png")
-        # plt.close()
+        fig = plt.subplots(1, 1, figsize=(7, 8))
+        bu.plot_healpix(
+            data_map=map_med,
+            vmin=-50,
+            vmax=0,
+            cmap="viridis",
+            title=f"{tile} Satellite Map",
+        )
+        plt.tight_layout()
+        plt.savefig(f"{out_dir}/{tile}_Sat.png")
+        plt.close()
 
-        # fig = plt.subplots(1, 1, figsize=(7, 8))
-        # min_res = fee_min - data_sat
-        # min_res[mask_30dB] = np.nan
-        # fm = fee_min
-        # ds = data_sat
-        # fm[mask_30dB] = np.nan
-        # ds[mask_30dB] = np.nan
-        # log_chi_sq = np.log(np.nansum(np.square(fm - ds)))
-        # bu.plot_healpix(
-        #     data_map=min_res,
-        #     vmin=-5,
-        #     vmax=5,
-        #     cmap="RdYlGn",
-        #     title=f"FEE Min - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
-        # )
-        # plt.tight_layout()
-        # plt.savefig(f"{out_dir}/FEE_Min-{tile}_Sat.png")
-        # plt.close()
+        fig = plt.subplots(1, 1, figsize=(7, 8))
+        data_res = fee - map_med
+        fp = fee
+        ds = map_med
+        er = map_mad
+        fp[mask] = np.nan
+        ds[mask] = np.nan
+        er[mask] = np.nan
+        log_chi_sq = np.log(np.nansum(np.square(fp - ds) / er))
+        data_res[mask] = np.nan
+        bu.plot_healpix(
+            data_map=data_res,
+            vmin=-5,
+            vmax=5,
+            cmap="RdYlGn",
+            title=f"FEE - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+        )
+        plt.tight_layout()
+        plt.savefig(f"{out_dir}/FEE-{tile}_Sat.png")
+        plt.close()
+
+        fig = plt.subplots(1, 1, figsize=(7, 8))
+        min_res = fee_min - map_med
+        fm = fee_min
+        ds = map_med
+        er = map_mad
+        fm[mask] = np.nan
+        ds[mask] = np.nan
+        er[mask] = np.nan
+        log_chi_sq = np.log(np.nansum(np.square(fm - ds) / er))
+        min_res[mask] = np.nan
+        bu.plot_healpix(
+            data_map=min_res,
+            vmin=-5,
+            vmax=5,
+            cmap="RdYlGn",
+            title=f"FEE Min - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+        )
+        plt.tight_layout()
+        plt.savefig(f"{out_dir}/FEE_Min-{tile}_Sat.png")
+        plt.close()
