@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Saving MCMC chains
     out_dir = Path(f"{args.out_dir}")
     out_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{out_dir}/beam_mcmc_{args.map_name}.h5"
+    filename = f"{out_dir}/{args.map_name}_{n_iterations}_beam_mcmc.h5"
 
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
