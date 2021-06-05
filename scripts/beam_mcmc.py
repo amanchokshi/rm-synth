@@ -5,60 +5,60 @@ import mwa_hyperbeam
 import numpy as np
 
 import beam_utils as bu
+from beam_minimize import beam_mask, likelihood
 
-
-def log_likelihood(amps, data, mask, pol):
-    """Likelihood of a beam model give some data.
-
-    Parameter
-    ---------
-    amps : numpy.array
-        16 element dipole amplitude array
-    data : numpy.array
-        Satellite beam model healpix array
-    mask : numpy.array
-        Indicies of data array where beam power >= -30dB
-    pol : string
-        Either XX, YY, indicating the polarization of current map
-
-    Returns
-    -------
-    :float
-        The log probability that the model fits the data
-    """
-
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
-
-    # Hyperbeam settings
-    nside = 32
-    freq = 138e6
-    delays = [0] * 16
-    norm_to_zenith = True
-
-    # Zenith angle and Azimuth of healpix pixels
-    za, az = bu.healpix_za_az(nside=nside)
-
-    # Create model with given amplitudes
-    jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
-    unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
-
-    if pol == "XX":
-        model = 10 * np.log10(np.real(unpol_beam[:, 0]))
-    else:
-        model = 10 * np.log10(np.real(unpol_beam[:, 3]))
-
-    # Remove NaNs from data & model arrays
-    model = model[~np.isnan(data)]
-    data = data[~np.isnan(data)]
-
-    # Mask nulls
-    model = model[mask]
-    data = data[mask]
-
-    chisq = np.sum(np.square(data - model))
-
-    return -0.5 * np.log(chisq)
+# def log_likelihood(amps, data, mask, pol):
+#     """Likelihood of a beam model give some data.
+#
+#     Parameter
+#     ---------
+#     amps : numpy.array
+#         16 element dipole amplitude array
+#     data : numpy.array
+#         Satellite beam model healpix array
+#     mask : numpy.array
+#         Indicies of data array where beam power >= -30dB
+#     pol : string
+#         Either XX, YY, indicating the polarization of current map
+#
+#     Returns
+#     -------
+#     :float
+#         The log probability that the model fits the data
+#     """
+#
+#     # Make a new beam object
+#     beam = mwa_hyperbeam.FEEBeam()
+#
+#     # Hyperbeam settings
+#     nside = 32
+#     freq = 138e6
+#     delays = [0] * 16
+#     norm_to_zenith = True
+#
+#     # Zenith angle and Azimuth of healpix pixels
+#     za, az = bu.healpix_za_az(nside=nside)
+#
+#     # Create model with given amplitudes
+#     jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
+#     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
+#
+#     if pol == "XX":
+#         model = 10 * np.log10(np.real(unpol_beam[:, 0]))
+#     else:
+#         model = 10 * np.log10(np.real(unpol_beam[:, 3]))
+#
+#     # Remove NaNs from data & model arrays
+#     model = model[~np.isnan(data)]
+#     data = data[~np.isnan(data)]
+#
+#     # Mask nulls
+#     model = model[mask]
+#     data = data[mask]
+#
+#     chisq = np.sum(np.square(data - model))
+#
+#     return -0.5 * np.log(chisq)
 
 
 def log_prior(amps):
@@ -70,7 +70,7 @@ def log_prior(amps):
         return -np.inf
 
 
-def log_posterior(amps, data=None, mask=None, pol=None):
+def log_posterior(amps, med_map, mad_map, mask, pol):
     """Posterior distribution in log space."""
 
     # calculate prior
@@ -81,65 +81,104 @@ def log_posterior(amps, data=None, mask=None, pol=None):
         return -np.inf
 
     # ln posterior = ln likelihood + ln prior
-    return lp + log_likelihood(amps, data, mask, pol)
+    return lp + -1 * likelihood(amps, med_map, mad_map, mask, pol)
 
 
 if __name__ == "__main__":
 
     import argparse
-    from multiprocessing import Pool
     from pathlib import Path
+
+    # parser = argparse.ArgumentParser(
+    #     description="Determine best fit beam gain parameters",
+    # )
+
+    # parser.add_argument(
+    #     "--sat_map",
+    #     metavar="\b",
+    #     type=str,
+    #     required=True,
+    #     help="Path to satellite beam data map",
+    # )
+
+    # args = parser.parse_args()
+
+    # sat_map = Path(args.sat_map)
+
+    # map_name = sat_map.stem.split("_")[0]
+
+    # if "XX" in map_name:
+    #     pol = "XX"
+    # else:
+    #     pol = "YY"
+
+    # # Make a new beam object
+    # beam = mwa_hyperbeam.FEEBeam()
+
+    # # Healpix map with given nside
+    # nside = 32
+    # freq = 138e6
+    # delays = [0] * 16
+    # norm_to_zenith = True
+
+    # # Zenith angle and Azimuth of healpix pixels
+    # za, az = bu.healpix_za_az(nside=nside)
+
+    # # Load satellite beam map
+    # data_sat = np.load(sat_map)["beam_map"][: az.shape[0]]
+
+    # # Create mask based on -30dB threshold of perfect FEE model
+    # jones_perfect = beam.calc_jones_array(
+    #     az, za, freq, delays, [1.0] * 16, norm_to_zenith
+    # )
+    # unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
+
+    # if pol == "XX":
+    #     model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
+    #     mask_30dB = np.where(model_perfect >= -30)
+    # else:
+    #     model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
+    #     mask_30dB = np.where(model_perfect >= -30)
 
     parser = argparse.ArgumentParser(
         description="Determine best fit beam gain parameters",
     )
 
     parser.add_argument(
-        "--sat_map",
+        "--map_dir",
         metavar="\b",
         type=str,
         required=True,
-        help="Path to satellite beam data map",
+        help="Path to satellite map directory",
+    )
+
+    parser.add_argument(
+        "--map_name",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Name of satellite map - Ex: S06XX_rf1XX",
+    )
+
+    parser.add_argument(
+        "--out_dir",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Output directory to save minimization results",
     )
 
     args = parser.parse_args()
 
-    sat_map = Path(args.sat_map)
+    med_map = np.load(Path(f"{args.map_dir}/rf1_med_maps/{args.map_name}_med.npy"))
+    mad_map = np.load(Path(f"{args.map_dir}/rf1_mad_maps/{args.map_name}_mad.npy"))
 
-    map_name = sat_map.stem.split("_")[0]
-
-    if "XX" in map_name:
+    if "XX" in args.map_name:
         pol = "XX"
     else:
         pol = "YY"
 
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
-
-    # Healpix map with given nside
-    nside = 32
-    freq = 138e6
-    delays = [0] * 16
-    norm_to_zenith = True
-
-    # Zenith angle and Azimuth of healpix pixels
-    za, az = bu.healpix_za_az(nside=nside)
-
-    # Load satellite beam map
-    data_sat = np.load(sat_map)["beam_map"][: az.shape[0]]
-
-    # Create mask based on -30dB threshold of perfect FEE model
-    jones_perfect = beam.calc_jones_array(
-        az, za, freq, delays, [1.0] * 16, norm_to_zenith
-    )
-    unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
-
-    if pol == "XX":
-        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 0]))
-        mask_30dB = np.where(model_perfect >= -30)
-    else:
-        model_perfect = 10 * np.log10(np.real(unpol_perfect[:, 3]))
-        mask_30dB = np.where(model_perfect >= -30)
+    mask = beam_mask(med_map, mad_map, pol=pol, db_thresh=-30, zen_mask=20, nside=32)
 
     # number of ensemble walkers
     nwalkers = 64
@@ -154,22 +193,22 @@ if __name__ == "__main__":
     n_iterations = 100000
 
     # Saving MCMC chains
-    filename = f"/astro/mwaeor/achokshi/rm-synth/data/beam_mcmc/beam_mcmc_{map_name}.h5"
+    out_dir = Path(f"{args.out_dir}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"{out_dir}/beam_mcmc_{args.map_name}.h5"
 
     backend = emcee.backends.HDFBackend(filename)
     backend.reset(nwalkers, ndim)
 
-    with Pool() as pool:
+    # initialise sampler object
+    sampler = emcee.EnsembleSampler(
+        nwalkers,
+        ndim,
+        log_posterior,
+        args=(med_map, mad_map, mask, pol),
+        #  kwargs=({"data": data_sat, "mask": mask_30dB, "pol": pol}),
+        backend=backend,
+    )
 
-        # initialise sampler object
-        sampler = emcee.EnsembleSampler(
-            nwalkers,
-            ndim,
-            log_posterior,
-            kwargs=({"data": data_sat, "mask": mask_30dB, "pol": pol}),
-            backend=backend,
-            pool=pool,
-        )
-
-        # start the chain!
-        sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    # start the chain!
+    sampler.run_mcmc(amps_init, n_iterations, progress=True)
