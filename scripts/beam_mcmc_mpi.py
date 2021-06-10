@@ -285,4 +285,4 @@ if __name__ == "__main__":
     )
 
     # start the chain!
-    sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    sampler.run_mcmc(amps_init, n_iterations, progress=False)
