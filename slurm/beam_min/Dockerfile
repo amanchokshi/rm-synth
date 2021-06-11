@@ -38,6 +38,7 @@ RUN pip3 install \
 # RMextract requirements
 RUN pip3 install \
         --no-cache-dir \
+        h5py \
         numpy \
         emcee \
         healpy \
