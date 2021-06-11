@@ -42,11 +42,7 @@ RUN pip3 install \
         emcee \
         healpy \
         mpi4py \
-        schwimmbad
-
-# Install Hyperbeam
-RUN pip3 install \
-        --no-cache-dir \
-        git+https://github.com/MWATelescope/mwa_pb.git@hyperbeam
+        schwimmbad \
+        mwa_hyperbeam
 
 ENTRYPOINT /bin/bash
