@@ -2,9 +2,8 @@ FROM ubuntu:20.04
 
 MAINTAINER Aman Chokshi <achokshi@student.unimelb.edu.au>
 
-# Set timezone to utc
-ENV TZ 'UTC'
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update -y && \
+        DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 
 # Update and install packages
 RUN apt-get -y update && \
@@ -23,6 +22,10 @@ RUN apt-get -y update && \
     && apt-get autoremove \
     && apt-get clean
 
+# Enable mpi as root
+ENV OMPI_ALLOW_RUN_AS_ROOT=1 
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
 ADD http://ws.mwatelescope.org/static/mwa_full_embedded_element_pattern.h5 /mwa_full_embedded_element_pattern.h5
 ENV MWA_BEAM_FILE="/mwa_full_embedded_element_pattern.h5"
 
@@ -35,10 +38,11 @@ RUN pip3 install \
         --no-cache-dir \
         pip
 
-# RMextract requirements
+# Python requirements
 RUN pip3 install \
         --no-cache-dir \
         h5py \
+        tqdm \
         numpy \
         emcee \
         healpy \
