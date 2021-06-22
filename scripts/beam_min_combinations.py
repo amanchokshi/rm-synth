@@ -141,6 +141,3 @@ if __name__ == "__main__":
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
         results = executor.map(amp_comb_chisq, tiles)
-
-    for result in results:
-        print(result)
