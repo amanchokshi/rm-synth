@@ -11,7 +11,7 @@ from scipy.signal import find_peaks
 
 from beam_minimize import beam_mask, likelihood
 
-#  from tqdm import tqdm
+from tqdm import tqdm
 
 
 def write_json(data, filename=None, out_dir=None):
@@ -139,5 +139,7 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
-        results = executor.map(amp_comb_chisq, tiles)
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
+    #     results = executor.map(amp_comb_chisq, tiles)
+
+    amp_comb_chisq(tiles[0])
