@@ -284,4 +284,7 @@ if __name__ == "__main__":
     #     results = executor.map(amp_comb_chisq, tiles)
 
     for tile in tiles:
-        amp_comb_chisq(tile)
+        try:
+            amp_comb_chisq(tile)
+        except Exception as e:
+            print(e)
