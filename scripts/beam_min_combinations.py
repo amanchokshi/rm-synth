@@ -10,10 +10,9 @@ import mwa_hyperbeam
 import numpy as np
 from scipy import stats
 from scipy.signal import find_peaks
+from tqdm import tqdm
 
 import beam_utils as bu
-
-# from tqdm import tqdm
 
 
 def write_json(data, filename=None, out_dir=None):
@@ -77,7 +76,7 @@ def beam_mask(
     # Zenith angle and Azimuth of healpix pixels
     za, az = bu.healpix_za_az(nside=nside)
 
-    jones_perfect = beam.calc_jones_array(
+    jones_perfect = hyperbeam.calc_jones_array(
         az, za, freq, delays, [1.0] * 16, norm_to_zenith
     )
     unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
@@ -144,7 +143,7 @@ def likelihood(hyperbeam, amps, med_map, mad_map, mask, pol):
     az = np.delete(az, mask_za_az)
 
     # Create model with given amplitudes
-    jones = beam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
+    jones = hyperbeam.calc_jones_array(az, za, freq, delays, amps, norm_to_zenith)
     unpol_beam = bu.makeUnpolInstrumentalResponse(jones, jones)
 
     if pol == "XX":
@@ -223,6 +222,9 @@ def amp_comb_chisq(hyperbeam, tile):
     # for i, a16 in enumerate(tqdm(amps_16)):
     for i, a16 in enumerate(amps_16):
 
+        # Make a new beam object
+        hyperbeam = mwa_hyperbeam.FEEBeam()
+
         if "XX" in tile:
             pol = "XX"
         else:
@@ -237,6 +239,8 @@ def amp_comb_chisq(hyperbeam, tile):
         chi = likelihood(hyperbeam, a16, map_med, map_mad, mask, pol)
 
         amps_chisq[i] = [list(a16), chi]
+
+        del hyperbeam
 
     write_json(amps_chisq, filename=f"{tile}_amp_combinations.json", out_dir=out_dir)
 
@@ -274,10 +278,7 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
+    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+        results = executor.map(amp_comb_chisq, tiles)
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
-        results = executor.map(amp_comb_chisq, itertools.repeat(beam), tiles)
-
-    #  amp_comb_chisq(beam, tiles[0])
+    #  amp_comb_chisq(tiles[0])
