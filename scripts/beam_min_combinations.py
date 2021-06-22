@@ -8,9 +8,10 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 from scipy.signal import find_peaks
-from tqdm import tqdm
 
 from beam_minimize import beam_mask, likelihood
+
+#  from tqdm import tqdm
 
 
 def write_json(data, filename=None, out_dir=None):
@@ -75,6 +76,7 @@ def amp_combinations(amps):
 def amp_comb_chisq(tile):
     """Determine chisq for all combinations of dipole amps."""
 
+    print(tile)
     out_dir = Path("../data/beam_min_1024_masked/raw")
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -84,7 +86,7 @@ def amp_comb_chisq(tile):
     amps_16 = amp_combinations(p_amps)
 
     amps_chisq = {}
-    for i, a16 in enumerate(tqdm(amps_16)):
+    for i, a16 in enumerate(amps_16):
 
         if "XX" in tile:
             pol = "XX"
@@ -102,7 +104,6 @@ def amp_comb_chisq(tile):
         amps_chisq[i] = [list(a16), chi]
 
     write_json(amps_chisq, filename=f"{tile}_amp_combinations.json", out_dir=out_dir)
-    print(tile)
 
 
 if __name__ == "__main__":
