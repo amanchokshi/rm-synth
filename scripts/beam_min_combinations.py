@@ -1,15 +1,15 @@
 """Evaluate all combinations of gain parameters from beam_minimize.py"""
 
+import concurrent.futures
 import itertools
 import json
+from pathlib import Path
 
-import mwa_hyperbeam
 import numpy as np
 from scipy import stats
 from scipy.signal import find_peaks
 from tqdm import tqdm
 
-import beam_utils as bu
 from beam_minimize import beam_mask, likelihood
 
 
@@ -72,9 +72,40 @@ def amp_combinations(amps):
     return amps_16
 
 
-if __name__ == "__main__":
+def amp_comb_chisq(tile):
+    """Determine chisq for all combinations of dipole amps."""
 
-    from pathlib import Path
+    out_dir = Path("../data/beam_min_1024_masked/raw")
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    beam_min = f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
+
+    p_amps = peak_amps(beam_min)
+    amps_16 = amp_combinations(p_amps)
+
+    amps_chisq = {}
+    for i, a16 in enumerate(tqdm(amps_16)):
+
+        if "XX" in tile:
+            pol = "XX"
+        else:
+            pol = "YY"
+
+        # Load satellite beam map
+        map_med = np.load(f"../data/embers_maps/rf1_med_maps/{tile}_med.npy")
+        map_mad = np.load(f"../data/embers_maps/rf1_mad_maps/{tile}_mad.npy")
+
+        mask = beam_mask(map_med, map_mad, pol=pol)
+
+        chi = likelihood(a16, map_med, map_mad, mask, pol)
+
+        amps_chisq[i] = [list(a16), chi]
+
+    write_json(amps_chisq, filename=f"{tile}_amp_combinations.json", out_dir=out_dir)
+    print(tile)
+
+
+if __name__ == "__main__":
 
     tiles = [
         "S06XX_rf1XX",
@@ -107,50 +138,8 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
-    for tile in tiles:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = executor.map(amp_comb_chisq, tiles)
 
-        print(f"Tile : {tile}")
-
-        out_dir = Path("../data/beam_min_1024_masked/raw")
-        out_dir.mkdir(parents=True, exist_ok=True)
-
-        beam_min = (
-            f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
-        )
-
-        p_amps = peak_amps(beam_min)
-        amps_16 = amp_combinations(p_amps)
-
-        amps_chisq = {}
-        for i, a16 in enumerate(tqdm(amps_16)):
-
-            # Hyperbeam settings
-            nside = 32
-            freq = 138e6
-            delays = [0] * 16
-            norm_to_zenith = True
-
-            # Zenith angle and Azimuth of healpix pixels
-            za, az = bu.healpix_za_az(nside=nside)
-
-            # Make a new beam object
-            beam = mwa_hyperbeam.FEEBeam()
-
-            if "XX" in tile:
-                pol = "XX"
-            else:
-                pol = "YY"
-
-            # Load satellite beam map
-            map_med = np.load(f"../data/embers_maps/rf1_med_maps/{tile}_med.npy")
-            map_mad = np.load(f"../data/embers_maps/rf1_mad_maps/{tile}_mad.npy")
-
-            mask = beam_mask(map_med, map_mad, pol=pol)
-
-            chi = likelihood(a16, map_med, map_mad, mask, pol)
-
-            amps_chisq[i] = [list(a16), chi]
-
-        write_json(
-            amps_chisq, filename=f"{tile}_amp_combinations.json", out_dir=out_dir
-        )
+    for result in results:
+        print(result)
