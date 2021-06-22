@@ -206,7 +206,7 @@ def amp_combinations(amps):
     return amps_16
 
 
-def amp_comb_chisq(hyperbeam, tile):
+def amp_comb_chisq(tile):
     """Determine chisq for all combinations of dipole amps."""
 
     print(tile)
@@ -215,15 +215,16 @@ def amp_comb_chisq(hyperbeam, tile):
 
     beam_min = f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
 
+    # Make a new beam object
+    hyperbeam = mwa_hyperbeam.FEEBeam()
+
     p_amps = peak_amps(beam_min)
     amps_16 = amp_combinations(p_amps)
 
     amps_chisq = {}
-    # for i, a16 in enumerate(tqdm(amps_16)):
-    for i, a16 in enumerate(amps_16):
+    for i, a16 in enumerate(tqdm(amps_16)):
+    # for i, a16 in enumerate(amps_16):
 
-        # Make a new beam object
-        hyperbeam = mwa_hyperbeam.FEEBeam()
 
         if "XX" in tile:
             pol = "XX"
@@ -240,7 +241,7 @@ def amp_comb_chisq(hyperbeam, tile):
 
         amps_chisq[i] = [list(a16), chi]
 
-        del hyperbeam
+    del hyperbeam
 
     write_json(amps_chisq, filename=f"{tile}_amp_combinations.json", out_dir=out_dir)
 
@@ -278,7 +279,9 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
-    with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
-        results = executor.map(amp_comb_chisq, tiles)
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
+    # with concurrent.futures.ProcessPoolExecutor() as executor:
+    #     results = executor.map(amp_comb_chisq, tiles)
 
-    #  amp_comb_chisq(tiles[0])
+    for tile in tiles:
+        amp_comb_chisq(tile)
