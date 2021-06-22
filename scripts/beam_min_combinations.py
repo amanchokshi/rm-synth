@@ -139,5 +139,5 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
         results = executor.map(amp_comb_chisq, tiles)
