@@ -175,8 +175,17 @@ def peak_amps(beam_min_npy):
             kde_series = kde(np.linspace(0, 1, 2048))
             kde_peak = np.amax(kde_series)
             kde_m = np.append(kde_series, kde_series[-2])
-            peaks, _ = find_peaks(kde_m, height=0.7 * kde_peak)
-            amps.append(np.linspace(0, 1, 2048)[peaks])
+            peaks, _ = find_peaks(kde_m, height=0.5 * kde_peak)
+
+            # Sort peaks and pick top two
+            peak_height_sort = np.array(sorted(zip(kde_m[peaks], peaks), reverse=True))
+
+            if peak_height_sort.shape[0] > 1:
+                amps.append(
+                    np.linspace(0, 1, 2048)[peak_height_sort[:2, 1].astype(int)]
+                )
+            else:
+                amps.append(np.linspace(0, 1, 2048)[peaks])
 
     return amps
 
@@ -223,6 +232,7 @@ def amp_comb_chisq(tile):
     hyperbeam = mwa_hyperbeam.FEEBeam()
 
     p_amps = peak_amps(beam_min)
+    print(p_amps)
     amps_16 = amp_combinations(p_amps)
 
     amps_chisq = {}
