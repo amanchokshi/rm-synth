@@ -232,12 +232,11 @@ def amp_comb_chisq(tile):
     hyperbeam = mwa_hyperbeam.FEEBeam()
 
     p_amps = peak_amps(beam_min)
-    print(p_amps)
     amps_16 = amp_combinations(p_amps)
 
     amps_chisq = {}
-    for i, a16 in enumerate(tqdm(amps_16)):
-        # for i, a16 in enumerate(amps_16):
+    # for i, a16 in enumerate(tqdm(amps_16)):
+    for i, a16 in enumerate(amps_16):
 
         if "XX" in tile:
             pol = "XX"
