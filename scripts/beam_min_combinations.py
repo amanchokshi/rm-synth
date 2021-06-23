@@ -171,11 +171,11 @@ def peak_amps(beam_min_npy):
         if np.unique(data[:, i]).shape[0] == 1:
             amps.append(np.unique(data[:, i]))
         else:
-            kde = stats.gaussian_kde(data[:, i])
+            kde = stats.gaussian_kde(data[:, i], bw_method=0.1)
             kde_series = kde(np.linspace(0, 1, 2048))
             kde_peak = np.amax(kde_series)
             kde_m = np.append(kde_series, kde_series[-2])
-            peaks, _ = find_peaks(kde_m, height=0.3 * kde_peak)
+            peaks, _ = find_peaks(kde_m, height=0.7 * kde_peak)
             amps.append(np.linspace(0, 1, 2048)[peaks])
 
     return amps
@@ -251,43 +251,58 @@ def amp_comb_chisq(tile):
 
 if __name__ == "__main__":
 
-    tiles = [
-        "S06XX_rf1XX",
-        "S06YY_rf1YY",
-        "S07XX_rf1XX",
-        "S07YY_rf1YY",
-        "S08XX_rf1XX",
-        "S08YY_rf1YY",
-        "S09XX_rf1XX",
-        "S09YY_rf1YY",
-        "S10XX_rf1XX",
-        "S10YY_rf1YY",
-        "S12XX_rf1XX",
-        "S12YY_rf1YY",
-        "S29XX_rf1XX",
-        "S29YY_rf1YY",
-        "S30XX_rf1XX",
-        "S30YY_rf1YY",
-        "S31XX_rf1XX",
-        "S31YY_rf1YY",
-        "S32XX_rf1XX",
-        "S32YY_rf1YY",
-        "S33XX_rf1XX",
-        "S33YY_rf1YY",
-        "S34XX_rf1XX",
-        "S34YY_rf1YY",
-        "S35XX_rf1XX",
-        "S35YY_rf1YY",
-        "S36XX_rf1XX",
-        "S36YY_rf1YY",
-    ]
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Determine best fit beam gain parameters",
+    )
+
+    parser.add_argument(
+        "--tile",
+        metavar="\b",
+        type=str,
+        required=True,
+        help="Tile name. Ex: S06XX_rf1XX",
+    )
+
+    args = parser.parse_args()
+
+    # tiles = [
+    #     "S06XX_rf1XX",
+    #     "S06YY_rf1YY",
+    #     "S07XX_rf1XX",
+    #     "S07YY_rf1YY",
+    #     "S08XX_rf1XX",
+    #     "S08YY_rf1YY",
+    #     "S09XX_rf1XX",
+    #     "S09YY_rf1YY",
+    #     "S10XX_rf1XX",
+    #     "S10YY_rf1YY",
+    #     "S12XX_rf1XX",
+    #     "S12YY_rf1YY",
+    #     "S29XX_rf1XX",
+    #     "S29YY_rf1YY",
+    #     "S30XX_rf1XX",
+    #     "S30YY_rf1YY",
+    #     "S31XX_rf1XX",
+    #     "S31YY_rf1YY",
+    #     "S32XX_rf1XX",
+    #     "S32YY_rf1YY",
+    #     "S33XX_rf1XX",
+    #     "S33YY_rf1YY",
+    #     "S34XX_rf1XX",
+    #     "S34YY_rf1YY",
+    #     "S35XX_rf1XX",
+    #     "S35YY_rf1YY",
+    #     "S36XX_rf1XX",
+    #     "S36YY_rf1YY",
+    # ]
 
     # with concurrent.futures.ProcessPoolExecutor(max_workers=7) as executor:
     # with concurrent.futures.ProcessPoolExecutor() as executor:
     #     results = executor.map(amp_comb_chisq, tiles)
 
-    for tile in tiles:
-        try:
-            amp_comb_chisq(tile)
-        except Exception as e:
-            print(e)
+    try:
+        amp_comb_chisq(args.tile)
+    except Exception as e:
+        print(e)
