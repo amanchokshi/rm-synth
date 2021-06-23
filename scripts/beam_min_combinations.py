@@ -167,12 +167,16 @@ def peak_amps(beam_min_npy):
 
     amps = []
     for i in range(16):
-        kde = stats.gaussian_kde(data[:, i])
-        kde_series = kde(np.linspace(0, 1, 2048))
-        kde_peak = np.amax(kde_series)
-        kde_m = np.append(kde_series, kde_series[-2])
-        peaks, _ = find_peaks(kde_m, height=0.3 * kde_peak)
-        amps.append(np.linspace(0, 1, 2048)[peaks])
+
+        if np.unique(data[:, i]).shape[0] == 1:
+            amps.append(np.unique(data[:, i]))
+        else:
+            kde = stats.gaussian_kde(data[:, i])
+            kde_series = kde(np.linspace(0, 1, 2048))
+            kde_peak = np.amax(kde_series)
+            kde_m = np.append(kde_series, kde_series[-2])
+            peaks, _ = find_peaks(kde_m, height=0.3 * kde_peak)
+            amps.append(np.linspace(0, 1, 2048)[peaks])
 
     return amps
 
@@ -223,8 +227,7 @@ def amp_comb_chisq(tile):
 
     amps_chisq = {}
     for i, a16 in enumerate(tqdm(amps_16)):
-    # for i, a16 in enumerate(amps_16):
-
+        # for i, a16 in enumerate(amps_16):
 
         if "XX" in tile:
             pol = "XX"
