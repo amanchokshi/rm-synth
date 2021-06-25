@@ -1,3 +1,5 @@
+import json
+
 import healpy as hp
 import mwa_hyperbeam
 import numpy as np
@@ -50,6 +52,7 @@ if __name__ == "__main__":
     ]
 
     chi_sq_tiles = []
+    chi_sq_comb_min = []
 
     for tile in tiles:
 
@@ -59,6 +62,16 @@ if __name__ == "__main__":
         beam_min = np.load(
             f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
         )
+
+        with open(
+            f"../data/beam_min_1024_masked/raw/{tile}_amp_combinations.json", "r"
+        ) as file:
+            data = file.read()
+
+            amps_comb = np.array(list(json.loads(data).values()), dtype="object")
+            chisq = amps_comb[:, -1]
+
+            chi_sq_comb_min.append(chisq[0])
 
         amps_sat = np.median(beam_min, axis=0)
 
@@ -179,8 +192,16 @@ if __name__ == "__main__":
         chi_sq_tiles[:, 1],
         "-s",
         color="#00587a",
-        label="FEE Minimized",
+        label="FEE Min Median",
     )
+    ax.plot(
+        range(len(chi_sq_comb_min)),
+        chi_sq_comb_min,
+        "-s",
+        color="#AA2B1D",
+        label="FEE Comb Min",
+    )
+
     # ax.hlines(
     #     np.mean(log_chi_sq),
     #     0,
