@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import beam_utils as bu
+from beam_min_combinations import write_json
 from beam_minimize import beam_mask
 
 
@@ -51,18 +52,28 @@ if __name__ == "__main__":
         "S36YY_rf1YY",
     ]
 
+    # Each element of this list contains the set of chisq values of
+    # the satellite map compared to the full FEE beam, and the minimized (median)
+    # FEE beam
     chi_sq_tiles = []
+
+    # Chisqs from all possible dipole peak combinations
     chi_sq_comb_min = []
+    amp_comb_min = {}
 
     for tile in tiles:
 
         out_dir = Path(f"../data/beam_min_1024_masked/{tile}/")
         out_dir.mkdir(parents=True, exist_ok=True)
 
+        # All 1024 min dipole gains from beam_minimize.py, started from random initial conditions
+        # Histogram this data to get an idea of prefered dipole gains
         beam_min = np.load(
             f"../data/beam_min_1024_masked/raw/{tile}_beam_min_1024_walk_mask.npy"
         )
 
+        # KDE fit to above histogram, and upto two highest peaks selected per dipole
+        # Chisq of ll combinations of possible peaks evaluated and saved to json dict
         with open(
             f"../data/beam_min_1024_masked/raw/{tile}_amp_combinations.json", "r"
         ) as file:
@@ -70,9 +81,14 @@ if __name__ == "__main__":
 
             amps_comb = np.array(list(json.loads(data).values()), dtype="object")
             chisq = amps_comb[:, -1]
+            chisq_min = min(chisq)
 
-            chi_sq_comb_min.append(chisq[0])
+            min_ind = np.where(chisq == chisq_min)[0][0]
 
+            chi_sq_comb_min.append(chisq_min)
+            amp_comb_min[f"{tile.split('_')[0]}"] = amps_comb[:, 0][min_ind]
+
+        # Median dipole gains from all 1024 random walkers for beam_minimize.py
         amps_sat = np.median(beam_min, axis=0)
 
         # Hyperbeam settings
@@ -128,45 +144,46 @@ if __name__ == "__main__":
         fee_min[mask] = np.nan
         map_med[mask] = np.nan
         map_mad[mask] = np.nan
+
         log_chisq_fee = np.log(np.nansum(np.square(fee - map_med) / map_mad))
         log_chisq_fee_min = np.log(np.nansum(np.square(fee_min - map_med) / map_mad))
-
         chi_sq_tiles.append([log_chisq_fee, log_chisq_fee_min])
 
-    # Hyperbeam settings
-    nside = 32
-    freq = 138e6
-    delays = [0] * 16
-    norm_to_zenith = True
 
-    # Zenith angle and Azimuth of healpix pixels
-    za, az = bu.healpix_za_az(nside=nside)
+    # # Hyperbeam settings
+    # nside = 32
+    # freq = 138e6
+    # delays = [0] * 16
+    # norm_to_zenith = True
 
-    # Make a new beam object
-    beam = mwa_hyperbeam.FEEBeam()
+    # # Zenith angle and Azimuth of healpix pixels
+    # za, az = bu.healpix_za_az(nside=nside)
 
-    # Create mask based on -30dB threshold of perfect FEE model
-    jones_perfect = beam.calc_jones_array(
-        az, za, freq, delays, [1.0] * 16, norm_to_zenith
-    )
-    unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
+    # # Make a new beam object
+    # beam = mwa_hyperbeam.FEEBeam()
 
-    model_perfect_XX = 10 * np.log10(np.real(unpol_perfect[:, 0]))
-    mask_30dB_XX = np.where(model_perfect_XX < -30)
+    # # Create mask based on -30dB threshold of perfect FEE model
+    # jones_perfect = beam.calc_jones_array(
+    #     az, za, freq, delays, [1.0] * 16, norm_to_zenith
+    # )
+    # unpol_perfect = bu.makeUnpolInstrumentalResponse(jones_perfect, jones_perfect)
 
-    amps_flagged = [0.0] + [1.0] * 15
-    log_chi_sq = []
-    for i in range(16):
-        amps_f = np.roll(amps_flagged, i)
+    # model_perfect_XX = 10 * np.log10(np.real(unpol_perfect[:, 0]))
+    # mask_30dB_XX = np.where(model_perfect_XX < -30)
 
-        jones_min = beam.calc_jones_array(az, za, freq, delays, amps_f, norm_to_zenith)
-        unpol_min = bu.makeUnpolInstrumentalResponse(jones_min, jones_min)
+    # amps_flagged = [0.0] + [1.0] * 15
+    # log_chi_sq = []
+    # for i in range(16):
+    #     amps_f = np.roll(amps_flagged, i)
 
-        data_flagged_XX = 10 * np.log10(np.real(unpol_min[:, 0]))
+    #     jones_min = beam.calc_jones_array(az, za, freq, delays, amps_f, norm_to_zenith)
+    #     unpol_min = bu.makeUnpolInstrumentalResponse(jones_min, jones_min)
 
-        lchs = log_chisq(model_perfect_XX, data_flagged_XX, mask_30dB_XX)
+    #     data_flagged_XX = 10 * np.log10(np.real(unpol_min[:, 0]))
 
-        log_chi_sq.append(lchs)
+    #     lchs = log_chisq(model_perfect_XX, data_flagged_XX, mask_30dB_XX)
+
+    #     log_chi_sq.append(lchs)
 
     chi_sq_tiles = np.array(chi_sq_tiles)
 
@@ -187,18 +204,18 @@ if __name__ == "__main__":
         color="#008891",
         label="FEE Perfect",
     )
-    ax.plot(
-        range(len(tiles)),
-        chi_sq_tiles[:, 1],
-        "-s",
-        color="#00587a",
-        label="FEE Min Median",
-    )
+    # ax.plot(
+    #     range(len(tiles)),
+    #     chi_sq_tiles[:, 1],
+    #     "-s",
+    #     color="#AA2B1D",
+    #     label="FEE Min Median",
+    # )
     ax.plot(
         range(len(chi_sq_comb_min)),
         chi_sq_comb_min,
         "-s",
-        color="#AA2B1D",
+        color="#00587a",
         label="FEE Comb Min",
     )
 
@@ -256,6 +273,8 @@ if __name__ == "__main__":
     plt.tight_layout()
     #  plt.show()
     plt.savefig("../data/beam_min_1024_masked/MWA_Min_Log_Chisq.png")
+
+    write_json(amp_comb_min, filename="sat_dipole_amps.json", out_dir="../data/beam_min_1024_masked")
 
     # dipoles = [
     #     "$A_0$",

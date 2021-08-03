@@ -168,8 +168,11 @@ def peak_amps(beam_min_npy):
     amps = []
     for i in range(16):
 
+        # All minimization has converged to one point from random inital conditions
         if np.unique(data[:, i]).shape[0] == 1:
             amps.append(np.unique(data[:, i]))
+
+        # Else fit KDE and extract two tallest peaks
         else:
             kde = stats.gaussian_kde(data[:, i], bw_method=0.1)
             kde_series = kde(np.linspace(0, 1, 2048))
