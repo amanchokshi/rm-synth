@@ -10,6 +10,19 @@ from astropy.io import fits
 
 np.random.seed(256)
 
+
+def mod_metafits(meta_dir, obsid, col_name=None, col_data=None):
+    """Add a DipAmps column to metafits files."""
+
+    # https://docs.astropy.org/en/stable/_modules/astropy/io/fits/column.html
+    column = fits.Column(name=col_name, format="16E", array=col_data)
+
+    with fits.open(f"{meta_dir}/{obsid}.metafits") as hdus:
+        table_new = fits.BinTableHDU.from_columns(hdus[1].columns + column)
+        hdus[1] = table_new
+        hdus.writeto(f"{meta_dir}/{obsid}_DipAmps.metafits")
+
+
 if __name__ == "__main__":
 
     # Path to json file it best fit dipole amps from satellite maps
@@ -43,10 +56,10 @@ if __name__ == "__main__":
 
     # Modify and write new metafits file
 
-    # https://docs.astropy.org/en/stable/_modules/astropy/io/fits/column.html
-    column = fits.Column(name="DipAmps", format="16E", array=mwa_amps)
+    obsids = [1120082744, 1120082864]
+    meta_dir = "../data/metafits_dipoles"
 
-    with fits.open("../data/metafits_dipoles/1120082744.metafits") as hdus:
-        table_new = fits.BinTableHDU.from_columns(hdus[1].columns + column)
-        hdus[1] = table_new
-        hdus.writeto("tmp.metafits")
+    print(f"Saving Modified Metafits to : {meta_dir}")
+    for obs in obsids:
+        mod_metafits(meta_dir, obs, col_name="DipAmps", col_data=mwa_amps)
+        print(f"Augmented {obs}.metafits with dipole amps")
