@@ -1,3 +1,5 @@
+import json
+
 import healpy as hp
 import mwa_hyperbeam
 import numpy as np
@@ -48,6 +50,13 @@ def plot_beam_amp(beam_min, dipoles, index, fig, ax):
 if __name__ == "__main__":
 
     from pathlib import Path
+
+    # The best dipole amp combinations
+    sat_amps = "../data/beam_min_1024_masked/sat_dipole_amps.json"
+
+    with open(sat_amps, "r") as file:
+        data = file.read()
+        dip_amps_min = json.loads(data)
 
     tiles = [
         "S06XX_rf1XX",
@@ -152,7 +161,8 @@ if __name__ == "__main__":
         plt.savefig(f"{out_dir}/{tile}_beam_min.png")
         plt.close()
 
-        amps_sat = np.median(beam_min, axis=0)
+        #  amps_sat = np.median(beam_min, axis=0)
+        amps_sat = dip_amps_min[f"{tile.split('_')[0]}"]
 
         # Hyperbeam settings
         nside = 32
