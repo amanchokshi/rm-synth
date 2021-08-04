@@ -37,23 +37,25 @@ if __name__ == "__main__":
         ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
     )
 
-    print(f"SOURCE RM-001 {rm_coords.ra.hour} {rm_coords.dec.deg}")
-    for i, freq in enumerate(freqs):
-        print(
-            f"FREQ {freq:.4e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}"
-        )
-    print("ENDSOURCE")
+    with open("../data/rts_srclists/srclist_eor1_rm001.txt", "w") as f:
+        f.write(f"SOURCE RM-001 {rm_coords.ra.hour} {rm_coords.dec.deg}\n")
 
-    plt.style.use("seaborn")
-    plt.plot(freqs, I.real, label="I")
-    plt.plot(freqs, Q.real, label="Q")
-    plt.plot(freqs, U.real, label="U")
-    plt.plot(freqs, V.real, label="V")
-    leg = plt.legend(loc="upper right", frameon=True)
-    leg.get_frame().set_facecolor("white")
-    for le in leg.legendHandles:
-        le.set_alpha(1)
-    plt.ylabel("FLux [Jy]")
-    plt.xlabel("Frequency [Hz]")
-    plt.tight_layout()
-    plt.show()
+        for i, freq in enumerate(freqs):
+            f.write(
+                f"FREQ {freq:.4e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}\n"
+            )
+        f.write("ENDSOURCE\n")
+
+    # plt.style.use("seaborn")
+    # plt.plot(freqs, I.real, label="I")
+    # plt.plot(freqs, Q.real, label="Q")
+    # plt.plot(freqs, U.real, label="U")
+    # plt.plot(freqs, V.real, label="V")
+    # leg = plt.legend(loc="upper right", frameon=True)
+    # leg.get_frame().set_facecolor("white")
+    # for le in leg.legendHandles:
+    #     le.set_alpha(1)
+    # plt.ylabel("FLux [Jy]")
+    # plt.xlabel("Frequency [Hz]")
+    # plt.tight_layout()
+    # plt.show()
