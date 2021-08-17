@@ -10,6 +10,10 @@ sys.path.append("..")
 import beam_utils as bu
 from beam_minimize import beam_mask
 
+from colormaps import jade
+
+j, jr = jade()
+
 if __name__ == "__main__":
 
     from pathlib import Path
@@ -54,23 +58,23 @@ if __name__ == "__main__":
 
     for tile in tiles:
 
-        plt.style.use("seaborn")
+        # plt.style.use("seaborn")
 
-        plt.rcParams.update(
-            {
-                "font.size": 16,
-                #  "xtick.major.size": 12,
-                #  "ytick.major.size": 12,
-                #  "xtick.major.width": 1,
-                #  "ytick.major.width": 1,
-                #  "ytick.minor.size": 5,
-                #  "xtick.minor.size": 5,
-                #  "axes.linewidth": 1,
-                "font.family": "serif",
-                "font.serif": "Times New Roman",
-                "text.usetex": True,
-            }
-        )
+        # plt.rcParams.update(
+        #     {
+        #         "font.size": 16,
+        #         #  "xtick.major.size": 12,
+        #         #  "ytick.major.size": 12,
+        #         #  "xtick.major.width": 1,
+        #         #  "ytick.major.width": 1,
+        #         #  "ytick.minor.size": 5,
+        #         #  "xtick.minor.size": 5,
+        #         #  "axes.linewidth": 1,
+        #         "font.family": "serif",
+        #         "font.serif": "Times New Roman",
+        #         "text.usetex": True,
+        #     }
+        # )
 
         amps_sat = dip_amps_min[f"{tile.split('_')[0]}"]
 
@@ -95,7 +99,7 @@ if __name__ == "__main__":
         map_med = np.load(f"../../data/embers_maps/rf1_med_maps/{tile}_med.npy")
         map_mad = np.load(f"../../data/embers_maps/rf1_mad_maps/{tile}_mad.npy")
 
-        mask = beam_mask(map_med, map_mad, pol=pol)
+        mask = beam_mask(map_med, map_mad, pol=pol, zen_mask=0)
 
         jones_perfect = beam.calc_jones_array(
             az, za, freq, delays, [1.0] * 16, norm_to_zenith
@@ -123,36 +127,133 @@ if __name__ == "__main__":
         fee_min = np.zeros(hp.nside2npix(nside))
         fee_min[: data_min.shape[0]] = data_min
 
-        plt.rcParams.update(plt.rcParamsDefault)
-        fig = plt.subplots(1, 1, figsize=(7, 8))
-        bu.plot_healpix(
-            data_map=fee, vmin=-50, vmax=0, cmap="viridis", title="FEE Perfect",
-        )
-        plt.tight_layout()
-        plt.savefig("./FEE.png")
-        plt.close()
+        # plt.rcParams.update(plt.rcParamsDefault)
+        # fig = plt.subplots(1, 1, figsize=(7, 8))
+        # bu.plot_healpix(
+        #     data_map=fee, vmin=-50, vmax=0, cmap="viridis", title="FEE Perfect",
+        # )
+        # plt.tight_layout()
+        # plt.savefig("./FEE.png")
+        # plt.close()
 
-        fig = plt.subplots(1, 1, figsize=(7, 8))
-        bu.plot_healpix(
-            data_map=fee_min, vmin=-50, vmax=0, cmap="viridis", title="FEE Minimized",
-        )
-        plt.tight_layout()
-        plt.savefig("./FEE_Min.png")
-        plt.close()
+        # fig = plt.subplots(1, 1, figsize=(7, 8))
+        # bu.plot_healpix(
+        #     data_map=fee_min, vmin=-50, vmax=0, cmap="viridis", title="FEE Minimized",
+        # )
+        # plt.tight_layout()
+        # plt.savefig("./FEE_Min.png")
+        # plt.close()
 
-        fig = plt.subplots(1, 1, figsize=(7, 8))
+        # fig = plt.subplots(1, 1, figsize=(7, 8))
+        # bu.plot_healpix(
+        #     data_map=map_med,
+        #     vmin=-50,
+        #     vmax=0,
+        #     cmap="viridis",
+        #     title=f"{tile} Satellite Map",
+        # )
+        # plt.tight_layout()
+        # plt.savefig(f"./{tile}_Sat.png")
+        # plt.close()
+
+        # fig = plt.subplots(1, 1, figsize=(7, 8))
+        # data_res = fee - map_med
+        # fp = fee
+        # ds = map_med
+        # er = map_mad
+        # fp[mask] = np.nan
+        # ds[mask] = np.nan
+        # er[mask] = np.nan
+        # log_chi_sq = np.log(np.nansum(np.square(fp - ds) / er))
+        # data_res[mask] = np.nan
+        # bu.plot_healpix(
+        #     data_map=data_res,
+        #     vmin=-7,
+        #     vmax=7,
+        #     cmap="RdYlGn",
+        #     title=f"FEE - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+        # )
+        # plt.tight_layout()
+        # plt.savefig(f"./FEE-{tile}_Sat.png")
+        # plt.close()
+
+        # fig = plt.subplots(1, 1, figsize=(7, 8))
+        # min_res = fee_min - map_med
+        # fm = fee_min
+        # ds = map_med
+        # er = map_mad
+        # fm[mask] = np.nan
+        # ds[mask] = np.nan
+        # er[mask] = np.nan
+        # log_chi_sq = np.log(np.nansum(np.square(fm - ds) / er))
+        # min_res[mask] = np.nan
+        # bu.plot_healpix(
+        #     data_map=min_res,
+        #     vmin=-7,
+        #     vmax=7,
+        #     cmap="RdYlGn",
+        #     title=f"FEE Min - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+        # )
+        # plt.tight_layout()
+        # plt.savefig(f"./FEE_Min-{tile}_Sat.png")
+        # plt.close()
+
+        #  plt.style.use("seaborn")
+        plt.rcParams.update(
+            {
+                #  "font.size": 15,
+                "text.usetex": True,
+                "font.family": "serif",
+                #  "font.serif": "Times New Roman",
+                # Use 10pt font in plots, to match 10pt font in document
+                "axes.labelsize": 8,
+                "axes.titlesize": 9,
+                "font.size": 8,
+                # Make the legend/label fonts a little smaller
+                "legend.fontsize": 10,
+                "xtick.labelsize": 8,
+                "ytick.labelsize": 8,
+            }
+        )
+
+        fig = plt.figure(figsize=(7.6, 5))
+
+        ax1 = fig.add_axes([0.01, 0.51, 0.29, 0.44])
+        bu.plot_healpix(
+            data_map=fee,
+            vmin=-50,
+            vmax=0,
+            cmap=j,
+            title=r"($\,i\,$) FEE",
+            cbar=False,
+        )
+
+        ax2 = fig.add_axes([0.31, 0.51, 0.29, 0.44])
         bu.plot_healpix(
             data_map=map_med,
             vmin=-50,
             vmax=0,
-            cmap="viridis",
-            title=f"{tile} Satellite Map",
+            cmap=j,
+            title=r"($\,ii\,$) Satellite Map",
+            cbar=False,
         )
-        plt.tight_layout()
-        plt.savefig(f"./{tile}_Sat.png")
-        plt.close()
 
-        fig = plt.subplots(1, 1, figsize=(7, 8))
+        ax3 = fig.add_axes([0.61, 0.51, 0.29, 0.44])
+        bu.plot_healpix(
+            data_map=fee_min,
+            fig=fig,
+            vmin=-50,
+            vmax=0,
+            cmap=j,
+            title=r"($\,iii\,$) FEE Optimised",
+            cbar=False,
+        )
+        ax3 = plt.gca()
+        image = ax3.get_images()[0]
+        cax1 = fig.add_axes([0.92, 0.51, 0.015, 0.44])
+        fig.colorbar(image, cax=cax1, label="Zenith Power [dB]")
+
+        ax4 = fig.add_axes([0.17, 0.01, 0.29, 0.44])
         data_res = fee - map_med
         fp = fee
         ds = map_med
@@ -164,16 +265,14 @@ if __name__ == "__main__":
         data_res[mask] = np.nan
         bu.plot_healpix(
             data_map=data_res,
-            vmin=-5,
-            vmax=5,
+            vmin=-6,
+            vmax=6,
             cmap="RdYlGn",
-            title=f"FEE - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+            title=r"($\,iv\,$) FEE - Satellite Map",
+            cbar=False,
         )
-        plt.tight_layout()
-        plt.savefig(f"./FEE-{tile}_Sat.png")
-        plt.close()
 
-        fig = plt.subplots(1, 1, figsize=(7, 8))
+        ax5 = fig.add_axes([0.47, 0.01, 0.29, 0.44])
         min_res = fee_min - map_med
         fm = fee_min
         ds = map_med
@@ -185,11 +284,16 @@ if __name__ == "__main__":
         min_res[mask] = np.nan
         bu.plot_healpix(
             data_map=min_res,
-            vmin=-5,
-            vmax=5,
+            vmin=-6,
+            vmax=6,
             cmap="RdYlGn",
-            title=f"FEE Min - {tile} Satellite Map : Log Chisq = {log_chi_sq:.3f}",
+            title=r"($\,v\,$) FEE Optimised - Satellite Map",
+            cbar=False,
         )
-        plt.tight_layout()
-        plt.savefig(f"./FEE_Min-{tile}_Sat.png")
+        ax5 = plt.gca()
+        image = ax5.get_images()[0]
+        cax2 = fig.add_axes([0.78, 0.01, 0.015, 0.44])
+        fig.colorbar(image, cax=cax2, label="Residual Power [dB]")
+        plt.savefig("./plots/S06YY_optimised.pdf", bbox_inches="tight", dpi=300)
         plt.close()
+        #  plt.show()
