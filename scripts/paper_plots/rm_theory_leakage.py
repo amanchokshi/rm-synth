@@ -42,7 +42,11 @@ def set_size(width, fraction=1):
 if __name__ == "__main__":
 
     # Epic spectral colours
-    colours = ["#DA3752", "#FCAD61", "#66C1A4", "#3287BC", "#5E4FA1"]
+    colours = ["#DA3752",
+               "#FCAD61",
+               "#66C1A4",
+               "#3287BC",
+               "#5E4FA1"]
 
     # MWA constants
     low_freq = 160e6
