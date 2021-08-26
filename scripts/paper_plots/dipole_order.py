@@ -32,9 +32,9 @@ rect = plt.Rectangle(
     (left, bottom),
     width,
     height,
-    facecolor="#222222",
-    edgecolor="#282828",
-    alpha=0.2,
+    facecolor="#eaeaf2",
+    edgecolor="#DAD0C2",
+    alpha=0.8,
     zorder=-1,
 )
 ax.add_patch(rect)
@@ -60,3 +60,4 @@ plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])
 plt.tight_layout()
 plt.savefig("./plots/dipole_order.pdf", bbox_inches="tight", dpi=300)
+#  plt.show()
