@@ -3,6 +3,7 @@
 #SBATCH --job-name="cuFFS"
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-gpu=1
 #SBATCH --time=00:10:00
 #SBATCH --clusters=garrawarla
 #SBATCH --partition=gpuq
