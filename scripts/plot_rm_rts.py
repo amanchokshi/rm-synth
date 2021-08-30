@@ -70,11 +70,25 @@ if __name__ == "__main__":
     rm_coords = SkyCoord(
         ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
     )
-    rm_cube = "../data/rts-rm-test/cubes/1120082744_test_2_1120082744_p.phi.dirty.fits"
+    rm_cube = "../data/rts-rm-test/1120082744_test_4_1120082744_p.phi.dirty.fits"
 
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(rm_coords, rm_cube)
 
     rm_spec = data_p[dec_y, ra_x, :]
+    arr = [
+        data_p[dec_y, ra_x, :],
+        data_p[dec_y + 1, ra_x, :],
+        data_p[dec_y + 1, ra_x + 1, :],
+        data_p[dec_y + 1, ra_x - 1, :],
+        data_p[dec_y, ra_x + 1, :],
+        data_p[dec_y, ra_x - 1, :],
+        data_p[dec_y - 1, ra_x, :],
+        data_p[dec_y - 1, ra_x + 1, :],
+        data_p[dec_y - 1, ra_x - 1, :],
+    ]
+
+    rm_med = np.median(arr, axis=0)
+    rm_max = np.amax(arr, axis=0)
 
     plt.rcParams.update(
         {
@@ -93,9 +107,10 @@ if __name__ == "__main__":
         }
     )
     plt.style.use("seaborn")
-    plt.plot(phi, rm_spec, color=colours[0], linewidth=2, alpha=0.9)
-    plt.xlim([-100, 100])
+    plt.plot(phi, rm_max, color=colours[0], linewidth=2, alpha=0.9)
+    plt.xlim([-200, 200])
     plt.xlabel("Faraday Depth [rad/m$^2$]")
     plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
     plt.tight_layout()
-    plt.savefig("../data/rts-rm-test/rts_rm.pdf")
+    plt.savefig("../data/rts-rm-test/rts_rm_v6.pdf")
+    #  plt.show()

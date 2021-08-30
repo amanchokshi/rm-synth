@@ -9,14 +9,14 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from matplotlib import pyplot as plt
 
-from rm_theory import get_IQUV_complex
+from rm_theory import get_IQUV_complex, rm_synth
 
 if __name__ == "__main__":
 
     # MWA constants
     low_freq = 168e6
     high_freq = 232e6
-    fine_channel = 20e3
+    fine_channel = 5e3
 
     # RM Source Constants
     SI = -0.7
@@ -37,14 +37,16 @@ if __name__ == "__main__":
         ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
     )
 
-    with open("../data/rts_srclists/srclist_eor1_rm001.txt", "w") as f:
+    with open("../data/rts_srclists/srclist_eor1_rm001_v2.txt", "w") as f:
         f.write(f"SOURCE RM-001 {rm_coords.ra.hour} {rm_coords.dec.deg}\n")
 
         for i, freq in enumerate(freqs):
             f.write(
-                f"FREQ {freq:.4e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}\n"
+                f"FREQ {freq:.6e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}\n"
             )
         f.write("ENDSOURCE\n")
+
+    # FDF, RMSF, phi_arr = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
     # plt.style.use("seaborn")
     # plt.plot(freqs, I.real, label="I")
@@ -57,5 +59,9 @@ if __name__ == "__main__":
     #     le.set_alpha(1)
     # plt.ylabel("FLux [Jy]")
     # plt.xlabel("Frequency [Hz]")
+
+    # plt.plot(phi_arr, np.abs(FDF))
+    # plt.xlim([-50, 50])
+
     # plt.tight_layout()
     # plt.show()
