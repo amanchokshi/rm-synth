@@ -14,8 +14,8 @@ freqFileName = "/astro/mwaeor/achokshi/rm-synth/data/obsid/tag/imgs/cubes/freque
 // Define the faraday depth axis. All units in rad/m/m
 plotRMSF = False;
 phiMin = -200.;
-nPhi = 801; // integer
-dPhi = 0.5;
+nPhi = 2001; // integer
+dPhi = 0.2;
 
 // Prefix for output filenames
 outPrefix = "/astro/mwaeor/achokshi/rm-synth/data/obsid/tag/imgs/cubes/tag_obsid_";

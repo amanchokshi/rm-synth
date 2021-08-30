@@ -90,17 +90,24 @@ if __name__ == "__main__":
     out_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{out_dir}/{args.map_name}_{n_iterations}_beam_mcmc.h5"
 
-    backend = emcee.backends.HDFBackend(filename)
-    backend.reset(nwalkers, ndim)
+    #  backend = emcee.backends.HDFBackend(filename)
+    #  backend.reset(nwalkers, ndim)
+    new_backend = emcee.backends.HDFBackend(filename)
+    print("Initial size: {0}".format(new_backend.iteration))
+
 
     # initialise sampler object
-    sampler = emcee.EnsembleSampler(
+    #  sampler = emcee.EnsembleSampler(
+    new_sampler = emcee.EnsembleSampler(
         nwalkers,
         ndim,
         log_posterior,
         args=(med_map, mad_map, mask, pol),
-        backend=backend,
+        #  backend=backend,
+        backend=new_backend,
     )
 
     # start the chain!
-    sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    #  sampler.run_mcmc(amps_init, n_iterations, progress=True)
+    new_sampler.run_mcmc(amps_init, n_iterations, progress=False)
+    print("Initial size: {0}".format(new_backend.iteration))
