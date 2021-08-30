@@ -68,9 +68,9 @@ if __name__ == "__main__":
                "#5E4FA1"]
 
     rm_coords = SkyCoord(
-        ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
+        ra=10.44137913863797 * u.degree, dec=-16.78792973842179 * u.degree, frame="icrs"
     )
-    rm_cube = "../data/rts-rm-test/1120082744_test_4_1120082744_p.phi.dirty.fits"
+    rm_cube = "../data/1120082744/1120082744_+10/imgs/cubes/1120082744_+10_1120082744_p.phi.dirty.fits"
 
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(rm_coords, rm_cube)
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     plt.rcParams.update(
         {
             #  "font.size": 15,
-            "text.usetex": True,
+            #  "text.usetex": True,
             "font.family": "serif",
             #  "font.serif": "Times New Roman",
             # Use 10pt font in plots, to match 10pt font in document
@@ -112,5 +112,5 @@ if __name__ == "__main__":
     plt.xlabel("Faraday Depth [rad/m$^2$]")
     plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
     plt.tight_layout()
-    plt.savefig("../data/rts-rm-test/rts_rm_v6.pdf")
+    plt.savefig("../data/1120082744/1120082744_+10/imgs/cubes/RM_1120082744_+10.pdf")
     #  plt.show()
