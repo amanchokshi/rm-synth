@@ -67,9 +67,13 @@ if __name__ == "__main__":
     # the satellite map compared to the full FEE beam, and the minimized (median)
     # FEE beam
     chi_sq_tiles = []
+    bic_tiles = []
+    aic_tiles = []
 
     # Chisqs from all possible dipole peak combinations
     chi_sq_comb_min = []
+    bic_comb_min = []
+    aic_comb_min = []
     amp_comb_min = {}
 
     for tile in tiles:
@@ -124,6 +128,9 @@ if __name__ == "__main__":
         map_mad = np.load(f"../../data/embers_maps/rf1_mad_maps/{tile}_mad.npy")
 
         mask = beam_mask(map_med, map_mad, pol=pol)
+        num_data_pts = hp.nside2npix(32) - mask.shape[0]
+        bic_comb_min.append(16 * np.log(num_data_pts) + 2 * chisq_min)
+        aic_comb_min.append(2 * 16 + 2 * chisq_min)
 
         jones_perfect = beam.calc_jones_array(
             az, za, freq, delays, [1.0] * 16, norm_to_zenith
@@ -159,6 +166,14 @@ if __name__ == "__main__":
         log_chisq_fee = np.log(np.nansum(np.square(fee - map_med) / map_mad))
         log_chisq_fee_min = np.log(np.nansum(np.square(fee_min - map_med) / map_mad))
         chi_sq_tiles.append([log_chisq_fee, log_chisq_fee_min])
+
+        bic_fee = 16 * np.log(num_data_pts) + 2 * log_chisq_fee
+        bic_fee_min = 16 * np.log(num_data_pts) + 2 * log_chisq_fee_min
+        bic_tiles.append([bic_fee, bic_fee_min])
+
+        aic_fee = 2 * 16 + 2 * log_chisq_fee
+        aic_fee_min = 2 * 16 + 2 * log_chisq_fee_min
+        aic_tiles.append([aic_fee, aic_fee_min])
 
     # # Hyperbeam settings
     # nside = 32
@@ -196,6 +211,8 @@ if __name__ == "__main__":
     #     log_chi_sq.append(lchs)
 
     chi_sq_tiles = np.array(chi_sq_tiles)
+    bic_tiles = np.array(bic_tiles)
+    aic_tiles = np.array(aic_tiles)
 
     plt.style.use("seaborn")
     # plt.rcParams.update(
@@ -306,6 +323,179 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.savefig("./plots/beam_min_chisq.pdf", bbox_inches="tight", dpi=300)
+    plt.close()
+
+    ##############
+    # BIC!
+    ##############
+
+    fig, ax = plt.subplots(1, 1, figsize=(3.6, 2.4))
+    ax.plot(
+        range(len(tiles)),
+        bic_tiles[:, 0],
+        "-D",
+        lw=1.4,
+        ms=4,
+        color=colours[3],
+        label="FEE",
+    )
+    # ax.plot(
+    #     range(len(tiles)),
+    #     chi_sq_tiles[:, 1],
+    #     "-s",
+    #     color="#AA2B1D",
+    #     label="FEE Min Median",
+    # )
+    ax.plot(
+        range(len(bic_comb_min)),
+        bic_comb_min,
+        "-s",
+        lw=1.4,
+        ms=4,
+        color=colours[4],
+        label="FEE Min",
+    )
+
+    # ax.hlines(
+    #     np.mean(log_chi_sq),
+    #     0,
+    #     len(tiles) - 1,
+    #     colors="#687980",
+    #     linestyles="dashed",
+    #     label="Avg Flagged Dipole",
+    # )
+
+    tile_names = [
+        "$S06XX$",
+        "$S06YY$",
+        "$S07XX$",
+        "$S07YY$",
+        "$S08XX$",
+        "$S08YY$",
+        "$S09XX$",
+        "$S09YY$",
+        "$S10XX$",
+        "$S10YY$",
+        "$S12XX$",
+        "$S12YY$",
+        "$S29XX$",
+        "$S29YY$",
+        "$S30XX$",
+        "$S30YY$",
+        "$S31XX$",
+        "$S31YY$",
+        "$S32XX$",
+        "$S32YY$",
+        "$S33XX$",
+        "$S33YY$",
+        "$S34XX$",
+        "$S34YY$",
+        "$S35XX$",
+        "$S35YY$",
+        "$S36XX$",
+        "$S36YY$",
+    ]
+
+    ax.set_xticks(range(len(tile_names)))
+    ax.set_xticklabels(tile_names)
+    ax.tick_params(axis="x", rotation=90, labelsize=6)
+    ax.set_ylabel("Bayesian Information Criterion")
+    #  ax.set_title("MWA Satellite Beam Map Gain Minimization : Log Chi Square Test")
+
+    leg = ax.legend(loc="lower right", frameon=True)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
+    plt.tight_layout()
+    plt.savefig("./plots/beam_min_bic.pdf", bbox_inches="tight", dpi=300)
+    plt.close()
+
+    ##############
+    # AIC!
+    ##############
+
+    fig, ax = plt.subplots(1, 1, figsize=(3.6, 2.4))
+    ax.plot(
+        range(len(tiles)),
+        aic_tiles[:, 0],
+        "-D",
+        lw=1.4,
+        ms=4,
+        color=colours[3],
+        label="FEE",
+    )
+    # ax.plot(
+    #     range(len(tiles)),
+    #     chi_sq_tiles[:, 1],
+    #     "-s",
+    #     color="#AA2B1D",
+    #     label="FEE Min Median",
+    # )
+    ax.plot(
+        range(len(aic_comb_min)),
+        aic_comb_min,
+        "-s",
+        lw=1.4,
+        ms=4,
+        color=colours[4],
+        label="FEE Min",
+    )
+
+    # ax.hlines(
+    #     np.mean(log_chi_sq),
+    #     0,
+    #     len(tiles) - 1,
+    #     colors="#687980",
+    #     linestyles="dashed",
+    #     label="Avg Flagged Dipole",
+    # )
+
+    tile_names = [
+        "$S06XX$",
+        "$S06YY$",
+        "$S07XX$",
+        "$S07YY$",
+        "$S08XX$",
+        "$S08YY$",
+        "$S09XX$",
+        "$S09YY$",
+        "$S10XX$",
+        "$S10YY$",
+        "$S12XX$",
+        "$S12YY$",
+        "$S29XX$",
+        "$S29YY$",
+        "$S30XX$",
+        "$S30YY$",
+        "$S31XX$",
+        "$S31YY$",
+        "$S32XX$",
+        "$S32YY$",
+        "$S33XX$",
+        "$S33YY$",
+        "$S34XX$",
+        "$S34YY$",
+        "$S35XX$",
+        "$S35YY$",
+        "$S36XX$",
+        "$S36YY$",
+    ]
+
+    ax.set_xticks(range(len(tile_names)))
+    ax.set_xticklabels(tile_names)
+    ax.tick_params(axis="x", rotation=90, labelsize=6)
+    ax.set_ylabel("Akaike Information Criterion")
+    #  ax.set_title("MWA Satellite Beam Map Gain Minimization : Log Chi Square Test")
+
+    leg = ax.legend(loc="upper left", frameon=True)
+    leg.get_frame().set_facecolor("white")
+    for le in leg.legendHandles:
+        le.set_alpha(1)
+
+    plt.tight_layout()
+    plt.savefig("./plots/beam_min_aic.pdf", bbox_inches="tight", dpi=300)
+    plt.close()
 
     #  write_json(amp_comb_min, filename="sat_dipole_amps.json", out_dir="../data/beam_min_1024_masked")
 
