@@ -4,7 +4,7 @@
 for i in 1120082744;
 do
     # for j in ana_wide fee_wide;
-    for j in 1120082744_dip_0 1120082744_dip_-10 1120082744_dip_+10;
+    for j in 1120082744_+10_disable;
     do
         echo Submitting cuffs.sh "$i" "$j" to slurm queue
         sed "s/obsid/"$i"/g" cuffs_parset.in >> "$j"_"$i".in

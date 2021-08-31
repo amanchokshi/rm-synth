@@ -68,9 +68,9 @@ if __name__ == "__main__":
                "#5E4FA1"]
 
     rm_coords = SkyCoord(
-        ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
+        ra=10.44137913863797 * u.degree, dec=-16.78792973842179 * u.degree, frame="icrs"
     )
-    rm_cube = "../data/1120082744/1120082744_dip_0/imgs/cubes/1120082744_dip_0_1120082744_p.phi.dirty.fits"
+    rm_cube = "../data/1120082744/1120082744_+10_disable/imgs/cubes/1120082744_+10_disable_1120082744_p.phi.dirty.fits"
 
     ra_x, dec_y, phi_z, phi, data_p, wcs = read_rm_cube(rm_coords, rm_cube)
 
@@ -112,5 +112,5 @@ if __name__ == "__main__":
     plt.xlabel("Faraday Depth [rad/m$^2$]")
     plt.ylabel("Polarized Flux Density [Jy/PSF/RMSF]")
     plt.tight_layout()
-    plt.savefig("../data/1120082744/1120082744_dip_0/imgs/cubes/RM_1120082744_dip_0.pdf")
+    plt.savefig("../data/1120082744/1120082744_+10_disable/imgs/cubes/RM_1120082744_+10_disable.pdf")
     #  plt.show()
