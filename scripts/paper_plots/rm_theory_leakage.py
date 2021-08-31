@@ -167,10 +167,10 @@ if __name__ == "__main__":
     ax1.plot(
         phi,
         np.abs(fdfs[1]),
-        color=colours[4],
+        color=colours[3],
         lw=1.4,
         ls=ls[0],
-        label=r"A:0.9, $\phi:0^\circ$",
+        label=r"A:0.9, $\Theta:0^\circ$",
     )
     ax1.plot(
         phi,
@@ -178,7 +178,7 @@ if __name__ == "__main__":
         color=colours[0],
         lw=1.4,
         ls=ls[0],
-        label=r"A:0.9, $\phi:90^\circ$",
+        label=r"A:0.9, $\Theta:90^\circ$",
     )
     ax1.plot(
         phi,
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         color=colours[1],
         lw=1.4,
         ls=ls[0],
-        label=r"A:0.9, $\phi:180^\circ$",
+        label=r"A:0.9, $\Theta:180^\circ$",
         zorder=1,
     )
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     ax2.plot(
         freqs / 1e6,
         Is[1].real,
-        color=colours[4],
+        color=colours[3],
         lw=1.4,
         ls=ls[0],
         label=r"A:0.9, $\phi:0^\circ$",
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     ax3.plot(
         freqs / 1e6,
         Qs[1].real,
-        color=colours[4],
+        color=colours[3],
         lw=1.4,
         ls=ls[0],
         label=r"A:0.9, $\phi:0^\circ$",
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     ax4.plot(
         freqs / 1e6,
         Us[1].real,
-        color=colours[4],
+        color=colours[3],
         lw=1.4,
         ls=ls[0],
         label=r"A:0.9, $\phi:0^\circ$",
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     ax5.plot(
         freqs / 1e6,
         Vs[1].real,
-        color=colours[4],
+        color=colours[3],
         lw=1.4,
         ls=ls[0],
         label=r"A:0.9, $\phi:0^\circ$",
@@ -336,5 +336,5 @@ if __name__ == "__main__":
 
     #  fig.tight_layout()
     #  plt.show()
-    plt.savefig("./plots/rm_theory_leakage.pdf", bbox_inches="tight", dpi=300)
+    plt.savefig("./plots/rm_theory_leakage_v2.pdf", bbox_inches="tight", dpi=300)
     plt.close()
