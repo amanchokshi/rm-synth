@@ -37,18 +37,21 @@ if __name__ == "__main__":
         ra=10.44137913863797 * u.degree, dec=-26.78792973842179 * u.degree, frame="icrs"
     )
 
-    with open("../data/rts_srclists/srclist_eor1_rm001_v2.txt", "w") as f:
-        f.write(f"SOURCE RM-001 {rm_coords.ra.hour} {rm_coords.dec.deg}\n")
+    # with open("../data/rts_srclists/srclist_eor1_rm001_v2.txt", "w") as f:
+    #     f.write(f"SOURCE RM-001 {rm_coords.ra.hour} {rm_coords.dec.deg}\n")
 
-        for i, freq in enumerate(freqs):
-            f.write(
-                f"FREQ {freq:.6e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}\n"
-            )
-        f.write("ENDSOURCE\n")
+    #     for i, freq in enumerate(freqs):
+    #         f.write(
+    #             f"FREQ {freq:.6e} {I[i].real:.5f} {Q[i].real:.5f} {U[i].real:.5f} {V[i].real:.5f}\n"
+    #         )
+    #     f.write("ENDSOURCE\n")
 
-    # FDF, RMSF, phi_arr = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
+    FDF, RMSF, phi_arr = rm_synth(freqs, Q, U, phi_lim=200, dphi=0.1)
 
-    # plt.style.use("seaborn")
+    plt.style.use("seaborn")
+    plt.plot(phi_arr, np.abs(FDF))
+    plt.tight_layout()
+    plt.show()
     # plt.plot(freqs, I.real, label="I")
     # plt.plot(freqs, Q.real, label="Q")
     # plt.plot(freqs, U.real, label="U")

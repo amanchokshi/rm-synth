@@ -1,4 +1,4 @@
-import corner
+iread_emcee_h5.pp ymport corner
 import emcee
 import numpy as np
 from matplotlib import pyplot as plt

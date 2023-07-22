@@ -295,5 +295,6 @@ if __name__ == "__main__":
         cax2 = fig.add_axes([0.78, 0.01, 0.015, 0.44])
         fig.colorbar(image, cax=cax2, label="Residual Power [dB]")
         plt.savefig("./plots/S06YY_optimised.pdf", bbox_inches="tight", dpi=300)
+        plt.savefig("./plots/S06YY_optimised.png", bbox_inches="tight", dpi=300)
         plt.close()
         #  plt.show()
